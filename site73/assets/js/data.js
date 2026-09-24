@@ -487,3 +487,285 @@ window.S73.data = {
     noms: ["Varenne", "Delorme", "Kader", "Ferrand", "Roux", "Marchetti", "Brunet", "Morel", "Lemoine", "Girard", "Vasseur", "Keller", "Aubert", "Perrin", "Fontaine", "Lambert", "Garnier", "Belkacem", "Duval", "Renaud", "Castel", "Moreau", "Béranger", "Oudin"]
   }
 };
+
+/* ==========================================================================
+   CONTENU DES PAGES ÉVÉNEMENTS, PROTOCOLES, LABORATOIRE, ENTRAÎNEMENT, CARNET
+   ========================================================================== */
+Object.assign(window.S73.data, {
+
+  /* Événements RP. date au format ISO avec fuseau ; duree en minutes.
+     type : evenement | formation | promotion | recrutement | special        */
+  evenements: [
+    { id: "exercice-173", date: "2026-09-12T21:00:00+02:00", duree: 120, type: "evenement", titre: "Exercice de reconfinement",
+      lieu: "Niveau −5 · Zone de confinement lourde",
+      texte: "Exercice grandeur nature de reconfinement de SCP-173, avec participation des unités Epsilon-11 et Eta-10." },
+    { id: "avalanche", date: "2026-09-26T21:00:00+02:00", duree: 120, type: "evenement", titre: "Opération Avalanche",
+      lieu: "Niveau −1 · Salle de briefing",
+      texte: "Une avalanche coupe la route du col et isole le Site-73. Les communications tombent une à une. Briefing obligatoire pour tout le personnel, présence des unités FIM requise." },
+    { id: "formation-0930", date: "2026-09-30T20:00:00+02:00", duree: 60, type: "formation", titre: "Formation des nouvelles recrues",
+      lieu: "Niveau −1 · Salle de briefing",
+      texte: "Procédures de base, radio, habilitations et visite guidée du site. Idéal pour une première session." },
+    { id: "promo-securite", date: "2026-10-03T20:30:00+02:00", duree: 90, type: "promotion", titre: "Examen de promotion · Sécurité",
+      lieu: "Niveau −4 · QG Sécurité",
+      texte: "Épreuves pratiques pour les gardes qui visent le grade de Garde senior ou de Sergent. Inscription auprès du Chef de la Sécurité." },
+    { id: "audit-ethique", date: "2026-10-10T21:00:00+02:00", duree: 90, type: "evenement", titre: "Audit du Comité d'Éthique",
+      lieu: "Niveau −3 · Laboratoires",
+      texte: "Le Comité inspecte les protocoles du Département Scientifique. Certaines expériences pourraient être suspendues." },
+    { id: "selection-e11", date: "2026-10-17T20:00:00+02:00", duree: 120, type: "recrutement", titre: "Sélection Epsilon-11",
+      lieu: "Surface · Porte B",
+      texte: "Épreuves de sélection pour rejoindre l'unité Epsilon-11. Réservé aux joueurs présents depuis au moins trois semaines." },
+    { id: "nuit-ogive", date: "2026-10-31T21:00:00+01:00", duree: 180, type: "special", titre: "La Nuit de l'Ogive",
+      lieu: "Tout le site",
+      texte: "Soirée spéciale Halloween. Coupure générale, brèches multiples, et une rumeur sur le niveau −7 que la Direction refuse de commenter." },
+    { id: "formation-rapport", date: "2026-11-04T20:00:00+01:00", duree: 60, type: "formation", titre: "Atelier : rédiger un rapport",
+      lieu: "Niveau −1 · Salle de briefing",
+      texte: "Comment rédiger un rapport d'incident ou un journal d'expérience crédible, avec le générateur du Laboratoire." }
+  ],
+  typesEvenement: {
+    evenement:   { nom: "Événement",   couleur: "var(--signal)" },
+    formation:   { nom: "Formation",   couleur: "var(--c-attente)" },
+    promotion:   { nom: "Promotion",   couleur: "var(--c-sur)" },
+    recrutement: { nom: "Recrutement", couleur: "var(--a-orange)" },
+    special:     { nom: "Spécial",     couleur: "var(--a-rouge)" }
+  },
+
+  /* ---------------------------------------------------------------------- */
+  protocoles: {
+    roles: [
+      { id: "chercheur", nom: "Chercheur" }, { id: "securite", nom: "Garde" }, { id: "fim", nom: "Agent FIM" },
+      { id: "medical", nom: "Médical" }, { id: "technique", nom: "Technicien" }, { id: "classe-d", nom: "Classe-D" },
+      { id: "direction", nom: "Direction" }
+    ],
+    niveaux: {
+      vert: {
+        general: ["Activité normale. Badge visible en permanence.", "Signaler tout comportement inhabituel d'une anomalie au chef de zone."],
+        roles: {
+          chercheur: ["Mener les expériences validées et les consigner au registre.", "Vérifier l'habilitation des sujets avant chaque test."],
+          securite: ["Tenir les points de contrôle et effectuer les rondes horaires.", "Escorter chercheurs et Classe-D dans les zones de confinement."],
+          fim: ["Entraînement et maintien en condition opérationnelle.", "Rester joignable sur le canal FIM."],
+          medical: ["Visites de contrôle et suivi psychologique.", "Tenir à jour le stock d'amnésiques."],
+          technique: ["Maintenance préventive des portes, de l'énergie et de la ventilation.", "Contrôler le réseau autour de SCP-079."],
+          "classe-d": ["Suivre les consignes du personnel.", "Couvre-feu à 21 h au secteur D."],
+          direction: ["Valider les expériences sensibles.", "Préparer les briefings d'événement."]
+        }
+      },
+      jaune: {
+        general: ["Accès aux niveaux −5 et −6 limité au personnel désigné.", "Radio allumée en permanence sur le canal principal."],
+        roles: {
+          chercheur: ["Suspendre les expériences non essentielles.", "Rester joignable, à proximité de son laboratoire."],
+          securite: ["Doubler les postes des zones lourdes.", "Contrôler systématiquement les badges aux sas."],
+          fim: ["Équipement complet, prêt au déploiement en cinq minutes."],
+          medical: ["Préparer le bloc opératoire et les kits de décontamination."],
+          technique: ["Tester les groupes électrogènes et les portes de sas."],
+          "classe-d": ["Retour en cellule. Aucun déplacement sans escorte."],
+          direction: ["Ouvrir la cellule de crise au QG Sécurité.", "Informer le Commandement régional."]
+        }
+      },
+      orange: {
+        general: ["La zone concernée est isolée. Le personnel non essentiel rejoint les abris.", "Ne jamais emprunter l'ascenseur principal sans autorisation."],
+        roles: {
+          chercheur: ["Évacuer les laboratoires vers l'abri le plus proche.", "Transmettre les données de confinement à la Sécurité."],
+          securite: ["Boucler les accès de la zone concernée.", "Guider le personnel vers les abris."],
+          fim: ["Déployer l'unité d'astreinte.", "Établir le contact avec l'anomalie et appliquer ses procédures."],
+          medical: ["Installer un poste médical avancé près de la zone.", "Trier les blessés."],
+          technique: ["Couper l'alimentation non essentielle de la zone.", "Passer les portes de sas en mode manuel."],
+          "classe-d": ["Rester allongé en cellule, mains visibles."],
+          direction: ["Coordonner depuis la cellule de crise.", "Autoriser l'usage des protocoles de rappel."]
+        }
+      },
+      rouge: {
+        general: ["Confinement total : tous les sas sont scellés.", "Rejoindre l'abri le plus proche et y rester jusqu'à la fin d'alerte."],
+        roles: {
+          chercheur: ["Sécuriser les données sensibles de son poste.", "Obéir sans discussion aux agents de sécurité."],
+          securite: ["Tir autorisé sur toute menace identifiée.", "Tenir les points de repli jusqu'à l'arrivée des FIM."],
+          fim: ["Reconfinement prioritaire de l'anomalie.", "Neutraliser les éléments hostiles."],
+          medical: ["Soigner uniquement en zone sécurisée.", "Placer en quarantaine toute personne exposée."],
+          technique: ["Basculer sur l'énergie de secours.", "Préparer l'isolement complet des niveaux touchés."],
+          "classe-d": ["Toute tentative d'évasion est traitée comme une menace."],
+          direction: ["Demander le renfort des unités sur appel.", "Préparer la procédure de l'Ogive Alpha."]
+        }
+      },
+      noir: {
+        general: ["Protocole Oméga : évacuation immédiate par la Porte B.", "L'Ogive Alpha peut être déclenchée sans autre préavis."],
+        roles: {
+          chercheur: ["Abandonner tout matériel et rejoindre la Porte B."],
+          securite: ["Couvrir l'évacuation du personnel essentiel."],
+          fim: ["Protéger le personnel de classe A et B jusqu'à l'extraction."],
+          medical: ["Évacuer avec les blessés transportables."],
+          technique: ["Verrouiller les niveaux −5 à −7, puis rejoindre la surface."],
+          "classe-d": ["Suivre les ordres. [[4|Aucune évacuation n'est prévue pour le personnel de Classe-D.]]"],
+          direction: ["Double clé et accord du Conseil O5 pour l'Ogive Alpha.", "Quitter le site en dernier."]
+        }
+      }
+    }
+  },
+
+  radio: [
+    ["10-4", "Message reçu, compris"],
+    ["10-9", "Répétez le message"],
+    ["10-20", "Quelle est votre position ?"],
+    ["10-33", "Urgence : silence radio sur le canal"],
+    ["Code 1", "Urgence médicale"],
+    ["Code 2", "Renfort demandé"],
+    ["Code 3", "Brèche de confinement confirmée"],
+    ["Code 5", "Évasion de Classe-D"],
+    ["Code 7", "Intrusion hostile"],
+    ["Code 9", "Fin d'alerte, retour à la normale"],
+    ["Sierra", "Situation sous contrôle"],
+    ["Mayday", "Agent en danger de mort"]
+  ],
+
+  alphabet: ["Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike",
+    "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"],
+  chiffres: ["Zéro", "Un", "Deux", "Trois", "Quatre", "Cinq", "Six", "Sept", "Huit", "Neuf"],
+
+  /* Annonces générales. Variables : {scp} {zone} {niveau} {personne}          */
+  annonces: [
+    { id: "breche", nom: "Brèche de confinement",
+      texte: "Attention. Brèche de confinement détectée : {scp}, {zone}. Tout le personnel non essentiel rejoint immédiatement l'abri le plus proche. Ceci n'est pas un exercice." },
+    { id: "evacuation", nom: "Évacuation",
+      texte: "Attention. Ordre d'évacuation du {niveau}. Le personnel se dirige vers la Porte B en suivant le balisage lumineux. Laissez vos effets personnels." },
+    { id: "exercice", nom: "Exercice",
+      texte: "Attention. Exercice de confinement programmé au {niveau} dans dix minutes. Merci de ne pas utiliser l'ascenseur principal pendant l'exercice." },
+    { id: "fin", nom: "Fin d'alerte",
+      texte: "Fin d'alerte. Le confinement de {scp} est rétabli. Reprise des activités normales. Le personnel blessé se présente à l'infirmerie, niveau −2." },
+    { id: "convocation", nom: "Convocation",
+      texte: "{personne} est attendu au bureau du Directeur, niveau −1. Je répète : {personne}, bureau du Directeur." }
+  ],
+
+  /* ---------------------------------------------------------------------- */
+  /* SCP-914 : 5 résultats par objet, du réglage Brut au réglage Très fin.    */
+  lab914: {
+    reglages: ["Brut", "Grossier", "1:1", "Fin", "Très fin"],
+    objets: [
+      { nom: "Carte d'accès de niveau 1", res: [
+        "Un tas de plastique fondu et une puce grillée.",
+        "La carte, découpée en lamelles d'un millimètre.",
+        "Une carte d'accès de niveau 1 au nom d'un autre membre du personnel.",
+        "Une carte d'accès de niveau 2, parfaitement fonctionnelle.",
+        "Une carte d'accès de niveau 4. [[4|Elle ouvre aussi une porte du niveau −7 qui ne figure sur aucun plan.]]"] },
+      { nom: "Montre à gousset", res: [
+        "Engrenages, ressorts et éclats de verre, triés par taille.",
+        "Des pièces de montre assemblées au hasard, qui ne fonctionnent pas.",
+        "Une montre-bracelet numérique qui affiche la même heure.",
+        "Une montre à gousset qui dérive d'une seconde par siècle.",
+        "Une montre qui indique l'heure exacte de la mort de son porteur. Confisquée par la Direction."] },
+      { nom: "Pièce de 1 €", res: [
+        "De la poudre de cuivre, de nickel et de zinc.",
+        "Un disque de métal lisse, sans gravure.",
+        "Une pièce de 1 € frappée dans un autre pays de la zone euro.",
+        "Une pièce de 1 € en or massif.",
+        "Une pièce qui retombe toujours du même côté. Le côté dépend de l'humeur de la personne qui la lance."] },
+      { nom: "Pomme", res: [
+        "De la purée de pomme et des pépins.",
+        "Des tranches de pomme rigoureusement identiques.",
+        "Une poire.",
+        "Une pomme sans pépins, au goût remarquable.",
+        "Une pomme qui soigne les maux de tête. Elle hurle quand on la croque."] },
+      { nom: "Téléphone portable", res: [
+        "Composants, batterie et écran, séparés.",
+        "Une coque vide et des circuits tordus.",
+        "Un téléphone d'une autre marque, avec les mêmes contacts.",
+        "Un téléphone doté de six mois d'autonomie.",
+        "Un téléphone qui reçoit des appels d'une voix se présentant comme SCP-079."] },
+      { nom: "Revolver", res: [
+        "Des pièces détachées et de la poudre.",
+        "Un bloc de métal vaguement en forme de revolver.",
+        "Un pistolet semi-automatique de même calibre.",
+        "Un revolver qui ne manque jamais sa cible. Placé sous clé.",
+        "Un revolver qui tire des balles en caoutchouc. Elles s'excusent à l'impact."] },
+      { nom: "Tasse de café", res: [
+        "Une poudre de céramique et une flaque de café.",
+        "Des morceaux de tasse et des grains de café.",
+        "Une tasse de thé.",
+        "Un café parfait, qui reste chaud pendant douze heures.",
+        "Un café qui supprime le besoin de sommeil pendant neuf jours. Le sujet a demandé à dormir dès le quatrième."] },
+      { nom: "Stylo", res: [
+        "Encre, plastique et bille, séparés.",
+        "Un tube de plastique rempli d'encre.",
+        "Un crayon à papier.",
+        "Un stylo-plume qui corrige les fautes d'orthographe.",
+        "Un stylo qui écrit la vérité, quoi que veuille écrire son utilisateur."] },
+      { nom: "Rat de laboratoire", res: [
+        "De la matière organique. Le test ne sera pas répété.",
+        "Un rat vivant, gravement désorganisé. Euthanasié.",
+        "Une souris blanche en bonne santé.",
+        "Un rat d'une intelligence remarquable, qui résout des labyrinthes complexes.",
+        "Une créature à six pattes de la taille d'un chat, enfuie par les conduits. [[4|Toujours introuvable.]]"] }
+    ],
+    inconnu: [
+      "{objet} réduit à ses composants de base.",
+      "{objet} découpé en morceaux grossiers.",
+      "Un objet de même valeur et de même usage que {objet}, mais de forme différente.",
+      "{objet} amélioré : plus solide, plus efficace, plus élégant.",
+      [
+        "{objet} doté d'une conscience rudimentaire. Il demande à rentrer chez lui.",
+        "Rien. La cabine de sortie est vide et sent le brûlé.",
+        "{objet}, légèrement tiède, qui vibre dès qu'on l'approche de SCP-914.",
+        "Un {objet} identique, qui disparaît au bout de quatorze secondes."
+      ]
+    ]
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Test d'orientation : chaque réponse donne des points aux départements.  */
+  orientation: [
+    { q: "Une alarme retentit. Ton premier réflexe ?", r: [
+      ["Je prends mon arme et je vais voir.", { securite: 2, fim: 1 }],
+      ["Je sécurise mes données et j'observe.", { scientifique: 2 }],
+      ["Je cherche s'il y a des blessés.", { medical: 2 }],
+      ["Je vérifie que les portes tiennent.", { technique: 2 }],
+      ["Je profite du chaos pour m'enfuir.", { "classe-d": 2 }]] },
+    { q: "Ton moment préféré en RP ?", r: [
+      ["Interroger une anomalie.", { scientifique: 2, ethique: 1 }],
+      ["Les assauts et les fusillades.", { fim: 2, securite: 1 }],
+      ["Les intrigues et les secrets.", { dsi: 2, direction: 1 }],
+      ["Survivre coûte que coûte.", { "classe-d": 2 }],
+      ["Sauver des vies.", { medical: 2 }]] },
+    { q: "On te donne un ordre qui te paraît injuste.", r: [
+      ["J'obéis, la hiérarchie sait ce qu'elle fait.", { securite: 1, fim: 1 }],
+      ["Je le signale au Comité d'Éthique.", { ethique: 2 }],
+      ["J'enquête discrètement sur celui qui l'a donné.", { dsi: 2 }],
+      ["Je prends la décision moi-même.", { direction: 2 }],
+      ["Je fais semblant d'obéir.", { "classe-d": 1, dsi: 1 }]] },
+    { q: "Ton outil de prédilection ?", r: [
+      ["Un carnet et un microscope.", { scientifique: 2 }],
+      ["Un fusil et une radio.", { fim: 2, securite: 1 }],
+      ["Une trousse de soins.", { medical: 2 }],
+      ["Une caisse à outils.", { technique: 2 }],
+      ["Un dossier confidentiel.", { direction: 1, dsi: 1, ethique: 1 }]] },
+    { q: "Combien de temps peux-tu consacrer au RP ?", r: [
+      ["Un peu chaque jour.", { securite: 1, scientifique: 1, medical: 1 }],
+      ["Surtout pendant les événements.", { fim: 1, "classe-d": 1 }],
+      ["Beaucoup : je veux des responsabilités.", { direction: 2, ethique: 1 }],
+      ["Quand j'en ai envie, sans pression.", { "classe-d": 1, technique: 1 }]] }
+  ],
+  // Département conseillé pour débuter quand le résultat est « sur nomination »
+  entreeConseillee: { fim: "securite", direction: "scientifique", ethique: "scientifique", dsi: "securite" },
+
+  /* ---------------------------------------------------------------------- */
+  /* Distinctions du carnet de service. secret : cachée tant que non obtenue. */
+  distinctions: [
+    { id: "arrivee",      code: "J1",  nom: "Premier jour",          texte: "Se connecter à l'intranet du Site-73." },
+    { id: "lecteur",      code: "D5",  nom: "Lecteur assidu",        texte: "Consulter 5 dossiers SCP." },
+    { id: "archiviste",   code: "D18", nom: "Archiviste",            texte: "Consulter tous les dossiers SCP." },
+    { id: "favoris",      code: "★3",  nom: "Collectionneur",        texte: "Suivre 3 dossiers." },
+    { id: "visite",       code: "P13", nom: "Tour du propriétaire",  texte: "Visiter toutes les pages de l'intranet." },
+    { id: "thaumiel",     code: "N5",  nom: "Déclassifié",           texte: "Atteindre l'habilitation de niveau 5." },
+    { id: "reglement",    code: "§5",  nom: "Juriste",               texte: "Lire les cinq chapitres du règlement." },
+    { id: "apte",         code: "EX",  nom: "Apte au service",       texte: "Réussir l'examen d'aptitude." },
+    { id: "sansfaute",    code: "6/6", nom: "Sans faute",            texte: "Obtenir 6/6 à l'examen d'aptitude." },
+    { id: "evacuation",   code: "BR",  nom: "Exercice d'évacuation", texte: "Lancer une simulation de brèche." },
+    { id: "itineraire",   code: "IT",  nom: "Guide du site",         texte: "Afficher un itinéraire sur le plan." },
+    { id: "horloger",     code: "914", nom: "Horloger",              texte: "Mener 5 expériences avec SCP-914." },
+    { id: "tresfin",      code: "TF",  nom: "Très fin",              texte: "Utiliser le réglage « Très fin » de SCP-914." },
+    { id: "radio",        code: "PA",  nom: "Voix du site",          texte: "Diffuser une annonce générale." },
+    { id: "redacteur",    code: "RD",  nom: "Rédacteur",             texte: "Copier une fiche, un rapport ou un dossier." },
+    { id: "planning",     code: "EV",  nom: "Toujours à l'heure",    texte: "Ajouter un événement à son planning." },
+    { id: "contact",      code: "173", nom: "Contact visuel",        texte: "Survivre à l'exercice Contact visuel." },
+    { id: "verrouillage", code: "L8",  nom: "Maître des sas",        texte: "Atteindre la séquence 8 du protocole de verrouillage." },
+    { id: "nuit",         code: "03h", nom: "Service de nuit",       texte: "Se connecter entre minuit et 5 h, heure du site." },
+    { id: "pirate",       code: "079", nom: "Intrusion",             texte: "Provoquer une réponse de SCP-079 dans le terminal.", secret: true },
+    { id: "omega",        code: "Ω",   nom: "Protocole Oméga",       texte: "Entrer le code du Conseil O5.", secret: true }
+  ]
+});

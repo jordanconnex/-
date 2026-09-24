@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mon carnet · Site-73</title>
+  <meta name="description" content="Carnet de service du Site-73 : progression, distinctions, dossiers consultés, planning et réglages de l'intranet.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Plan du site · Site-73">
+  <meta property="og:description" content="Carnet de service du Site-73 : progression, distinctions, dossiers consultés, planning et réglages de l'intranet.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="carnet">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="carnet">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">ID</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Dossier personnel · Enregistré sur cet appareil</p>
+          <h1 class="sign__title">Mon carnet</h1>
+          <p class="sign__lede">Ton carnet de service suit ta progression sur l'intranet : dossiers lus, exercices, examens et distinctions. Il reste uniquement dans ton navigateur.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-RH-ID</dd></div>
+          <div><dt>Distinctions</dt><dd><span data-badge-count>0</span> / <span data-badge-total>21</span></dd></div>
+          <div><dt>Habilitation</dt><dd data-hab-name></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" aria-label="Résumé">
+      <div class="wrap carnet-top">
+        <div class="carnet-id">
+          <div class="creator__caption"><span>Carte d'accès</span><span>Format ID-1 · 85,6 × 54 mm</span></div>
+          <div class="idcard-stage" id="carnet-stage"><div class="idcard" id="carnet-card"></div></div>
+          <p class="muted" id="carnet-who"></p>
+          <div class="hero__cta"><a class="btn btn--sm" href="rejoindre.html#fiche">Modifier ma fiche</a><a class="btn btn--sm" href="reglement.html#examen">Passer l'examen</a></div>
+        </div>
+        <div class="carnet-sum">
+          <div><p class="label">Distinctions obtenues</p>
+            <p class="carnet-big"><span data-badge-count>0</span><small> / <span data-badge-total>21</span></small></p>
+            <div class="bar-progress" aria-hidden="true"><i id="carnet-progress"></i></div></div>
+          <div class="stats" id="carnet-stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="distinctions" aria-labelledby="dist-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Récompenses</p>
+          <h2 class="h2" id="dist-title">Distinctions</h2>
+          <p class="sec__lede">Explore l'intranet, passe les exercices et lis les dossiers pour les débloquer. Deux d'entre elles sont secrètes.</p>
+        </div>
+        <div class="badges" id="carnet-badges"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="lectures" aria-label="Lectures et planning">
+      <div class="wrap two">
+        <div>
+        <div class="sec__head">
+          <p class="eyebrow">Base de données</p>
+          <h2 class="h2">Dossiers consultés</h2>
+          <p class="sec__lede">Les cases éclairées sont les dossiers déjà lus. Une étoile marque ceux que tu suis.</p>
+        </div>
+          <div class="seen-grid" id="carnet-seen"></div>
+        </div>
+        <div>
+        <div class="sec__head">
+          <p class="eyebrow">Calendrier</p>
+          <h2 class="h2">Mon planning</h2>
+
+        </div>
+          <ul class="plan-list" id="carnet-planning"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="reglages" aria-labelledby="set-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Préférences</p>
+          <h2 class="h2" id="set-title">Réglages</h2>
+          <p class="sec__lede">Ces réglages s'appliquent à toutes les pages de l'intranet, sur cet appareil.</p>
+        </div>
+        <div class="settings" id="carnet-settings"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

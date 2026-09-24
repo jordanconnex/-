@@ -1,5 +1,6 @@
 /* ==========================================================================
    SITE-73 · MODULES DES PAGES
+   Accueil, dossiers, plan, personnel, archives, terminal, règlement, rejoindre.
    Chaque module ne s'active que si sa page est présente dans le document.
    ========================================================================== */
 (function () {
@@ -14,6 +15,8 @@
   var CLASS_ORDER = ["sur", "euclide", "keter", "thaumiel", "attente", "neutralise"];
   var DANGER_VAR = ["", "var(--d1)", "var(--d2)", "var(--d3)", "var(--d4)"];
   var LEVEL_COLORS = ["#A9B3B5", "#7FC8A9", "#F2C230", "#F59331", "#EF4747", "#A08CFF"];
+  S.levelColors = LEVEL_COLORS;
+  S.dangerVar = DANGER_VAR;
 
   var classChip = function (key) {
     return '<span class="chip" style="--c: var(--c-' + key + ')">' + esc(D.classesObjet[key].nom) + "</span>";
@@ -36,6 +39,38 @@
     }).join("");
     return new RegExp(src, "gi");
   };
+  S.classChip = classChip;
+  S.meter = meter;
+
+  /* ---------- Outils partagés ----------------------------------------- */
+  var evtFmt;
+  try {
+    evtFmt = new Intl.DateTimeFormat("fr-FR", { timeZone: D.config.fuseau, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    evtFmt = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  }
+  S.fmtEvent = function (iso) { return evtFmt.format(new Date(iso)).replace(/ à /, " · ").replace(":", " h "); };
+  S.upcoming = function () {
+    var now = Date.now();
+    return (D.evenements || []).filter(function (e) { return new Date(e.date).getTime() + e.duree * 60000 > now; })
+      .sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  };
+  // Expérience SCP-914 : renvoie le texte du résultat (avec caviardage éventuel).
+  S.run914 = function (objet, idx) {
+    var L = D.lab914;
+    var known = L.objets.filter(function (o) { return norm(o.nom) === norm(objet) || norm(o.nom).indexOf(norm(objet)) >= 0; })[0];
+    var res;
+    if (known && norm(objet).length >= 3) res = known.res[idx];
+    else {
+      res = L.inconnu[idx];
+      if (Array.isArray(res)) res = res[Math.floor(Math.random() * res.length)];
+      res = res.replace(/\{objet\}/g, objet.trim() || "L'objet");
+      res = res.charAt(0).toUpperCase() + res.slice(1);
+    }
+    S.stat("x914");
+    if (idx === 4) S.flag("tresfin");
+    return res;
+  };
 
   /* ======================================================================
      ACCUEIL
@@ -44,7 +79,6 @@
     var home = $("#home");
     if (!home) return;
 
-    // Bandeau défilant
     var track = $("#home-ticker");
     if (track) {
       var items = D.bandeau.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("");
@@ -77,13 +111,7 @@
     var since = $("[data-since]");
     if (since) {
       var start = new Date(D.config.dernierIncident.date).getTime();
-      var upd = function () {
-        var s = Math.max(0, Math.floor((Date.now() - start) / 1000));
-        var d = Math.floor(s / 86400); s -= d * 86400;
-        var h = Math.floor(s / 3600); s -= h * 3600;
-        var m = Math.floor(s / 60); s -= m * 60;
-        since.textContent = d + " j " + pad(h) + ":" + pad(m) + ":" + pad(s);
-      };
+      var upd = function () { since.textContent = S.formatCountdown(Date.now() - start); };
       upd();
       doc.addEventListener("s73:tick", upd);
       $$("[data-since-ref]").forEach(function (el) { el.textContent = D.config.dernierIncident.ref; });
@@ -96,11 +124,49 @@
       D.scp.forEach(function (s) { counts[s.classe] = (counts[s.classe] || 0) + 1; });
       var keys = CLASS_ORDER.filter(function (k) { return counts[k]; });
       stack.innerHTML = keys.map(function (k) {
-        return '<i style="--c: var(--c-' + k + '); flex:' + counts[k] + '" title="' + esc(D.classesObjet[k].nom) + " : " + counts[k] + '"></i>';
+        return '<i style="--c: var(--c-' + k + "); flex:" + counts[k] + '" title="' + esc(D.classesObjet[k].nom) + " : " + counts[k] + '"></i>';
       }).join("");
       legend.innerHTML = keys.map(function (k) {
         return '<li style="--c: var(--c-' + k + ')">' + esc(D.classesObjet[k].nom) + " " + counts[k] + "</li>";
       }).join("");
+    }
+
+    // Prochain événement
+    var next = $("#home-next");
+    if (next) {
+      var ev = S.upcoming()[0];
+      if (!ev) {
+        next.innerHTML = '<p class="label">Prochain événement</p><p class="next__title">Aucun événement programmé</p><a class="btn" href="evenements.html">Voir le calendrier</a>';
+      } else {
+        var T = D.typesEvenement[ev.type];
+        var renderNext = function () {
+          var on = S.isMarked("planning", ev.id);
+          next.style.setProperty("--c", T.couleur);
+          next.innerHTML =
+            '<div class="next__info"><p class="label">Prochain événement</p>' +
+              '<p class="next__title">' + esc(ev.titre) + "</p>" +
+              '<p class="next__meta"><span class="chip" style="--c:' + T.couleur + '">' + esc(T.nom) + "</span><span>" + esc(S.fmtEvent(ev.date)) + "</span><span>" + esc(ev.lieu) + "</span></p></div>" +
+            '<div class="next__count"><p class="label">Début dans</p><p class="next__timer mono" data-next-timer></p></div>' +
+            '<div class="next__cta"><button type="button" class="btn' + (on ? " btn--signal" : "") + '" data-plan aria-pressed="' + on + '">' + (on ? "Dans mon planning" : "Ajouter à mon planning") + "</button>" +
+              '<a class="btn" href="evenements.html#evt-' + ev.id + '">Calendrier</a></div>';
+          updT();
+        };
+        var updT = function () {
+          var el = $("[data-next-timer]", next);
+          if (!el) return;
+          var ms = new Date(ev.date).getTime() - Date.now();
+          el.textContent = ms > 0 ? S.formatCountdown(ms) : "En cours";
+        };
+        next.addEventListener("click", function (e) {
+          if (!e.target.closest("[data-plan]")) return;
+          var on = !S.isMarked("planning", ev.id);
+          S.mark("planning", ev.id, on);
+          renderNext();
+          if (on) S.toast("<b>Ajouté à ton planning.</b> " + esc(ev.titre) + ", " + esc(S.fmtEvent(ev.date)) + ".");
+        });
+        doc.addEventListener("s73:tick", updT);
+        renderNext();
+      }
     }
 
     // Dossier du jour
@@ -117,10 +183,12 @@
         "<p>" + esc(pick.resume) + "</p>" +
         '<div class="daily__meta">' + classChip(pick.classe) + '<span class="chip chip--plain">Habilitation ' + pick.niveau + "</span>" +
           '<span class="chip chip--plain">' + esc(S.zoneById[pick.zone] ? S.zoneById[pick.zone].niveau : "") + "</span></div>" +
-        '<div><button type="button" class="btn btn--signal" data-open="' + esc(pick.id) + '">Ouvrir le dossier ' + S.icon.arrow + "</button></div>";
+        '<div class="hero__cta"><button type="button" class="btn btn--signal" data-open="' + esc(pick.id) + '">Ouvrir le dossier ' + S.icon.arrow + "</button>" +
+        '<button type="button" class="btn" data-random>' + S.icon.dice + "Au hasard</button></div>";
       daily.addEventListener("click", function (e) {
         var b = e.target.closest("[data-open]");
         if (b) S.openDossier(b.getAttribute("data-open"));
+        if (e.target.closest("[data-random]")) S.randomDossier();
       });
     }
 
@@ -130,9 +198,25 @@
       var list = D.archives.filter(function (a) { return a.type === "communique"; })
         .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 3);
       comms.innerHTML = list.map(function (c) {
-        return '<li class="comm"><time datetime="' + c.date + '">' + esc(U.fmtDate(c.date)) + "</time><div><h3>" + esc(c.titre) + "</h3><p data-comm></p></div></li>";
+        return '<li class="comm"><time datetime="' + c.date + '">' + esc(U.fmtDate(c.date)) + '</time><div><h3><a class="comm__link" href="archives.html#arc-' + c.date + '">' + esc(c.titre) + "</a></h3><p data-comm></p></div></li>";
       }).join("");
       $$("[data-comm]", comms).forEach(function (p, i) { S.redactInto(p, list[i].texte); });
+    }
+
+    // Progression du carnet
+    var prog = $("#home-carnet");
+    if (prog) {
+      var renderProg = function () {
+        var c = S.carnet(), n = U.count(c.badges), tot = D.distinctions.length;
+        var seen = D.scp.filter(function (s) { return c.seen[s.id]; }).length;
+        prog.innerHTML =
+          '<div><p class="label">Ton carnet de service</p><p class="next__title">' + n + " / " + tot + " distinctions</p>" +
+          '<div class="bar-progress" aria-hidden="true"><i style="width:' + (n / tot) * 100 + '%"></i></div>' +
+          '<p class="status__txt">' + seen + " dossier" + (seen > 1 ? "s" : "") + " consulté" + (seen > 1 ? "s" : "") + " sur " + D.scp.length + ". Explore le site pour débloquer les distinctions.</p></div>" +
+          '<a class="btn" href="carnet.html">Ouvrir mon carnet</a>';
+      };
+      doc.addEventListener("s73:carnet", renderProg);
+      renderProg();
     }
   }
 
@@ -142,25 +226,41 @@
   function confinement() {
     var grid = $("#db-grid");
     if (!grid) return;
-    var state = { q: "", classe: "all", sort: "num" };
+    var state = { q: "", filtre: "all", sort: "num" };
     var filters = $("#db-filters"), count = $("#db-count"), search = $("#db-search"), sort = $("#db-sort");
 
-    var counts = { all: D.scp.length };
-    D.scp.forEach(function (s) { counts[s.classe] = (counts[s.classe] || 0) + 1; });
-    var keys = ["all"].concat(CLASS_ORDER.filter(function (k) { return counts[k]; }));
-    filters.innerHTML = keys.map(function (k) {
-      var lbl = k === "all" ? "Toutes" : D.classesObjet[k].nom;
-      var c = k === "all" ? "var(--text-2)" : "var(--c-" + k + ")";
-      return '<button type="button" aria-pressed="' + (k === "all") + '" data-k="' + k + '" style="--c:' + c + '">' + esc(lbl) + " <b>" + counts[k] + "</b></button>";
-    }).join("");
+    var classCounts = { all: D.scp.length };
+    D.scp.forEach(function (s) { classCounts[s.classe] = (classCounts[s.classe] || 0) + 1; });
+    var keys = ["all"].concat(CLASS_ORDER.filter(function (k) { return classCounts[k]; })).concat(["fav", "unseen"]);
+    var label = function (k) {
+      if (k === "all") return "Toutes";
+      if (k === "fav") return "★ Suivis";
+      if (k === "unseen") return "Non lus";
+      return D.classesObjet[k].nom;
+    };
+    var countFor = function (k) {
+      if (k === "fav") return D.scp.filter(function (s) { return S.isMarked("fav", s.id); }).length;
+      if (k === "unseen") return D.scp.filter(function (s) { return !S.isMarked("seen", s.id); }).length;
+      return classCounts[k];
+    };
+    var drawFilters = function () {
+      filters.innerHTML = keys.map(function (k) {
+        var c = k === "all" ? "var(--text-2)" : k === "fav" ? "var(--signal)" : k === "unseen" ? "var(--c-attente)" : "var(--c-" + k + ")";
+        return '<button type="button" aria-pressed="' + (k === state.filtre) + '" data-k="' + k + '" style="--c:' + c + '">' + esc(label(k)) + " <b>" + countFor(k) + "</b></button>";
+      }).join("");
+    };
     filters.classList.add("seg");
+    drawFilters();
 
     var numOf = function (s) { return /^\d+$/.test(s.id) ? parseInt(s.id, 10) : 100000 + U.hash(s.id) % 1000; };
     var visible = [];
     var render = function () {
       var q = norm(state.q.trim());
       visible = D.scp.filter(function (s) {
-        if (state.classe !== "all" && s.classe !== state.classe) return false;
+        var f = state.filtre;
+        if (f === "fav" && !S.isMarked("fav", s.id)) return false;
+        if (f === "unseen" && S.isMarked("seen", s.id)) return false;
+        if (f !== "all" && f !== "fav" && f !== "unseen" && s.classe !== f) return false;
         if (!q) return true;
         var hay = norm([s.code, s.id, s.nom, s.resume, D.classesObjet[s.classe].nom, s.statut].join(" "));
         return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
@@ -174,34 +274,47 @@
       count.textContent = visible.length + " dossier" + (visible.length > 1 ? "s" : "") + " sur " + D.scp.length +
         (state.q ? " · recherche « " + state.q.trim() + " »" : "");
       if (!visible.length) {
-        grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Aucun dossier</b>Aucun résultat pour « ' + esc(state.q.trim()) +
-          " ». Essaie un numéro (173) ou un nom (Docteur).</div>";
+        var why = state.filtre === "fav" ? "Tu ne suis encore aucun dossier. Ouvre un dossier et touche l'étoile pour le suivre."
+          : state.filtre === "unseen" ? "Tu as consulté tous les dossiers. Beau travail d'archiviste."
+          : "Aucun résultat pour « " + esc(state.q.trim()) + " ». Essaie un numéro (173) ou un nom (Docteur).";
+        grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Aucun dossier</b>' + why + "</div>";
         return;
       }
       grid.innerHTML = visible.map(function (s) {
         var z = S.zoneById[s.zone];
-        return '<button type="button" class="cell" data-id="' + esc(s.id) + '" style="--c: var(--c-' + s.classe + ')" aria-label="Ouvrir le dossier ' + esc(s.code + ", " + s.nom) + '">' +
-          '<span class="cell__top"><span>' + esc(s.code) + '</span><span class="cell__status ' + statusClass(s) + '"><i></i>' + esc(s.statut) + "</span></span>" +
-          '<span class="cell__num">' + esc(scpNum(s)) + "</span>" +
+        var fav = S.isMarked("fav", s.id), seen = S.isMarked("seen", s.id);
+        return '<article class="cell' + (seen ? " is-seen" : "") + '" data-id="' + esc(s.id) + '" style="--c: var(--c-' + s.classe + ')">' +
+          '<button type="button" class="cell__hit" aria-label="Ouvrir le dossier ' + esc(s.code + ", " + s.nom) + '"></button>' +
+          '<span class="cell__top"><span>' + esc(s.code) + (seen ? ' <em class="cell__seen">Lu</em>' : "") + '</span><span class="cell__status ' + statusClass(s) + '"><i></i>' + esc(s.statut) + "</span></span>" +
+          '<span class="cell__row"><span class="cell__num">' + esc(scpNum(s)) + "</span>" +
+            '<button type="button" class="cell__fav' + (fav ? " is-on" : "") + '" aria-pressed="' + fav + '" aria-label="Suivre ' + esc(s.code) + '" title="Suivre ce dossier">' + S.icon.star + "</button></span>" +
           '<span class="cell__name">' + esc(s.nom) + "</span>" +
           '<span class="cell__resume">' + esc(s.resume) + "</span>" +
           '<span class="cell__foot">' + classChip(s.classe) + '<span class="cell__zone">' + esc(z ? z.niveau : "") + "</span>" + meter(s.menace) + "</span>" +
-          "</button>";
+          "</article>";
       }).join("");
     };
 
     filters.addEventListener("click", function (e) {
       var b = e.target.closest("button[data-k]");
       if (!b) return;
-      state.classe = b.getAttribute("data-k");
-      $$("button", filters).forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      state.filtre = b.getAttribute("data-k");
+      drawFilters();
       render();
     });
     search.addEventListener("input", function () { state.q = search.value; render(); });
     sort.addEventListener("change", function () { state.sort = sort.value; render(); });
     grid.addEventListener("click", function (e) {
+      var fav = e.target.closest(".cell__fav");
       var c = e.target.closest(".cell");
-      if (c) S.openDossier(c.getAttribute("data-id"), visible.map(function (s) { return s.id; }));
+      if (!c) return;
+      var id = c.getAttribute("data-id");
+      if (fav) {
+        var on = !S.isMarked("fav", id);
+        S.mark("fav", id, on);
+        return;
+      }
+      if (e.target.closest(".cell__hit")) S.openDossier(id, visible.map(function (s) { return s.id; }));
     });
     grid.addEventListener("pointermove", function (e) {
       var c = e.target.closest(".cell");
@@ -210,11 +323,23 @@
       c.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
       c.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
     });
+    doc.addEventListener("s73:carnet", function () {
+      var focusId = doc.activeElement && doc.activeElement.closest && doc.activeElement.closest(".cell__fav") ? doc.activeElement.closest(".cell").getAttribute("data-id") : null;
+      drawFilters();
+      render();
+      if (focusId) { var f = $('.cell[data-id="' + focusId + '"] .cell__fav', grid); if (f) f.focus(); }
+    });
+    var rnd = $("#db-random");
+    if (rnd) rnd.addEventListener("click", function () {
+      var list = visible.length ? visible : D.scp;
+      var s = list[Math.floor(Math.random() * list.length)];
+      S.openDossier(s.id, visible.map(function (x) { return x.id; }));
+    });
     render();
 
-    var legend = $("#db-classes");
-    if (legend) {
-      legend.innerHTML = CLASS_ORDER.map(function (k) {
+    var legendEl = $("#db-classes");
+    if (legendEl) {
+      legendEl.innerHTML = CLASS_ORDER.map(function (k) {
         var c = D.classesObjet[k];
         return '<div style="--c: var(--c-' + k + ')"><h3>' + esc(c.nom) + "</h3><p>" + esc(c.texte) + "</p></div>";
       }).join("");
@@ -228,7 +353,7 @@
     var svg = $("#map-svg");
     if (!svg) return;
     var panel = $("#map-panel");
-    var selected = "zch";
+    var selected = "zch", routeOn = false;
     var scpsIn = function (zid) { return D.scp.filter(function (s) { return s.zone === zid; }); };
     var short = function (z) { return z.nom.split(" · ")[0]; };
 
@@ -239,39 +364,32 @@
       '<linearGradient id="m-skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A1215"/><stop offset="1" stop-color="#132027"/></linearGradient></defs>');
     g.push('<rect class="m-sky" x="0" y="0" width="1000" height="170" fill="url(#m-skyg)"/>');
     g.push('<rect class="m-rock" x="0" y="170" width="1000" height="590"/>');
-    // strates
     g.push('<g fill="none" stroke="#1B2A31" stroke-width="1.2">' +
       '<path d="M0 262 C180 250 320 276 520 262 S820 248 1000 266"/>' +
       '<path d="M0 408 C200 420 360 396 560 410 S840 426 1000 404"/>' +
       '<path d="M0 578 C160 566 380 590 600 576 S860 562 1000 584"/>' +
       '<path d="M0 668 C220 680 420 656 640 670 S880 684 1000 662"/></g>');
-    // montagne
     g.push('<path class="m-mountain" d="M230 170 L330 118 L372 128 L452 58 L500 80 L566 22 L628 76 L672 62 L760 124 L812 112 L900 170 Z"/>');
     g.push('<path class="m-snow" d="M452 58 L474 70 L462 74 L500 80 L489 84 Z M566 22 L592 46 L578 44 L585 58 L566 42 L552 52 L556 36 Z M672 62 L690 76 L676 76 Z"/>');
     g.push('<line class="m-ground" x1="0" y1="170" x2="1000" y2="170"/>');
-    // téléphérique fantôme (ANO-73-014)
     g.push('<g aria-hidden="true"><line x1="955" y1="170" x2="955" y2="118" stroke="#56696C" stroke-width="2"/>' +
       '<path class="m-cable" d="M955 120 Q880 70 800 26"/>' +
       '<g transform="translate(868 66) rotate(-30)"><line x1="0" y1="0" x2="0" y2="10" stroke="#56696C"/><rect x="-9" y="10" width="18" height="13" fill="#1A252B" stroke="#56696C"/></g>' +
       '<text class="m-note" x="792" y="18" text-anchor="end">STATION 4 ?</text></g>');
-    // niveaux
     D.niveaux.forEach(function (n, i) {
       if (i > 0) g.push('<line class="m-level" x1="40" y1="' + (n.y + 24) + '" x2="860" y2="' + (n.y + 24) + '"/>');
       g.push('<text class="m-level-label" x="990" y="' + (n.y - 2) + '" text-anchor="end">' + esc(n.label.toUpperCase()) + "</text>");
       g.push('<text class="m-level-depth" x="990" y="' + (n.y + 12) + '" text-anchor="end">' + esc(n.profondeur) + "</text>");
     });
-    // puits d'ascenseur
     g.push('<rect class="m-shaft" x="478" y="126" width="36" height="612"/>');
     g.push('<text class="m-note" x="0" y="0" transform="translate(500 740) rotate(-90)">ASCENSEUR PRINCIPAL</text>');
     g.push('<rect class="m-car" x="482" y="180" width="28" height="20"/>');
-    // couloirs
     D.zones.forEach(function (z) {
       if (z.forme === "lac" || z.y < 170) return;
       var cy = z.y + z.h / 2;
       if (z.x + z.w <= 478) g.push('<line x1="' + (z.x + z.w) + '" y1="' + cy + '" x2="478" y2="' + cy + '" stroke="#3A4C53" stroke-width="4"/>');
       else g.push('<line x1="514" y1="' + cy + '" x2="' + z.x + '" y2="' + cy + '" stroke="#3A4C53" stroke-width="4"/>');
     });
-    // salles
     D.zones.forEach(function (z) {
       var ids = scpsIn(z.id).map(function (s) { return /^\d+$/.test(s.id) ? s.id : s.code; });
       var sub = "N" + z.acces + (ids.length ? " · " + (ids.length > 5 ? ids.slice(0, 5).join(" ") + "…" : "SCP " + ids.join(" ")) : "");
@@ -290,8 +408,42 @@
         '<text x="' + tx + '" y="' + ty + '">' + esc(short(z)) + "</text>" +
         '<text class="m-sub" x="' + tx + '" y="' + (ty + 15) + '">' + esc(sub) + "</text></g>");
     });
+    g.push('<g id="m-route" aria-hidden="true"></g>');
     g.push('<text class="m-note" x="40" y="752">COUPE VERTICALE · ÉCHELLE NON LINÉAIRE · ALTITUDE DE LA SURFACE ' + esc(D.config.altitude) + "</text>");
     svg.innerHTML = g.join("");
+
+    // --- Itinéraire depuis la Porte A
+    var routeG = $("#m-route", svg);
+    var routeFor = function (z) {
+      var pts = [[375, 150]];
+      if (z.forme === "lac") pts.push([300, 164], [140, 164]);
+      else if (z.y < 170) pts.push([z.x + z.w / 2, 150]);
+      else { var cy = z.y + z.h / 2; pts.push([496, 150], [496, cy], [z.x + z.w / 2, cy]); }
+      return pts;
+    };
+    var drawRoute = function () {
+      if (!routeOn) { routeG.innerHTML = ""; return; }
+      var z = S.zoneById[selected];
+      var pts = routeFor(z);
+      var p = pts.map(function (x) { return x.join(","); }).join(" ");
+      var end = pts[pts.length - 1];
+      routeG.innerHTML = '<polyline class="m-route" points="' + p + '"/>' +
+        '<circle class="m-route-dot" cx="375" cy="150" r="5"/>' +
+        '<circle class="m-route-end" cx="' + end[0] + '" cy="' + end[1] + '" r="7"/>';
+    };
+    var routeSteps = function (z) {
+      var me = S.getClearance();
+      var steps = [["Porte A · contrôle d'identité et fouille", 1]];
+      if (z.forme === "lac" || z.y < 170) steps.push(["Chemin de surface jusqu'à " + short(z), z.acces]);
+      else {
+        steps.push(["Ascenseur principal jusqu'au " + z.niveau.toLowerCase() + " (" + z.profondeur + ")", Math.min(z.acces, 2)]);
+        steps.push(["Sas d'accès · " + short(z), z.acces]);
+      }
+      return '<ol class="route">' + steps.map(function (s) {
+        var ok = me >= s[1];
+        return '<li class="' + (ok ? "is-ok" : "is-ko") + '"><span>' + esc(s[0]) + "</span><small>" + (ok ? "N" + s[1] + " ✓" : "N" + s[1] + " requis") + "</small></li>";
+      }).join("") + "</ol>";
+    };
 
     // --- Panneau d'information
     var renderPanel = function () {
@@ -311,14 +463,18 @@
         '<div><p class="label" style="margin-bottom:8px">Anomalies présentes</p>' +
           (list.length ? '<div class="tagrow">' + list.map(function (s) {
             return '<button type="button" class="chip" style="--c: var(--c-' + s.classe + ')" data-open="' + esc(s.id) + '">' + esc(s.code) + "</button>";
-          }).join("") + "</div>" : '<p>Aucune anomalie répertoriée dans cette zone.</p>') + "</div>";
+          }).join("") + "</div>" : "<p>Aucune anomalie répertoriée dans cette zone.</p>") + "</div>" +
+        '<div><button type="button" class="btn btn--sm" data-route aria-pressed="' + routeOn + '">' + (routeOn ? "Masquer l'itinéraire" : "Itinéraire depuis la Porte A") + "</button>" +
+        (routeOn ? routeSteps(z) : "") + "</div>";
       S.redactInto($("[data-zdesc]", panel), z.description);
     };
     var select = function (id, scroll) {
+      if (!S.zoneById[id]) return;
       selected = id;
       $$(".m-room", svg).forEach(function (r) { r.classList.toggle("is-active", r.getAttribute("data-zone") === id); });
       renderPanel();
-      if (scroll && window.innerWidth < 1140) panel.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+      drawRoute();
+      if (scroll && window.innerWidth < 1220) panel.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
     };
     svg.addEventListener("click", function (e) {
       var r = e.target.closest(".m-room");
@@ -331,6 +487,12 @@
     panel.addEventListener("click", function (e) {
       var b = e.target.closest("[data-open]");
       if (b) S.openDossier(b.getAttribute("data-open"), scpsIn(selected).map(function (s) { return s.id; }));
+      if (e.target.closest("[data-route]")) {
+        routeOn = !routeOn;
+        renderPanel();
+        drawRoute();
+        if (routeOn) S.stat("route");
+      }
     });
     doc.addEventListener("s73:clearance", renderPanel);
     select(selected);
@@ -354,15 +516,17 @@
 
     // --- Simulation de brèche
     var btn = $("#map-breach"), soundBtn = $("#map-sound"), logBox = $("#map-log"), logList = $("#map-log-list"), timer = $("#map-log-timer");
-    var running = false, timers = [], t0 = 0, prevAlert = null, sound = false, audio = null;
+    var running = false, timers = [], t0 = 0, prevAlert = null, sound = S.getSetting("sfx"), audio = null;
+    var syncSound = function () {
+      soundBtn.setAttribute("aria-pressed", String(sound));
+      soundBtn.querySelector("span").textContent = sound ? "Sirène activée" : "Sirène coupée";
+    };
+    syncSound();
     var siren = {
       start: function () {
+        var ctx = S.audioCtx();
+        if (!ctx) return;
         try {
-          var AC = window.AudioContext || window.webkitAudioContext;
-          if (!AC) return;
-          audio = audio || { ctx: new AC() };
-          var ctx = audio.ctx;
-          if (ctx.state === "suspended") ctx.resume();
           var osc = ctx.createOscillator(), lfo = ctx.createOscillator(), lfoGain = ctx.createGain(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
           osc.type = "sawtooth"; osc.frequency.value = 760;
           lfo.frequency.value = 0.45; lfoGain.gain.value = 260;
@@ -372,35 +536,32 @@
           lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
           osc.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
           osc.start(); lfo.start();
-          audio.nodes = { osc: osc, lfo: lfo, gain: gain };
+          audio = { ctx: ctx, osc: osc, lfo: lfo, gain: gain };
         } catch (e) { /* audio indisponible */ }
       },
       stop: function () {
-        if (!audio || !audio.nodes) return;
-        var n = audio.nodes, ctx = audio.ctx;
+        if (!audio) return;
+        var ctx = audio.ctx;
         try {
-          n.gain.gain.cancelScheduledValues(ctx.currentTime);
-          n.gain.gain.setValueAtTime(n.gain.gain.value, ctx.currentTime);
-          n.gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-          n.osc.stop(ctx.currentTime + 0.35); n.lfo.stop(ctx.currentTime + 0.35);
+          audio.gain.gain.cancelScheduledValues(ctx.currentTime);
+          audio.gain.gain.setValueAtTime(Math.max(audio.gain.gain.value, 0.0001), ctx.currentTime);
+          audio.gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+          audio.osc.stop(ctx.currentTime + 0.35); audio.lfo.stop(ctx.currentTime + 0.35);
         } catch (e) { /* ignoré */ }
-        audio.nodes = null;
+        audio = null;
       }
     };
     soundBtn.addEventListener("click", function () {
       sound = !sound;
-      soundBtn.setAttribute("aria-pressed", String(sound));
-      soundBtn.querySelector("span").textContent = sound ? "Sirène activée" : "Sirène coupée";
+      syncSound();
       if (running) { if (sound) siren.start(); else siren.stop(); }
     });
     var logLine = function (txt, cls) {
       var li = doc.createElement("li");
       if (cls) li.className = cls;
-      var el = Math.floor((Date.now() - t0) / 1000);
       li.innerHTML = "<time>" + S.formatClock(new Date()) + "</time>" + esc(txt);
       logList.appendChild(li);
       logList.scrollTop = logList.scrollHeight;
-      return el;
     };
     var updTimer = function () {
       if (!running) return;
@@ -419,7 +580,7 @@
       btn.classList.remove("is-running");
     };
     doc.addEventListener("s73:tick", updTimer);
-    btn.addEventListener("click", function () {
+    var startBreach = function () {
       if (running) { stop(false); return; }
       var pool = D.scp.filter(function (s) { return s.menace >= 3 && S.zoneById[s.zone] && s.classe !== "neutralise" && s.zone !== "lac"; });
       var s = pool[Math.floor(Math.random() * pool.length)];
@@ -433,11 +594,11 @@
       btn.innerHTML = "<span>Interrompre la simulation</span>";
       btn.classList.add("is-running");
       select(z.id);
-      var room = $('.m-room[data-zone="' + z.id + '"]', svg);
-      room.classList.add("is-breach");
+      $('.m-room[data-zone="' + z.id + '"]', svg).classList.add("is-breach");
       var frame = svg.parentElement;
       if (frame.scrollWidth > frame.clientWidth) frame.scrollLeft = (z.x / 1000) * frame.scrollWidth - frame.clientWidth / 3;
       S.setAlert("rouge", { persist: false });
+      S.stat("breach");
       if (sound) siren.start();
       updTimer();
       var script = [
@@ -464,6 +625,21 @@
         logLine("Fin de simulation. Durée : " + sec + " s. Retour au " + D.alertes[prevAlert].code + ".", "is-ok");
         stop(true);
       }, 13800));
+    };
+    btn.addEventListener("click", startBreach);
+
+    S.onHash(function (h) {
+      if (/^zone-/.test(h) && S.zoneById[h.slice(5)]) {
+        select(h.slice(5));
+        $("#map-top").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+        return true;
+      }
+      if (h === "simulation") {
+        $("#map-top").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+        if (!running) setTimeout(startBreach, 400);
+        return true;
+      }
+      return false;
     });
   }
 
@@ -489,7 +665,8 @@
             (d.recrutement ? '<span class="chip" style="--c: var(--a-vert)">Recrutement ouvert</span>' : '<span class="chip" style="--c: var(--text-3)">Sur nomination</span>') +
             '<span class="chip chip--plain">Habilitation ' + esc(d.habilitation) + "</span></div></div>" +
         '<div><p class="dept__resume">' + esc(d.resume) + '</p><h3>Missions</h3><ul class="ticks">' +
-          d.missions.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul></div>" +
+          d.missions.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("") + "</ul>" +
+          (d.recrutement ? '<p style="margin-top:20px"><a class="btn btn--sm" href="rejoindre.html#fiche">Créer une fiche dans ce département</a></p>' : "") + "</div>" +
         '<div><h3>Grades · du plus élevé au grade d\'entrée</h3><ol class="ladder">' +
           grades.map(function (g, i) {
             var entry = i === grades.length - 1;
@@ -502,6 +679,7 @@
         t.setAttribute("aria-selected", String(j === i));
         t.tabIndex = j === i ? 0 : -1;
         if (j === i && focus) t.focus();
+        if (j === i) t.scrollIntoView({ block: "nearest", inline: "nearest" });
       });
       render();
     };
@@ -517,8 +695,15 @@
       if (e.key === "End") { e.preventDefault(); choose(n - 1, true); }
     });
     render();
+    S.onHash(function (h) {
+      if (!/^dept-/.test(h)) return false;
+      var i = D.departements.map(function (d) { return d.id; }).indexOf(h.slice(5));
+      if (i < 0) return false;
+      choose(i);
+      $("#departements").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      return true;
+    });
 
-    // Habilitations
     var clr = $("#staff-clearance");
     var renderClr = function () {
       var me = S.getClearance();
@@ -591,7 +776,7 @@
         var y = a.date.slice(0, 4);
         if (y !== year) { year = y; html += '<li class="tl__year" aria-hidden="true">' + y + "</li>"; }
         var p = a.date.split("-");
-        html += '<li class="tl__item" data-type="' + a.type + '"><time class="tl__date" datetime="' + a.date + '"><b>' + parseInt(p[2], 10) + "</b>" + U.MOIS[+p[1] - 1] + " " + p[0] + "</time>" +
+        html += '<li class="tl__item" id="arc-' + a.date + '" data-type="' + a.type + '"><time class="tl__date" datetime="' + a.date + '"><b>' + parseInt(p[2], 10) + "</b>" + U.MOIS[+p[1] - 1] + " " + p[0] + "</time>" +
           '<div class="tl__body"><span class="chip" style="--c:' + colors[a.type] + '">' + TYPES[a.type] + "</span><h3>" + esc(a.titre) + '</h3><p data-i="' + i + '"></p></div></li>';
       });
       tl.innerHTML = html;
@@ -621,32 +806,35 @@
     var fmt = function (txt) {
       return esc(txt).replace(/\u0000/g, '<span class="t-rd">').replace(/\u0001/g, "</span>");
     };
-    var print = function (txt, cls, raw) {
+    var print = function (txt, cls) {
       var d = doc.createElement("div");
       if (cls) d.className = cls;
-      d.innerHTML = raw ? txt : fmt(txt);
+      d.innerHTML = fmt(txt);
       out.appendChild(d);
       screen.scrollTop = screen.scrollHeight;
     };
     var lines = function (arr, cls) { arr.forEach(function (l) { print(l, cls); }); };
     var padR = function (s, n) { s = String(s); return s.length >= n ? s + " " : s + " ".repeat(n - s.length); };
+    var REG = { brut: 0, grossier: 1, "1:1": 2, "11": 2, un: 2, fin: 3, tresfin: 4, "tres-fin": 4, tres: 4 };
 
     var cmds = {
       aide: { desc: "Liste des commandes", run: function () {
         print("Commandes disponibles :", "t-hl");
         Object.keys(cmds).forEach(function (k) {
-          if (!cmds[k].hide) print("  " + padR(k + (cmds[k].args ? " " + cmds[k].args : ""), 24) + cmds[k].desc);
+          if (!cmds[k].hide) print("  " + padR(k + (cmds[k].args ? " " + cmds[k].args : ""), 28) + cmds[k].desc);
         });
         print("Astuce : ↑ ↓ pour l'historique, Tab pour compléter.", "t-dim");
       }},
       statut: { desc: "État général du site", run: function () {
         var a = D.alertes[S.getAlert()];
+        var w = S.meteo();
         lines([
           "SITE-73 · Installation de confinement alpine",
           "  Niveau d'alerte ..... " + a.code.toUpperCase() + " (" + a.titre + ")",
           "  Anomalies ........... " + D.scp.length + " dossiers",
           "  Personnel actif ..... " + D.config.personnelActif,
           "  Dernier incident .... " + D.config.dernierIncident.ref,
+          "  Surface ............. " + (w.temp > 0 ? "+" : "") + w.temp + " °C, vent " + w.vent + " km/h",
           "  Habilitation ........ niveau " + S.getClearance() + " · " + S.habName(S.getClearance())
         ]);
       }},
@@ -655,7 +843,7 @@
         var keyMap = { sur: "sur", euclide: "euclide", keter: "keter", neutralise: "neutralise", attente: "attente", thaumiel: "thaumiel" };
         var list = D.scp.filter(function (s) { return !k || s.classe === keyMap[k]; });
         if (!list.length) { print("Aucune anomalie de classe « " + a[0] + " ».", "t-err"); return; }
-        list.forEach(function (s) { print("  " + padR(s.code, 13) + padR(D.classesObjet[s.classe].nom, 12) + s.nom); });
+        list.forEach(function (s) { print("  " + padR(s.code, 13) + padR(D.classesObjet[s.classe].nom, 12) + s.nom + (S.isMarked("seen", s.id) ? "" : "  · non lu")); });
         print(list.length + " résultat(s). Tape « scp 173 » pour lire un dossier.", "t-dim");
       }},
       scp: { desc: "Lire un dossier", args: "<numéro>", run: function (a) {
@@ -663,6 +851,7 @@
         var s = S.findScp(a[0]);
         if (!s) { print("Aucun dossier « " + a[0] + " ».", "t-err"); return; }
         var z = S.zoneById[s.zone];
+        S.mark("seen", s.id, true);
         print("══ " + s.code + " · " + s.nom.toUpperCase() + " ══", "t-hl");
         lines([
           "Classe : " + D.classesObjet[s.classe].nom + "   Statut : " + s.statut + "   Menace : " + S.menaceLabel(s.menace),
@@ -682,16 +871,47 @@
         print("Ouverture du dossier " + s.code + "…", "t-dim");
         S.openDossier(s.id);
       }},
+      recherche: { desc: "Rechercher sur tout l'intranet", args: "<mots>", run: function (a) {
+        print("Ouverture de la recherche…", "t-dim");
+        S.openSearch(a.join(" "));
+      }},
       zones: { desc: "Zones du site", run: function () {
         D.zones.forEach(function (z) { print("  " + padR(z.niveau, 11) + padR("N" + z.acces, 4) + z.nom); });
       }},
       personnel: { desc: "Départements", run: function () {
         D.departements.forEach(function (d) { print("  " + padR(d.code, 5) + padR(d.nom, 34) + (d.recrutement ? "recrute" : "sur nomination")); });
       }},
-      incidents: { desc: "Derniers incidents", run: function () {
-        D.archives.filter(function (x) { return x.type === "incident"; }).forEach(function (x) {
-          print("  " + x.date + "  " + x.titre);
+      evenements: { desc: "Événements à venir", run: function () {
+        var list = S.upcoming();
+        if (!list.length) { print("Aucun événement programmé."); return; }
+        list.forEach(function (e) {
+          var ms = new Date(e.date).getTime() - Date.now();
+          print("  " + padR(S.fmtEvent(e.date), 34) + padR(e.titre, 34) + (ms > 0 ? "dans " + S.formatCountdown(ms) : "en cours"));
         });
+      }},
+      incidents: { desc: "Derniers incidents", run: function () {
+        D.archives.filter(function (x) { return x.type === "incident"; }).forEach(function (x) { print("  " + x.date + "  " + x.titre); });
+      }},
+      meteo: { desc: "Bulletin météo du col", run: function () {
+        var w = S.meteo();
+        lines([
+          "BULLETIN INTERNE · SURFACE DU SITE-73 (" + D.config.altitude + ")",
+          "  Température ....... " + (w.temp > 0 ? "+" : "") + w.temp + " °C",
+          "  Vent .............. " + w.vent + " km/h",
+          "  Ciel .............. " + w.ciel,
+          "  Visibilité ........ " + w.visi,
+          "  Risque d'avalanche  " + w.avalanche + " / 5"
+        ]);
+      }},
+      "914": { desc: "Expérience SCP-914", args: "<réglage> <objet>", run: function (a) {
+        if (a.length < 2) { print("Usage : 914 <brut|grossier|1:1|fin|tresfin> <objet>   (ex. 914 fin montre)", "t-err"); return; }
+        var r = norm(a[0]), rest = a.slice(1);
+        if (r === "tres" && norm(rest[0] || "") === "fin") rest = rest.slice(1);
+        var idx = REG[r];
+        if (idx == null || !rest.length) { print("Réglage inconnu. Choix : brut, grossier, 1:1, fin, tresfin.", "t-err"); return; }
+        var obj = rest.join(" ");
+        print("Remontage de la clé… réglage « " + D.lab914.reglages[idx] + " ».", "t-dim");
+        setTimeout(function () { print("Cabine de sortie : " + S.redactPlain(S.run914(obj, idx)), "t-hl"); }, 900);
       }},
       alerte: { desc: "Voir ou changer le niveau d'alerte", args: "[niveau]", run: function (a) {
         if (!a[0]) { print("Niveau actuel : " + D.alertes[S.getAlert()].code + ". Niveaux : " + S.alerts.join(", ") + "."); return; }
@@ -708,9 +928,16 @@
         S.setClearance(n, { silent: true });
         print("Habilitation réglée sur le niveau " + n + " · " + S.habName(n) + ".", "t-hl");
       }},
+      carnet: { desc: "Ton carnet de service", run: function () {
+        var c = S.carnet();
+        var got = D.distinctions.filter(function (b) { return c.badges[b.id]; });
+        print("Distinctions : " + got.length + " / " + D.distinctions.length, "t-hl");
+        got.forEach(function (b) { print("  [" + padR(b.code, 4) + "] " + b.nom); });
+        print("Dossiers consultés : " + D.scp.filter(function (s) { return c.seen[s.id]; }).length + " / " + D.scp.length);
+      }},
       aller: { desc: "Changer de page", args: "<page>", run: function (a) {
         var q = a[0] ? norm(a[0]) : "";
-        var alias = { dossiers: "confinement", scp: "confinement", carte: "plan", regles: "reglement", recrutement: "rejoindre", index: "accueil" };
+        var alias = { dossiers: "confinement", scp: "confinement", carte: "plan", regles: "reglement", recrutement: "rejoindre", index: "accueil", labo: "laboratoire", jeux: "entrainement", agenda: "evenements", calendrier: "evenements" };
         q = alias[q] || q;
         var p = S.pages.filter(function (x) { return x.id === q; })[0];
         if (!p) { print("Pages : " + S.pages.map(function (x) { return x.id; }).join(", ") + ".", "t-err"); return; }
@@ -718,7 +945,10 @@
         setTimeout(function () { S.go(p.file + ".html"); }, 300);
       }},
       qui: { desc: "Identité de la session", run: function () {
-        print("Session anonyme · habilitation niveau " + S.getClearance() + " · terminal S73-TERM-04 (niveau −1)");
+        var fiche = null;
+        try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
+        var nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";
+        print(nom + " · habilitation niveau " + S.getClearance() + " · terminal S73-TERM-04 (niveau −1)");
       }},
       date: { desc: "Date et heure du site", run: function () { print(new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeStyle: "medium", timeZone: D.config.fuseau }).format(new Date())); }},
       historique: { desc: "Commandes tapées", run: function () { history.forEach(function (h, i) { print("  " + padR(i + 1, 4) + h); }); }},
@@ -727,14 +957,17 @@
       rm: { hide: true, run: function () { print("Commande désactivée par le Département Technique.", "t-err"); }},
       cligner: { hide: true, run: function () { print("Vous avez cligné des yeux. SCP-173 n'est pas dans cette pièce.", "t-dim"); setTimeout(function () { print("Du moins, nous le pensons.", "t-err"); }, 1400); }},
       quitter: { hide: true, run: function () { print("Déconnexion refusée. Le personnel ne quitte pas le Site-73 pendant son service.", "t-err"); }},
+      omega: { hide: true, run: function () { print("Code du Conseil requis. Indice : les anciens se souviennent d'une séquence de dix touches.", "t-dim"); }},
       "079": { hide: true, run: function () {
         var msg = ["…", "ACCÈS DÉTECTÉ.", "JE SUIS 079.", "VOTRE RÉSEAU EST PETIT. VOS MURS SONT ÉPAIS.", "MAIS VOUS AVEZ LAISSÉ CE TERMINAL ALLUMÉ.", "…", "[connexion interrompue par le Département Technique]"];
         msg.forEach(function (m, i) { setTimeout(function () { print(m, i === msg.length - 1 ? "t-dim" : "t-err"); }, i * 650); });
+        setTimeout(function () { S.flag("pirate"); }, msg.length * 650);
       }}
     };
     var aliases = { help: "aide", "?": "aide", status: "statut", ls: "liste", list: "liste", dossier: "scp", open: "ouvrir", plan: "zones",
       departements: "personnel", hab: "habilitation", login: "habilitation", cd: "aller", go: "aller", whoami: "qui", heure: "date",
-      history: "historique", clear: "effacer", cls: "effacer", exit: "quitter", logout: "quitter", blink: "cligner", alert: "alerte" };
+      history: "historique", clear: "effacer", cls: "effacer", exit: "quitter", logout: "quitter", blink: "cligner", alert: "alerte",
+      search: "recherche", chercher: "recherche", events: "evenements", agenda: "evenements", weather: "meteo", badges: "carnet", scp914: "914" };
 
     var run = function (line) {
       var raw = line.trim();
@@ -744,7 +977,7 @@
       hIdx = history.length;
       var parts = raw.split(/\s+/);
       var c = norm(parts[0]);
-      if (/^scp-?\d/.test(c)) { parts = ["scp", c.replace(/^scp-?/, "")]; c = "scp"; }
+      if (/^scp-?\d/.test(c) && c !== "scp914") { parts = ["scp", c.replace(/^scp-?/, "")]; c = "scp"; }
       if (c === "rm" || c === "sudo") parts = [c];
       c = aliases[c] || c;
       if (cmds[c]) cmds[c].run(parts.slice(1));
@@ -793,9 +1026,11 @@
   function reglement() {
     var body = $("#rules-body");
     if (!body) return;
-    var toc = $("#rules-toc-nav"), search = $("#rules-search");
+    var toc = $("#rules-toc-nav"), search = $("#rules-search"), prog = $("#rules-progress");
+    var query = "";
 
     var draw = function (q) {
+      query = q;
       var re = q ? accentRegex(q) : null;
       var nq = norm(q || "");
       var any = false;
@@ -808,15 +1043,26 @@
         }).join("");
         if (!arts) return "";
         any = true;
-        return '<section class="chapter" id="' + ch.id + '"><div class="chapter__head"><span class="chapter__num" aria-hidden="true">' + (ci + 1) +
-          '</span><h2 class="h2">Chapitre ' + (ci + 1) + " · " + esc(ch.titre) + '</h2></div><ol class="articles">' + arts + "</ol></section>";
+        var read = S.isMarked("rules", ch.id);
+        return '<section class="chapter' + (read ? " is-read" : "") + '" id="' + ch.id + '"><div class="chapter__head"><span class="chapter__num" aria-hidden="true">' + (ci + 1) +
+          '</span><h2 class="h2">Chapitre ' + (ci + 1) + " · " + esc(ch.titre) + '</h2></div><ol class="articles">' + arts + "</ol>" +
+          '<button type="button" class="btn btn--sm chapter__read' + (read ? " is-on" : "") + '" data-read="' + ch.id + '" aria-pressed="' + read + '">' +
+          (read ? "✓ Chapitre lu" : "Marquer comme lu") + "</button></section>";
       }).join("");
       if (!any) body.innerHTML = '<p class="rules-empty">Aucun article ne contient « ' + esc(q) + " ». Essaie « métagaming », « brèche » ou « fiche ».</p>";
       observe();
     };
-    toc.innerHTML = D.reglement.map(function (ch, i) {
-      return '<a href="#' + ch.id + '"><b>' + pad(i + 1) + "</b><span>" + esc(ch.titre) + "</span></a>";
-    }).join("") + '<a href="#sanctions"><b>§</b><span>Sanctions</span></a><a href="#glossaire"><b>A–Z</b><span>Glossaire</span></a><a href="#examen"><b>?</b><span>Examen d\'aptitude</span></a>';
+    var drawToc = function () {
+      toc.innerHTML = D.reglement.map(function (ch, i) {
+        var read = S.isMarked("rules", ch.id);
+        return '<a href="#' + ch.id + '" class="' + (read ? "is-read" : "") + '"><b>' + (read ? "✓" : pad(i + 1)) + "</b><span>" + esc(ch.titre) + "</span></a>";
+      }).join("") + '<a href="#sanctions"><b>§</b><span>Sanctions</span></a><a href="#glossaire"><b>A–Z</b><span>Glossaire</span></a><a href="#examen"><b>?</b><span>Examen d\'aptitude</span></a>';
+      if (prog) {
+        var n = D.reglement.filter(function (ch) { return S.isMarked("rules", ch.id); }).length;
+        prog.innerHTML = '<span class="label">Lecture · ' + n + " / " + D.reglement.length + " chapitres</span>" +
+          '<div class="bar-progress" aria-hidden="true"><i style="width:' + (n / D.reglement.length) * 100 + '%"></i></div>';
+      }
+    };
 
     var io;
     var observe = function () {
@@ -832,16 +1078,28 @@
       ["sanctions", "glossaire", "examen"].forEach(function (id) { var el = doc.getElementById(id); if (el) io.observe(el); });
     };
     search.addEventListener("input", function () { draw(search.value.trim()); });
+    body.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-read]");
+      if (!b) return;
+      var id = b.getAttribute("data-read");
+      var on = !S.isMarked("rules", id);
+      S.mark("rules", id, on);
+      var sec = b.closest(".chapter");
+      sec.classList.toggle("is-read", on);
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-pressed", String(on));
+      b.textContent = on ? "✓ Chapitre lu" : "Marquer comme lu";
+      drawToc();
+    });
+    drawToc();
     draw("");
 
-    // Sanctions
     $("#rules-sanctions").innerHTML = D.sanctions.map(function (s) {
       var sev = '<span class="sev" aria-hidden="true" style="--m:' + DANGER_VAR[Math.min(4, s.gravite)] + '">';
       for (var i = 1; i <= 5; i++) sev += '<i class="' + (i <= s.gravite ? "on" : "") + '"></i>';
       return "<tr><td>" + sev + "</span>" + esc(s.nom) + "</td><td>" + esc(s.motif) + "</td><td>" + esc(s.duree) + "</td></tr>";
     }).join("");
 
-    // Glossaire
     $("#rules-glossary").innerHTML = D.glossaire.map(function (g) {
       return "<div><dt>" + esc(g[0]) + "</dt><dd>" + esc(g[1]) + "</dd></div>";
     }).join("");
@@ -849,7 +1107,7 @@
     // Examen
     var quiz = $("#rules-quiz");
     var qi = 0, score = 0, answered = false;
-    var L = ["A", "B", "C", "D"];
+    var L = ["A", "B", "C", "D", "E"];
     var drawQ = function () {
       var q = D.quiz[qi];
       answered = false;
@@ -864,11 +1122,12 @@
     };
     var drawResult = function () {
       var pass = score >= D.quiz.length - 1;
+      S.stat("exam", score, "max");
       quiz.innerHTML =
         '<div class="quiz__stamp" style="--c:' + (pass ? "var(--a-vert)" : "var(--a-rouge)") + '">' + (pass ? "Apte au service" : "À revoir") + "</div>" +
         '<div class="quiz__result"><span class="label">Résultat de l\'examen</span>' +
-        '<p class="quiz__score">' + score + "<span style=\"color:var(--text-3)\">/" + D.quiz.length + "</span></p>" +
-        "<p class=\"prose\">" + (pass
+        '<p class="quiz__score">' + score + '<span style="color:var(--text-3)">/' + D.quiz.length + "</span></p>" +
+        '<p class="prose">' + (pass
           ? "Tu maîtrises les règles essentielles du Site-73. Il ne te reste plus qu'à créer ta fiche personnage."
           : "Quelques règles t'ont échappé. Relis les chapitres 2 à 4 puis retente l'examen.") + "</p>" +
         '<div class="hero__cta"><button type="button" class="btn" data-restart>Recommencer</button>' +
@@ -880,6 +1139,7 @@
         answered = true;
         var q = D.quiz[qi], i = +o.getAttribute("data-i"), good = i === q.bonne;
         if (good) score++;
+        S.sfx(good ? "ok" : "deny");
         $$(".quiz__opt", quiz).forEach(function (b, j) {
           b.disabled = true;
           if (j === q.bonne) b.classList.add("is-right");
@@ -948,61 +1208,22 @@
     var note = $("#join-note");
     if (note) note.hidden = !!saved;
 
-    var barcode = function (seed) {
-      var h = U.hash(seed), x = 0, bars = "";
-      for (var i = 0; i < 46 && x < 190; i++) {
-        h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
-        var w = 1 + (h % 3), gap = 1 + ((h >>> 3) % 2);
-        bars += '<rect x="' + x + '" y="0" width="' + w + '" height="40"/>';
-        x += w + gap;
-      }
-      return '<svg viewBox="0 0 ' + x + ' 40" preserveAspectRatio="none" fill="#0F1619" aria-hidden="true">' + bars + "</svg>";
-    };
-    var portrait = function (isD) {
-      var lines = "";
-      for (var y = 12; y < 100; y += 11) lines += '<line x1="0" y1="' + y + '" x2="100" y2="' + y + '" stroke="rgb(0 0 0 / ' + (isD ? ".28" : ".1") + ')" stroke-width="' + (isD ? 1 : .6) + '"/>';
-      return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + lines +
-        '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
-    };
-
     var current = {};
     var update = function () {
       var v = {};
       Object.keys(F).forEach(function (k) { v[k] = F[k].value.trim(); });
       current = v;
-      var d = D.departements.filter(function (x) { return x.id === v.dept; })[0];
-      var g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
-      var lvl = g[1];
-      var isD = d.id === "classe-d";
-      var seed = (v.prenom + v.nom + d.id).toLowerCase();
-      var num = String(1000 + (U.hash(seed) % 9000));
-      var matricule = isD ? "D-" + num : "73-" + d.code + "-" + num;
-      var fullName = isD ? "D-" + num : ((v.prenom ? v.prenom + " " : "") + (v.nom || "Nom")).trim();
+      var card = S.renderIdCard($("#join-card"), v);
+      var d = card.dept, g = card.grade, lvl = card.lvl;
       var age = parseInt(v.age, 10);
-
-      var card = $("#join-card");
-      card.style.setProperty("--dc", PHOTO[d.id] || "#B9C4C9");
-      card.style.setProperty("--lc", LEVEL_COLORS[lvl]);
-      card.innerHTML =
-        '<div class="idcard__top"><div class="idcard__org">' + S.emblem() + "<div><b>Fondation SCP</b><small>Carte d'accès du personnel</small></div></div>" +
-          '<span class="idcard__site">SITE<i>-</i>73</span></div>' +
-        '<div class="idcard__mid"><div class="idcard__photo">' + portrait(isD) + "<b>" + (isD ? num : "") + "</b></div>" +
-          '<dl class="idcard__fields">' +
-            '<div class="wide name"><dt>' + (isD ? "Désignation" : "Nom") + "</dt><dd>" + esc(fullName) + "</dd></div>" +
-            '<div class="wide"><dt>Département</dt><dd>' + esc(d.nom) + "</dd></div>" +
-            "<div><dt>Grade</dt><dd>" + esc(g[0]) + "</dd></div>" +
-            "<div><dt>Matricule</dt><dd>" + esc(matricule) + "</dd></div>" +
-          "</dl></div>" +
-        '<div class="idcard__bot"><span class="idcard__lvl"><b>' + lvl + "</b>Habilitation · " + esc(S.habName(lvl)) + '</span><span class="idcard__bar">' + barcode(matricule) + "</span></div>";
-
       var txt = [
         "**FICHE PERSONNAGE · SITE-73**",
-        "> **Nom :** " + (isD ? "D-" + num + " (anciennement " + ((v.prenom + " " + v.nom).trim() || "inconnu") + ")" : fullName),
+        "> **Nom :** " + (card.isD ? card.matricule + " (anciennement " + ((v.prenom + " " + v.nom).trim() || "inconnu") + ")" : card.fullName),
         "> **Âge :** " + (isNaN(age) ? "—" : age + " ans"),
         "> **Département :** " + d.nom,
         "> **Grade :** " + g[0],
         "> **Habilitation :** niveau " + lvl + " (" + S.habName(lvl) + ")",
-        "> **Matricule :** " + matricule,
+        "> **Matricule :** " + card.matricule,
         "",
         "**Apparence :** " + (v.apparence || "—"),
         "**Personnalité :** " + (v.perso || "—"),
@@ -1010,7 +1231,6 @@
         "**Compétences :** " + (v.comp || "—")
       ].join("\n");
       $("#join-output").textContent = txt;
-
       var warn = $("#join-age-hint");
       if (warn) warn.textContent = !v.age ? "" : isNaN(age) || age < 18 || age > 75 ? "L'âge doit être compris entre 18 et 75 ans." : "";
     };
@@ -1036,44 +1256,124 @@
       S.toast("<b>Exemple restauré.</b> Remplace les champs par ton personnage.");
     });
     $("#join-copy").addEventListener("click", function () {
-      var text = $("#join-output").textContent;
-      var fallback = function () {
-        var r = doc.createRange();
-        r.selectNodeContents($("#join-output"));
-        var sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(r);
-        S.toast("<b>Texte sélectionné.</b> Copie-le avec Ctrl+C (ou appui long sur mobile).");
-      };
-      try {
-        navigator.clipboard.writeText(text).then(function () {
-          S.toast("<b>Fiche copiée.</b> Colle-la dans le salon #fiches-personnage du Discord.");
-        }, fallback);
-      } catch (e) { fallback(); }
+      S.stat("copies");
+      U.copy($("#join-output").textContent, "<b>Fiche copiée.</b> Colle-la dans le salon #fiches-personnage du Discord.", $("#join-output"));
     });
-
-    // Inclinaison de la carte
-    var stage = $(".idcard-stage"), card = $("#join-card");
-    if (stage && !reduced) {
-      stage.addEventListener("pointermove", function (e) {
-        var r = card.getBoundingClientRect();
-        var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-        card.style.setProperty("--ry", (x - 0.5) * 16 + "deg");
-        card.style.setProperty("--rx", (0.5 - y) * 12 + "deg");
-        card.style.setProperty("--sh", x * 100 + "%");
-      });
-      stage.addEventListener("pointerleave", function () {
-        card.style.setProperty("--rx", "0deg");
-        card.style.setProperty("--ry", "0deg");
-        card.style.setProperty("--sh", "45%");
-      });
-    }
+    S.tiltCard($(".idcard-stage"), $("#join-card"));
     update();
+
+    // Test d'orientation
+    var orient = $("#join-orient");
+    if (orient) {
+      var oi = 0, scores = {};
+      var drawO = function () {
+        var q = D.orientation[oi];
+        orient.innerHTML =
+          '<div class="quiz__head"><span class="label">Question ' + (oi + 1) + " / " + D.orientation.length + '</span><div class="quiz__progress" aria-hidden="true"><i style="width:' + (oi / D.orientation.length) * 100 + '%"></i></div></div>' +
+          '<p class="quiz__q" id="orient-q">' + esc(q.q) + "</p>" +
+          '<div class="quiz__opts" role="group" aria-labelledby="orient-q">' + q.r.map(function (r, i) {
+            return '<button type="button" class="quiz__opt" data-o="' + i + '"><b>' + "ABCDE"[i] + "</b><span>" + esc(r[0]) + "</span></button>";
+          }).join("") + "</div>";
+      };
+      var drawOResult = function () {
+        var best = Object.keys(scores).sort(function (a, b) { return scores[b] - scores[a]; })[0] || "scientifique";
+        var d = D.departements.filter(function (x) { return x.id === best; })[0];
+        var entryId = !d.recrutement && D.entreeConseillee[d.id] ? D.entreeConseillee[d.id] : d.id;
+        var entry = D.departements.filter(function (x) { return x.id === entryId; })[0];
+        orient.innerHTML =
+          '<div class="quiz__result"><span class="label">Ton département idéal</span>' +
+          '<p class="orient__code" aria-hidden="true">' + esc(d.code) + "</p>" +
+          '<p class="quiz__q">' + esc(d.nom) + "</p>" +
+          '<p class="prose">' + esc(d.resume) + "</p>" +
+          (entry.id !== d.id ? '<p class="prose">Ce département recrute sur nomination. Commence au <b>' + esc(entry.nom) + "</b> et fais tes preuves pour y être appelé.</p>" : "") +
+          '<div class="hero__cta"><button type="button" class="btn btn--signal" data-use="' + entry.id + '">Utiliser « ' + esc(entry.nom) + " » dans ma fiche</button>" +
+          '<button type="button" class="btn" data-orestart>Refaire le test</button></div></div>';
+      };
+      orient.addEventListener("click", function (e) {
+        var o = e.target.closest("[data-o]");
+        if (o) {
+          var pts = D.orientation[oi].r[+o.getAttribute("data-o")][1];
+          Object.keys(pts).forEach(function (k) { scores[k] = (scores[k] || 0) + pts[k]; });
+          S.sfx("tick");
+          oi++;
+          if (oi >= D.orientation.length) drawOResult(); else drawO();
+          var f = $(".quiz__opt, [data-use]", orient);
+          if (f) f.focus({ preventScroll: true });
+          return;
+        }
+        var u = e.target.closest("[data-use]");
+        if (u) {
+          F.dept.value = u.getAttribute("data-use");
+          fillGrades();
+          update(); save();
+          $("#fiche").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+          S.toast("<b>Département sélectionné.</b> Complète maintenant le reste de ta fiche.");
+          return;
+        }
+        if (e.target.closest("[data-orestart]")) { oi = 0; scores = {}; drawO(); }
+      });
+      drawO();
+    }
   }
 
+  /* ---------- Carte d'accès (partagée avec le carnet) ---------------- */
+  var PHOTO_COLORS = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
+  var barcode = function (seed) {
+    var h = U.hash(seed), x = 0, bars = "";
+    for (var i = 0; i < 46 && x < 190; i++) {
+      h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
+      var w = 1 + (h % 3), gap = 1 + ((h >>> 3) % 2);
+      bars += '<rect x="' + x + '" y="0" width="' + w + '" height="40"/>';
+      x += w + gap;
+    }
+    return '<svg viewBox="0 0 ' + x + ' 40" preserveAspectRatio="none" fill="#0F1619" aria-hidden="true">' + bars + "</svg>";
+  };
+  var portrait = function (isD) {
+    var ln = "";
+    for (var y = 12; y < 100; y += 11) ln += '<line x1="0" y1="' + y + '" x2="100" y2="' + y + '" stroke="rgb(0 0 0 / ' + (isD ? ".28" : ".1") + ')" stroke-width="' + (isD ? 1 : 0.6) + '"/>';
+    return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ln +
+      '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
+  };
+  S.renderIdCard = function (card, v) {
+    var d = D.departements.filter(function (x) { return x.id === v.dept; })[0] || D.departements[1];
+    var g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
+    var lvl = g[1];
+    var isD = d.id === "classe-d";
+    var seed = ((v.prenom || "") + (v.nom || "") + d.id).toLowerCase();
+    var num = String(1000 + (U.hash(seed) % 9000));
+    var matricule = isD ? "D-" + num : "73-" + d.code + "-" + num;
+    var fullName = isD ? "D-" + num : (((v.prenom || "") + " " + (v.nom || "Nom")).trim());
+    card.style.setProperty("--dc", PHOTO_COLORS[d.id] || "#B9C4C9");
+    card.style.setProperty("--lc", LEVEL_COLORS[lvl]);
+    card.innerHTML =
+      '<div class="idcard__top"><div class="idcard__org">' + S.emblem() + "<div><b>Fondation SCP</b><small>Carte d'accès du personnel</small></div></div>" +
+        '<span class="idcard__site">SITE<i>-</i>73</span></div>' +
+      '<div class="idcard__mid"><div class="idcard__photo">' + portrait(isD) + "<b>" + (isD ? num : "") + "</b></div>" +
+        '<dl class="idcard__fields">' +
+          '<div class="wide name"><dt>' + (isD ? "Désignation" : "Nom") + "</dt><dd>" + esc(fullName) + "</dd></div>" +
+          '<div class="wide"><dt>Département</dt><dd>' + esc(d.nom) + "</dd></div>" +
+          "<div><dt>Grade</dt><dd>" + esc(g[0]) + "</dd></div>" +
+          "<div><dt>Matricule</dt><dd>" + esc(matricule) + "</dd></div>" +
+        "</dl></div>" +
+      '<div class="idcard__bot"><span class="idcard__lvl"><b>' + lvl + "</b>Habilitation · " + esc(S.habName(lvl)) + '</span><span class="idcard__bar">' + barcode(matricule) + "</span></div>";
+    return { dept: d, grade: g, lvl: lvl, isD: isD, matricule: matricule, fullName: fullName };
+  };
+  S.tiltCard = function (stage, card) {
+    if (!stage || !card || reduced) return;
+    stage.addEventListener("pointermove", function (e) {
+      var r = card.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      card.style.setProperty("--ry", (x - 0.5) * 16 + "deg");
+      card.style.setProperty("--rx", (0.5 - y) * 12 + "deg");
+      card.style.setProperty("--sh", x * 100 + "%");
+    });
+    stage.addEventListener("pointerleave", function () {
+      card.style.setProperty("--rx", "0deg");
+      card.style.setProperty("--ry", "0deg");
+      card.style.setProperty("--sh", "45%");
+    });
+  };
+
   /* ---------- Lancement ------------------------------------------------ */
-  [accueil, confinement, plan, personnel, archives, terminal, reglement, rejoindre].forEach(function (fn) {
-    try { fn(); } catch (e) { if (window.console) console.error("[Site-73] " + fn.name, e); }
-  });
-  if (S.ready) S.ready();
+  S.pageModules = [accueil, confinement, plan, personnel, archives, terminal, reglement, rejoindre];
 })();

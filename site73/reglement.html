@@ -18,6 +18,7 @@
   <script src="assets/js/data.js" defer></script>
   <script src="assets/js/core.js" defer></script>
   <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
 </head>
 <body data-page="reglement">
   <a class="skip-link" href="#contenu">Aller au contenu</a>
@@ -46,6 +47,7 @@
       <div class="wrap rules-layout">
         <aside class="rules-toc">
           <label class="search"><span class="sr-only">Rechercher dans le règlement</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="rules-search" type="search" placeholder="Rechercher un mot…" autocomplete="off"></label>
+          <div class="rules-progress" id="rules-progress"></div>
           <nav id="rules-toc-nav" aria-label="Sommaire du règlement"></nav>
         </aside>
         <div id="rules-body"></div>
