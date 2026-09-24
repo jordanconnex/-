@@ -86,7 +86,7 @@ Les pages et fichiers statiques sont illimités. Chaque page ouverte appelle une
 Une modification du staff peut mettre jusqu'à une minute pour être vue partout dans le monde : c'est le délai de propagation de KV.
 
 ### Essayer en local (facultatif)
-Dans le terminal de VS Code, depuis le dossier `site73` :
+Il faut [Node.js](https://nodejs.org) **22 ou plus** (vérifie avec `node -v`). Dans le terminal de VS Code, depuis le dossier `site73` :
 ```
 npm install
 cp .dev.vars.exemple .dev.vars
