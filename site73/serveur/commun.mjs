@@ -27,10 +27,10 @@ export const apiDiscord = () => env("DISCORD_API_URL", "https://discord.com/api/
 
 /* ---------- Réponses ---------------------------------------------------- */
 const SECURITE = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin", "cache-control": "no-store" };
-export function json(corps, statut = 200) {
+export function json(corps, statut = 200, entetes = {}) {
   return new Response(JSON.stringify(corps), {
     status: statut,
-    headers: { "content-type": "application/json; charset=utf-8", ...SECURITE }
+    headers: { "content-type": "application/json; charset=utf-8", ...SECURITE, ...entetes }
   });
 }
 export function rediriger(url, cookies = []) {

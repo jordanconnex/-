@@ -9,6 +9,7 @@ import connexion from "./routes/connexion.mjs";
 import retourDiscord from "./routes/retour-discord.mjs";
 import deconnexion from "./routes/deconnexion.mjs";
 import staff from "./routes/staff.mjs";
+import roblox from "./routes/roblox.mjs";
 
 const ROUTES = {
   "/api/contenu": contenu,
@@ -16,7 +17,8 @@ const ROUTES = {
   "/api/auth/login": connexion,
   "/api/auth/callback": retourDiscord,
   "/api/auth/logout": deconnexion,
-  "/api/staff": staff
+  "/api/staff": staff,
+  "/api/roblox": roblox
 };
 
 const introuvable = () => new Response(

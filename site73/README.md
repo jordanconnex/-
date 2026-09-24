@@ -109,6 +109,11 @@ Caviardage : `[[3|texte]]` n'est lisible qu'à partir de l'habilitation 3. `[DON
 
 Les communiqués, les événements et le niveau d'alerte se gèrent aussi depuis la console staff, sans toucher au code.
 
+## Photo des cartes d'identité
+Sur la page Rejoindre, chaque joueur peut indiquer son **pseudo Roblox** : la carte d'identité (et celle de Mon carnet) affiche alors le buste de son avatar Roblox. Le Worker va chercher l'image chez Roblox (route `/api/roblox`), rien à configurer.
+
+Sans pseudo Roblox, ou si le pseudo est introuvable, la carte prend la **photo de profil Discord** du membre connecté. Sinon, elle garde la silhouette. En mode démonstration, sans serveur, seule la silhouette s'affiche.
+
 ## Mode démonstration
 Ouvert sans serveur (fichier local, aperçu claude.ai, hébergement de fichiers simple), le site passe en **mode démonstration** :
 - on arrive en visiteur (niveau 0) ;
@@ -123,7 +128,9 @@ site73/
   contenu/donnees.mjs           contenu complet (privé)
   scripts/build.mjs             génère la version publique caviardée
   serveur/worker.mjs            Worker : aiguille les routes /api/…
-  serveur/routes/               connexion Discord, contenu, espace staff
+  serveur/routes/               connexion Discord, contenu, espace staff, photo Roblox
+  functions/api/                même code pour Cloudflare Pages
+  public/api/contenu.json       réponse « démo » quand il n'y a pas de serveur
   serveur/commun.mjs            session signée, stockage KV, fusion du contenu
   serveur/caviardage.mjs        masque les passages selon l'habilitation
   public/                       le site publié (14 pages)

@@ -1230,7 +1230,7 @@
     };
     let PHOTO = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
     let F = {};
-    ["prenom", "nom", "age", "dept", "grade", "apparence", "perso", "histoire", "comp"].forEach(function (k) { F[k] = $("#join-" + k); });
+    ["prenom", "nom", "age", "dept", "grade", "roblox", "apparence", "perso", "histoire", "comp"].forEach(function (k) { F[k] = $("#join-" + k); });
 
     F.dept.innerHTML = D.departements.map(function (d) { return '<option value="' + d.id + '">' + esc(d.nom) + "</option>"; }).join("");
     let fillGrades = function (keep) {
@@ -1251,12 +1251,26 @@
     let note = $("#join-note");
     if (note) note.hidden = !!saved;
 
+    // État de la photo, sous le champ « Pseudo Roblox »
+    let photoHint = $("#join-roblox-hint");
+    let PHOTO_MSG = {
+      roblox: "✓ Photo Roblox affichée sur la carte.",
+      discord: "Photo de profil Discord affichée. Ajoute ton pseudo Roblox pour ta tête Roblox.",
+      "discord-secours": "Pseudo Roblox introuvable : photo de profil Discord affichée à la place.",
+      introuvable: "Pseudo Roblox introuvable. Vérifie l'orthographe.",
+      invalide: "3 à 20 caractères : lettres, chiffres ou _.",
+      attente: "Recherche de ton avatar Roblox…",
+      demo: "La photo Roblox s'affiche quand le site est en ligne (serveur Cloudflare).",
+      aucune: ""
+    };
+    let afficherPhoto = function (etat) { if (photoHint) photoHint.textContent = PHOTO_MSG[etat] || ""; };
+
     let current = {};
     let update = function () {
       let v = {};
       Object.keys(F).forEach(function (k) { v[k] = F[k].value.trim(); });
       current = v;
-      let card = S.renderIdCard($("#join-card"), v);
+      let card = S.renderIdCard($("#join-card"), v, afficherPhoto);
       let d = card.dept, g = card.grade, lvl = card.lvl;
       let age = parseInt(v.age, 10);
       let txt = [
@@ -1267,6 +1281,7 @@
         "> **Grade :** " + g[0],
         "> **Habilitation :** niveau " + lvl + " (" + S.habName(lvl) + ")",
         "> **Matricule :** " + card.matricule,
+        "> **Roblox :** " + (v.roblox || "—"),
         "",
         "**Apparence :** " + (v.apparence || "—"),
         "**Personnalité :** " + (v.perso || "—"),
@@ -1377,7 +1392,72 @@
     return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ln +
       '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
   };
-  S.renderIdCard = function (card, v) {
+  // Photo de la carte : avatar Roblox (via le Worker), sinon photo de profil
+  // Discord du membre connecté, sinon silhouette.
+  let PSEUDO_ROBLOX = /^[A-Za-z0-9_]{3,20}$/;
+  let photosRoblox = {}, photosResolues = {}, photosVues = {};
+  let chercherRoblox = function (pseudo) {
+    let cle = pseudo.toLowerCase();
+    if (!photosRoblox[cle]) {
+      photosRoblox[cle] = fetch("/api/roblox?pseudo=" + encodeURIComponent(pseudo), { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return j && j.image ? j.image : null; }, function () { return null; });
+      photosRoblox[cle].then(function (url) {
+        photosResolues[cle] = url;
+        if (!url) setTimeout(function () { delete photosRoblox[cle]; delete photosResolues[cle]; }, 60000);
+      });
+    }
+    return photosRoblox[cle];
+  };
+  let photoDiscord = function () {
+    let u = S.isLive() && S.session().user;
+    return u && u.avatar ? String(u.avatar).replace(/size=\d+/, "size=256") : null;
+  };
+  S.photoCarte = function (card, v, rapport) {
+    let zone = card.querySelector(".idcard__photo");
+    if (!zone) return;
+    let jeton = (card.__photo = (card.__photo || 0) + 1);
+    let dire = function (e) { if (rapport) rapport(e); };
+    let poser = function (url, source, alt) {
+      if (card.__photo !== jeton) return;
+      let old = zone.querySelector("img");
+      if (old) old.remove();
+      zone.classList.toggle("has-photo", !!url);
+      if (!url) { zone.removeAttribute("data-source"); return; }
+      let img = new Image();
+      img.alt = alt;
+      img.className = "idcard__img" + (photosVues[url] ? " is-vu" : "");
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      img.onload = function () { photosVues[url] = true; };
+      img.onerror = function () {
+        img.remove();
+        zone.classList.remove("has-photo");
+        if (source === "roblox") poser(photoDiscord(), "discord", "Photo de profil Discord");
+      };
+      img.src = url;
+      zone.insertBefore(img, zone.querySelector("b"));
+      zone.setAttribute("data-source", source);
+    };
+    let pseudo = String(v.roblox || "").trim();
+    let discord = photoDiscord();
+    if (!pseudo) { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord" : "aucune"); return; }
+    if (!PSEUDO_ROBLOX.test(pseudo)) { poser(discord, "discord", "Photo de profil Discord"); dire("invalide"); return; }
+    if (!S.isLive()) { poser(null); dire("demo"); return; }
+    let conclure = function (url) {
+      if (card.__photo !== jeton) return;
+      if (url) { poser(url, "roblox", "Avatar Roblox de " + pseudo); dire("roblox"); }
+      else { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord-secours" : "introuvable"); }
+    };
+    let cle = pseudo.toLowerCase();
+    if (cle in photosResolues) { conclure(photosResolues[cle]); return; }
+    dire("attente");
+    // Laisse finir la frappe avant d'interroger Roblox
+    setTimeout(function () {
+      if (card.__photo === jeton) chercherRoblox(pseudo).then(conclure);
+    }, photosRoblox[cle] ? 0 : 500);
+  };
+  S.renderIdCard = function (card, v, rapport) {
     let d = D.departements.filter(function (x) { return x.id === v.dept; })[0] || D.departements[1];
     let g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
     let lvl = g[1];
@@ -1399,6 +1479,7 @@
           "<div><dt>Matricule</dt><dd>" + esc(matricule) + "</dd></div>" +
         "</dl></div>" +
       '<div class="idcard__bot"><span class="idcard__lvl"><b>' + lvl + "</b>Habilitation · " + esc(S.habName(lvl)) + '</span><span class="idcard__bar">' + barcode(matricule) + "</span></div>";
+    S.photoCarte(card, v, rapport);
     return { dept: d, grade: g, lvl: lvl, isD: isD, matricule: matricule, fullName: fullName };
   };
   S.tiltCard = function (stage, card) {

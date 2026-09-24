@@ -2013,3 +2013,15 @@ html[data-motion="normal"] .sign .eyebrow, html[data-motion="normal"] .hero .eye
 .neige { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; transition: opacity .6s; }
 .hero__in { position: relative; z-index: 1; }
 html[data-motion="normal"] .ftr__staff svg { animation: blink 2.4s ease-in-out infinite; }
+
+/* ----- Carte d'identité : photo Roblox ou Discord ----- */
+.idcard__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; }
+.idcard__photo b { z-index: 1; }
+.idcard__photo.has-photo svg { opacity: 0; }
+.idcard__photo.has-photo::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 60%, rgb(0 0 0 / .18)), repeating-linear-gradient(0deg, rgb(0 0 0 / .05) 0 1px, transparent 1px 3px);
+}
+@keyframes photo-scan { from { clip-path: inset(0 0 100% 0); filter: brightness(2.2) saturate(0); } 60% { filter: brightness(1.2) saturate(.5); } to { clip-path: inset(0 0 0 0); filter: none; } }
+html[data-motion="normal"] .idcard__img:not(.is-vu) { animation: photo-scan .9s var(--ease) both; }
+.field > span small { text-transform: none; letter-spacing: 0; }
