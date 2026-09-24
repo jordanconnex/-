@@ -94,9 +94,9 @@
       etat.membres.forEach(function (m) { par[m.habilitation]++; });
       var total = etat.membres.length || 1;
       $("#st-resume").innerHTML =
-        '<div class="stat"><b class="mono">' + etat.membres.length + "</b><span>Membres connus</span></div>" +
-        '<div class="stat"><b class="mono">' + etat.membres.filter(function (m) { return m.admin; }).length + "</b><span>Administrateurs</span></div>" +
-        '<div class="stat"><b class="mono">' + etat.membres.filter(function (m) { return m.override !== null && !m.admin; }).length + "</b><span>Réglés par le staff</span></div>" +
+        '<div class="stat"><b class="mono" data-compter>' + etat.membres.length + "</b><span>Membres connus</span></div>" +
+        '<div class="stat"><b class="mono" data-compter>' + etat.membres.filter(function (m) { return m.admin; }).length + "</b><span>Administrateurs</span></div>" +
+        '<div class="stat"><b class="mono" data-compter>' + etat.membres.filter(function (m) { return m.override !== null && !m.admin; }).length + "</b><span>Réglés par le staff</span></div>" +
         '<div class="stat st-repart"><span>Répartition par habilitation</span><div class="stack" aria-hidden="true">' + par.map(function (n, i) {
           return n ? '<i style="--c:' + S.levelColors[i] + ";flex:" + n / total + '" title="Niveau ' + i + " : " + n + '"></i>' : "";
         }).join("") + '</div><ul class="legend">' + par.map(function (n, i) {

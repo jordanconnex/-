@@ -168,6 +168,7 @@
       state.type = b.getAttribute("data-k");
       drawFilters();
       renderList();
+      S.rejouer(list);
     });
     list.addEventListener("click", function (e) {
       var p = e.target.closest("[data-plan]");
@@ -740,7 +741,7 @@
       var rulesN = D.reglement.filter(function (ch) { return c.rules[ch.id]; }).length;
       var planN = (D.evenements || []).filter(function (e) { return c.planning[e.id]; }).length;
       var st = c.stats;
-      var stat = function (v, t, lbl) { return '<div class="stat"><b class="mono">' + v + (t != null ? "<small>/" + t + "</small>" : "") + "</b><span>" + lbl + "</span></div>"; };
+      var stat = function (v, t, lbl) { return '<div class="stat"><b class="mono"><span data-compter>' + v + "</span>" + (t != null ? "<small>/" + t + "</small>" : "") + "</b><span>" + lbl + "</span></div>"; };
       $("#carnet-stats").innerHTML =
         stat(n, tot, "Distinctions") + stat(seenN, D.scp.length, "Dossiers consultés") + stat(pagesN, S.pages.length, "Pages visitées") +
         stat(rulesN, D.reglement.length, "Chapitres lus") + stat(st.exam || 0, D.quiz.length, "Meilleur examen") + stat(st.breach || 0, null, "Brèches simulées") +

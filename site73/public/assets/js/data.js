@@ -8,7 +8,7 @@ window.S73.data = {
   "nom": "Site-73",
   "discord": "",
   "alerte": "vert",
-  "animations": "systeme",
+  "animations": "toujours",
   "habilitationParDefaut": 2,
   "dernierIncident": {
    "date": "2026-09-02T14:37:00+02:00",

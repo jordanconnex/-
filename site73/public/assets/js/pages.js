@@ -311,9 +311,10 @@
       state.filtre = b.getAttribute("data-k");
       drawFilters();
       render();
+      S.rejouer(grid);
     });
     search.addEventListener("input", function () { state.q = search.value; render(); });
-    sort.addEventListener("change", function () { state.sort = sort.value; render(); });
+    sort.addEventListener("change", function () { state.sort = sort.value; render(); S.rejouer(grid); });
     grid.addEventListener("click", function (e) {
       var fav = e.target.closest(".cell__fav");
       var c = e.target.closest(".cell");
@@ -804,6 +805,7 @@
       state.type = b.getAttribute("data-k");
       $$("button", filt).forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
       render();
+      S.rejouer(tl);
     });
     search.addEventListener("input", function () { state.q = search.value; render(); });
     doc.addEventListener("s73:dynamic", function () { drawFilt(); render(); });

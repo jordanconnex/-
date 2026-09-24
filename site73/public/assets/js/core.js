@@ -570,7 +570,9 @@
           '<a class="icon-btn carnet-btn" href="carnet.html" data-nav="carnet" title="Mon carnet de service">' + ICON.medal + '<span class="count" data-badge-count>0</span></a>' +
           '<button type="button" class="icon-btn menu-btn" id="menu-btn" aria-expanded="false" aria-controls="drawer" aria-label="Ouvrir le menu">' + ICON.menu + "</button>" +
         "</div>" +
-      '</div></header><div class="hazard" aria-hidden="true"></div></div>' +
+      '</div></header>' +
+      '<nav class="navstrip" id="navstrip" aria-label="Navigation">' + PAGES.map(function (p) { return linkFor(p, ""); }).join("") + "</nav>" +
+      '<div class="hazard" aria-hidden="true"></div></div>' +
       '<div class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="Menu">' +
         '<div class="drawer__head wrap"><a class="brand" href="index.html">' + S.emblem() + '<span class="brand__txt"><span class="brand__name">SITE<i>-</i>73</span></span></a>' +
         '<button type="button" class="icon-btn" id="drawer-close" aria-label="Fermer le menu">' + ICON.close + "</button></div>" +
@@ -677,6 +679,9 @@
     });
     var mb = doc.getElementById("more-btn");
     if (mb) mb.classList.toggle("is-current", !!byId[id] && !byId[id].top);
+    // Barre défilante : la page courante reste visible
+    var strip = doc.getElementById("navstrip"), cur = strip && strip.querySelector('[aria-current="page"]');
+    if (cur && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = cur.offsetLeft - strip.clientWidth / 2 + cur.offsetWidth / 2;
   };
 
   /* ---------- Pied de page ------------------------------------------- */
@@ -1262,6 +1267,7 @@
     var main = doc.querySelector('main[data-view="' + id + '"]');
     if (main) { main.setAttribute("tabindex", "-1"); main.focus({ preventScroll: true }); }
     S.mark("pages", id, true);
+    if (main) { reinitAnimations(main); setTimeout(function () { S.animer(main); }, 30); }
     doc.dispatchEvent(new CustomEvent("s73:view", { detail: { id: id } }));
   };
   S.currentPage = function () { return currentPage; };
@@ -1513,6 +1519,85 @@
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignoré */ }
   };
 
+  /* ---------- Apparitions au défilement & compteurs ------------------ */
+  var LISTES = ".cells, .sectors, .groups, .units, .steps, .badges, .evt-list, .tl, .articles, .codes, .clearance, .classes, .pclasses, .glossary, .zone-index, .st-list, .comms, .stats, .seen-grid, .faq, .plan-list, .status, .hero__facts, .st-journal, .ticks";
+  var BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .guard, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
+  var observateur = null;
+  var compter = function (el) {
+    if (reduced || el.getAttribute("data-compte")) return;
+    var txt = el.textContent, m = /\d[\d\s  ]*/.exec(txt);
+    if (!m) return;
+    var cible = parseInt(m[0].replace(/\D/g, ""), 10);
+    if (!(cible > 1)) return;
+    el.setAttribute("data-compte", "1");
+    var avant = txt.slice(0, m.index), apres = txt.slice(m.index + m[0].length), debut = null;
+    var etape = function (t) {
+      if (debut === null) debut = t;
+      var k = Math.min(1, (t - debut) / 1100), v = Math.round(cible * (1 - Math.pow(1 - k, 3)));
+      el.textContent = avant + v.toLocaleString("fr-FR").replace(/ /g, " ") + (m[0].match(/\s$/) ? " " : "") + apres;
+      if (k < 1) requestAnimationFrame(etape);
+    };
+    requestAnimationFrame(etape);
+  };
+  var reveler = function (el) {
+    if (el.classList.contains("rv-wait")) {
+      Array.prototype.forEach.call(el.children, function (c, i) { c.style.setProperty("--i", Math.min(i, 14)); });
+      el.classList.remove("rv-wait");
+      el.classList.add("rv-go");
+      setTimeout(function () { el.classList.remove("rv-go"); }, 2200);
+    } else if (el.classList.contains("rv-wait-b")) {
+      el.classList.remove("rv-wait-b");
+      el.classList.add("rv-go-b");
+      setTimeout(function () { el.classList.remove("rv-go-b"); }, 1200);
+    }
+    el.querySelectorAll("[data-compter]").forEach(compter);
+  };
+  // Prépare les blocs et listes d'une zone : ceux déjà à l'écran s'animent tout de suite,
+  // les autres attendent d'entrer dans l'écran.
+  S.animer = function (zone) {
+    if (reduced || !zone) return;
+    if (!observateur && "IntersectionObserver" in window) {
+      observateur = new IntersectionObserver(function (entrees) {
+        entrees.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          observateur.unobserve(en.target);
+          reveler(en.target);
+        });
+      }, { rootMargin: "0px 0px -8% 0px" });
+    }
+    var h = window.innerHeight || 800;
+    var preparer = function (el, cls) {
+      if (el.getAttribute("data-rv") || el.closest(".rv-wait, .rv-wait-b, [hidden]")) return;
+      el.setAttribute("data-rv", "1");
+      el.classList.add(cls);
+      if (!observateur || el.getBoundingClientRect().top < h * 0.92) reveler(el);
+      else observateur.observe(el);
+    };
+    zone.querySelectorAll(BLOCS).forEach(function (el) { preparer(el, "rv-wait-b"); });
+    zone.querySelectorAll(LISTES).forEach(function (el) { if (el.children.length) preparer(el, "rv-wait"); });
+    zone.querySelectorAll("[data-compter]").forEach(function (el) {
+      if (!el.closest(".rv-wait, .rv-wait-b") && el.getBoundingClientRect().top < h) compter(el);
+    });
+  };
+  // Rejoue l'apparition d'une liste après un filtre ou une recherche.
+  S.rejouer = function (liste) {
+    if (reduced || !liste || liste.classList.contains("rv-wait")) return;
+    Array.prototype.forEach.call(liste.children, function (c, i) { c.style.setProperty("--i", Math.min(i, 14)); });
+    liste.classList.remove("rv-go");
+    void liste.offsetWidth;
+    liste.classList.add("rv-go");
+    clearTimeout(liste.__rv);
+    liste.__rv = setTimeout(function () { liste.classList.remove("rv-go"); }, 2200);
+  };
+  var reinitAnimations = function (zone) {
+    zone.querySelectorAll("[data-rv]").forEach(function (el) {
+      el.removeAttribute("data-rv");
+      el.classList.remove("rv-wait", "rv-wait-b", "rv-go", "rv-go-b");
+      if (observateur) observateur.unobserve(el);
+    });
+    zone.querySelectorAll("[data-compte]").forEach(function (el) { el.removeAttribute("data-compte"); });
+  };
+
   /* ---------- Démarrage ----------------------------------------------- */
   buildHeader();
   buildFooter();
@@ -1587,6 +1672,7 @@
     if (hr >= 0 && hr < 5) carnet.flags.nuit = true;
     saveCarnet();
     badgeReady = true;
+    S.animer(doc.querySelector("main:not([hidden])"));
     if (BUNDLE || bootPending) boot();
     messageConnexion();
     // L'appareil demande moins d'animations : on le signale une fois par session.
