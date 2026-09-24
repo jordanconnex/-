@@ -29,7 +29,7 @@ Le staff passe par un mode à part :
 
 Qui peut entrer :
 - **En ligne (Cloudflare + Discord)** : seuls les comptes administrateurs Discord. Le serveur vérifie la session à chaque action : même en trafiquant la page, un membre ne peut rien modifier.
-- **Sans serveur** (aperçu, fichier local, hébergement statique) : un **code d'accès staff**, réglé dans `config.codeStaff` du fichier `contenu/donnees.mjs` (par défaut `SITE73-O5`, **change-le**). Le site publié n'en contient que l'empreinte ; après 5 erreurs, l'accès est bloqué 30 secondes. Dans ce mode, tout reste enregistré dans le navigateur de la personne : une modification ne touche jamais les autres visiteurs. Pour que le staff pilote vraiment le site pour tout le monde, il faut la mise en ligne ci-dessous.
+- **Sans serveur**, personne : il n'y a pas de mode démonstration. La console staff affiche « Serveur indisponible » tant que le Worker ne tourne pas (voir la mise en ligne ci-dessous).
 
 ## Mise en ligne sur Cloudflare (une seule fois)
 
@@ -101,7 +101,7 @@ Remplis `.dev.vars` (il n'est jamais envoyé sur GitHub), puis ouvre <http://loc
 - Le fichier `_redirects` à la racine du dépôt empêche le site Complexe 25 (hébergé ailleurs, il publie tout le dépôt) de servir les fichiers privés du Site-73.
 
 ## Modifier le contenu
-Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`, le code staff du mode démonstration dans `config.codeStaff`.
+Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`.
 
 Au déploiement, `npm run build` génère `public/assets/js/data.js`, où les passages classifiés sont remplacés par des « ▒ ». Si tu modifies le contenu et veux l'essayer en local, lance `npm run build`.
 
@@ -112,13 +112,12 @@ Les communiqués, les événements et le niveau d'alerte se gèrent aussi depuis
 ## Photo des cartes d'identité
 Sur la page Rejoindre, chaque joueur peut indiquer son **pseudo Roblox** : la carte d'identité (et celle de Mon carnet) affiche alors le buste de son avatar Roblox. Le Worker va chercher l'image chez Roblox (route `/api/roblox`), rien à configurer.
 
-Sans pseudo Roblox, ou si le pseudo est introuvable, la carte prend la **photo de profil Discord** du membre connecté. Sinon, elle garde la silhouette. En mode démonstration, sans serveur, seule la silhouette s'affiche.
+Sans pseudo Roblox, ou si le pseudo est introuvable, la carte prend la **photo de profil Discord** du membre connecté. Sinon, elle garde la silhouette. Sans serveur, seule la silhouette s'affiche.
 
-## Mode démonstration
-Ouvert sans serveur (fichier local, aperçu claude.ai, hébergement de fichiers simple), le site passe en **mode démonstration** :
-- on arrive en visiteur (niveau 0) ;
-- « Se connecter (démo) », dans le bouton « Hab. », connecte un membre de démonstration ; son habilitation est celle que le staff lui donne dans la console (niveau 2 par défaut) ;
-- le mode staff demande le code d'accès (voir plus haut). La console y fonctionne avec des données d'exemple, enregistrées seulement dans ton navigateur.
+## Sans serveur
+Le site n'a **pas de mode démonstration**. Ouvert sans son Worker (fichier local, Live Server, glisser-déposer sur Cloudflare), il reste lisible en visiteur (niveau 0), sans connexion ni espace staff. Le bouton « Hab. » affiche alors **« Serveur indisponible »** avec la raison et un bouton « Réessayer ».
+
+Pour tout avoir en local : `npm run dev`. En ligne : `npm run deploy` ou l'import GitHub, jamais le glisser-déposer.
 
 ## Structure
 ```
@@ -130,7 +129,6 @@ site-73/
   serveur/worker.mjs            Worker : aiguille les routes /api/…
   serveur/routes/               connexion Discord, contenu, espace staff, photo Roblox
   functions/api/                même code pour Cloudflare Pages
-  public/api/contenu.json       réponse « démo » quand il n'y a pas de serveur
   serveur/commun.mjs            session signée, stockage KV, fusion du contenu
   serveur/caviardage.mjs        masque les passages selon l'habilitation
   public/                       le site publié (14 pages)

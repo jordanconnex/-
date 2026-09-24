@@ -987,7 +987,6 @@
             : "Visiteur non connecté · habilitation niveau 0");
           return;
         }
-        if (se.user) { print(se.user.nom + " · démonstration · " + (S.modeStaff() ? "mode staff" : se.admin ? "administrateur" : "membre") + " · habilitation niveau " + S.getClearance()); return; }
         let fiche = null;
         try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
         let nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";
@@ -1260,7 +1259,7 @@
       introuvable: "Pseudo Roblox introuvable. Vérifie l'orthographe.",
       invalide: "3 à 20 caractères : lettres, chiffres ou _.",
       attente: "Recherche de ton avatar Roblox…",
-      demo: "La photo Roblox s'affiche quand le site est en ligne (serveur Cloudflare).",
+      horsligne: "La photo Roblox s'affiche quand le serveur du site répond.",
       aucune: ""
     };
     let afficherPhoto = function (etat) { if (photoHint) photoHint.textContent = PHOTO_MSG[etat] || ""; };
@@ -1428,7 +1427,7 @@
     let discord = photoDiscord(v);
     if (!pseudo) { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord" : "aucune"); return; }
     if (!PSEUDO_ROBLOX.test(pseudo)) { poser(discord, "discord", "Photo de profil Discord"); dire("invalide"); return; }
-    if (!S.isLive()) { poser(null); dire("demo"); return; }
+    if (!S.isLive()) { poser(null); dire("horsligne"); return; }
     let conclure = function (url) {
       if (card.__photo !== jeton) return;
       if (url) { poser(url, "roblox", "Avatar Roblox de " + pseudo); dire("roblox"); }

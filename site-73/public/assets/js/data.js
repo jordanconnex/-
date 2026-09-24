@@ -9,7 +9,6 @@ window.S73.data = {
   "discord": "https://discord.gg/RqM7Nvam2R",
   "alerte": "vert",
   "animations": "toujours",
-  "habilitationParDefaut": 2,
   "dernierIncident": {
    "date": "2026-09-02T14:37:00+02:00",
    "ref": "Incident 73-2026-17"
@@ -19,8 +18,7 @@ window.S73.data = {
   "profondeur": "−600 m",
   "personnelActif": 412,
   "fuseau": "Europe/Paris",
-  "version": "7.3.2",
-  "codeStaffEmpreinte": "db4c720e3b3036e8d4bdad8c1b608f4b957471a2d2f2229fec8a98f3e927baf2"
+  "version": "7.3.2"
  },
  "alertes": {
   "vert": {

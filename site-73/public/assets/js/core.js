@@ -235,7 +235,7 @@
   S.stopSpeak = function () { try { speechSynthesis.cancel(); } catch (e) { /* rien */ } };
 
   /* ---------- Habilitation ------------------------------------------- */
-  // L'habilitation vient de la session (serveur ou démonstration) : personne ne la choisit.
+  // L'habilitation vient de la session du serveur : personne ne la choisit.
   let clearance = 0;
   store.del("s73.hab");
   S.getClearance = function () { return clearance; };
@@ -244,13 +244,17 @@
 
   /* ---------- Session (connexion Discord) --------------------------- */
   // mode "live" : le site parle à son Worker Cloudflare (/api/…) ;
-  // mode "demo" : aperçu sans serveur (fichier local, hébergement statique).
-  // Le mode staff est à part : il faut être administrateur (rôle Discord en
-  // ligne, code d'accès en démonstration) PUIS l'activer. Hors mode staff,
-  // personne ne peut changer l'alerte ni les habilitations.
-  let sess = { mode: "demo", user: null, admin: false, reel: 0, source: "visiteur" };
+  // mode "horsligne" : le serveur ne répond pas (fichier local, hébergement
+  // de fichiers simples) : visiteur de niveau 0, sans connexion ni staff.
+  // Le mode staff est à part : il faut être administrateur (rôle Discord)
+  // PUIS l'activer. Hors mode staff, personne ne peut changer l'alerte ni
+  // les habilitations.
+  let sess = { mode: "horsligne", user: null, admin: false, reel: 0, source: "visiteur" };
   // Identifiant du compte qui a activé le mode staff dans cet onglet
   let staffId = store.get("s73.staff", true) || "";
+  // Restes de l'ancien mode démonstration
+  ["s73.demo.db", "s73.demo.profil", "s73.staff.essais", "s73.staff.bloque"].forEach(function (k) { store.del(k); });
+  store.del("s73.demo.staff", true);
   S.session = function () { return sess; };
   S.isLive = function () { return sess.mode === "live"; };
   S.isAdmin = function () { return !!sess.admin; };
@@ -648,7 +652,7 @@
     });
     pop.addEventListener("click", function (e) {
       // Connexion et mode staff : gérés plus bas, pour tout le site.
-      if (e.target.closest("[data-demo-login], [data-demo-logout], [data-staff-on], [data-staff-off]")) { closePop(); return; }
+      if (e.target.closest("[data-reessayer], [data-staff-on], [data-staff-off]")) { closePop(); return; }
       let o = e.target.closest(".clr__opt");
       if (!o) return;
       S.setClearance(o.getAttribute("data-lvl"));
@@ -685,14 +689,16 @@
   function renderClrPop() {
     let pop = doc.getElementById("clr-pop"), btn = doc.getElementById("clr-btn");
     if (!pop) return;
-    let demo = sess.mode === "demo";
     let who = sess.user ? '<div class="who">' + S.avatar(sess.user) + "<div><b>" + esc(sess.user.nom) + "</b><small>" +
-      (sess.admin ? "Administrateur" : "Membre du serveur") + (demo ? " · démo" : "") + "</small></div></div>" : "";
-    let sortir = demo ? '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>'
-      : '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
-    let out = demo ? '<p class="clr__demo">Mode démonstration</p>' + (S.texteRaisonDemo() ? '<p class="clr__raison">⚠ ' + esc(S.texteRaisonDemo()) + "</p>" : "") : "";
-    if (!demo && sess.admin && sess.avertissement) out += '<p class="clr__raison">⚠ ' + esc(sess.avertissement) + "</p>";
-    if (S.modeStaff()) {
+      (sess.admin ? "Administrateur" : "Membre du serveur") + "</small></div></div>" : "";
+    let sortir = '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
+    let out = sess.admin && sess.avertissement ? '<p class="clr__raison">⚠ ' + esc(sess.avertissement) + "</p>" : "";
+    if (sess.mode !== "live") {
+      out += '<p class="clr__horsligne">Serveur indisponible</p>' +
+        "<p><b>Visiteur · niveau 0</b><br>La connexion Discord et l'espace staff reviennent dès que le serveur du site répond.</p>" +
+        (S.texteRaisonHorsLigne() ? '<p class="clr__raison">⚠ ' + esc(S.texteRaisonHorsLigne()) + "</p>" : "") +
+        '<button type="button" class="btn btn--signal clr__login" data-reessayer>Réessayer</button>';
+    } else if (S.modeStaff()) {
       out += who + '<p class="clr__staff"><i></i>Mode staff actif</p>' +
         "<p>Ton niveau réel est " + sess.reel + ". Prévisualise le site comme le verrait un membre :</p>" + levelsHtml(sess.reel) +
         '<div class="clr__acts"><a class="btn btn--sm btn--signal" href="staff.html">Console staff</a>' +
@@ -701,11 +707,8 @@
       out += who + "<p><b>Administrateur · niveau " + sess.reel + "</b><br>Les commandes du staff (alerte, habilitations, communiqués) ne s'affichent qu'en mode staff.</p>" +
         '<div class="clr__acts"><button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' + sortir + "</div>";
     } else if (!sess.user) {
-      out += "<p><b>Visiteur · niveau 0</b><br>" + (demo
-        ? "En ligne, chacun se connecte avec Discord et reçoit l'habilitation que le staff lui donne. Ici, connecte-toi en membre de démonstration."
-        : "Connecte-toi avec ton compte Discord : le staff du serveur t'attribue ton habilitation.") + "</p>" +
-        (demo ? '<button type="button" class="btn btn--signal clr__login" data-demo-login>' + ICON.chat + "Se connecter (démo)</button>"
-          : '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>") +
+      out += "<p><b>Visiteur · niveau 0</b><br>Connecte-toi avec ton compte Discord : le staff du serveur t'attribue ton habilitation.</p>" +
+        '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>" +
         '<a class="clr__staff-link" href="staff.html">' + ICON.lock + "Accès staff</a>";
     } else {
       out += who + "<p><b>Habilitation · niveau " + sess.reel + " · " + esc(habName(sess.reel)) + "</b><br>" + esc(SOURCES[sess.source] || SOURCES.defaut) + "</p>" +
@@ -1340,31 +1343,7 @@
   };
   S.currentPage = function () { return currentPage; };
 
-  /* ---------- Session : chargement, démonstration, API staff -------- */
-  let staticArchives = D.archives.slice(), staticEvenements = (D.evenements || []).slice(), staticAlerte = D.config.alerte;
-  let dateParis;
-  try {
-    let dpFmt = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
-    dateParis = function (d) { return dpFmt.format(d); };
-  } catch (e) { dateParis = function (d) { return d.toISOString().slice(0, 10); }; }
-  // "2026-09-26T21:00" (heure de Paris) → ISO avec le bon décalage (été/hiver)
-  S.isoParis = function (local) {
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local || "")) return null;
-    let dec = function (d) {
-      try {
-        let nom = new Intl.DateTimeFormat("en-US", { timeZone: D.config.fuseau, timeZoneName: "shortOffset" }).formatToParts(d)
-          .filter(function (x) { return x.type === "timeZoneName"; })[0].value;
-        let m = /GMT(?:([+-]\d+)(?::(\d+))?)?/.exec(nom);
-        let h = m && m[1] ? +m[1] : 0;
-        return h * 60 + (m && m[2] ? (h < 0 ? -1 : 1) * +m[2] : 0);
-      } catch (e) { return 120; }
-    };
-    let approx = new Date(local + ":00Z");
-    if (isNaN(approx)) return null;
-    let min = dec(new Date(approx.getTime() - dec(approx) * 60000)), a = Math.abs(min);
-    return local + ":00" + (min >= 0 ? "+" : "-") + pad(Math.floor(a / 60)) + ":" + pad(a % 60);
-  };
-
+  /* ---------- Session : chargement et API staff -------------------- */
   let reindex = function () {
     scpById = {}; D.scp.forEach(function (x) { scpById[x.id] = x; });
     zoneById = {}; D.zones.forEach(function (z) { zoneById[z.id] = z; });
@@ -1375,157 +1354,6 @@
     reindex();
   };
 
-  // Faux serveur local du mode démonstration (aperçu sans Worker)
-  let ilYa = function (h) { return new Date(Date.now() - h * 3600000).toISOString(); };
-  let demoGraine = function () {
-    return {
-      membres: [
-        { id: "demo-admin", nom: "Admin (démo)", pseudo: "staff", admin: true, derniereVisite: ilYa(0) },
-        { id: "demo-membre", nom: "Membre (démo) · vous", pseudo: "vous", derniereVisite: ilYa(0) },
-        { id: "100000000000000001", nom: "Exemple · Élise Varenne", pseudo: "exemple.varenne", roleHab: 2, derniereVisite: ilYa(3) },
-        { id: "100000000000000002", nom: "Exemple · Hugo Ferrand", pseudo: "exemple.ferrand", roleHab: 3, derniereVisite: ilYa(20) },
-        { id: "100000000000000003", nom: "Exemple · Karim Belkacem", pseudo: "exemple.belkacem", roleHab: 2, override: 4, modifiePar: "Admin (démo)", modifieLe: ilYa(48), derniereVisite: ilYa(30) },
-        { id: "100000000000000004", nom: "Exemple · D-9341", pseudo: "exemple.dclasse", derniereVisite: ilYa(70) },
-        { id: "100000000000000005", nom: "Exemple · Nora Castel", pseudo: "exemple.castel", roleHab: 1, derniereVisite: ilYa(120) }
-      ],
-      etat: null, communiques: [], evenements: null,
-      journal: [{ le: ilYa(48), par: "Admin (démo)", action: "Habilitation de Exemple · Karim Belkacem réglée sur le niveau 4" }]
-    };
-  };
-  let demoLire = function () {
-    let d = null;
-    try { d = JSON.parse(store.get("s73.demo.db") || "null"); } catch (e) { d = null; }
-    if (!d || !d.membres) return demoGraine();
-    // Base créée par une ancienne version : il manque le membre « vous ».
-    if (!d.membres.some(function (m) { return m.id === "demo-membre"; })) d.membres.splice(1, 0, demoGraine().membres[1]);
-    return d;
-  };
-  let demoEcrire = function (d) { store.set("s73.demo.db", JSON.stringify(d)); };
-  let habDe = function (m) {
-    if (m.admin) return { niveau: 5, source: "admin" };
-    if (typeof m.override === "number") return { niveau: m.override, source: "staff" };
-    if (typeof m.roleHab === "number") return { niveau: m.roleHab, source: "role" };
-    return { niveau: D.config.habilitationParDefaut || 1, source: "defaut" };
-  };
-  let demoEtat = function (d) {
-    return {
-      membres: d.membres.map(function (m) {
-        let h = habDe(m);
-        return Object.assign({}, m, { habilitation: h.niveau, source: h.source, override: typeof m.override === "number" ? m.override : null, admin: !!m.admin });
-      }).sort(function (a, b) { return (b.derniereVisite || "").localeCompare(a.derniereVisite || ""); }),
-      etat: d.etat || { alerte: staticAlerte, par: null, le: null },
-      communiques: d.communiques,
-      evenements: d.evenements || staticEvenements,
-      journal: d.journal.slice(0, 60),
-      fiches: d.fiches || []
-    };
-  };
-  // Même contrôle des fiches que le vrai serveur (serveur/routes/staff.mjs)
-  let STATUTS_FICHE = ["service", "attente", "archive"];
-  let validerFiche = function (c, t) {
-    let f = {
-      prenom: t(c.prenom, 30), nom: t(c.nom, 30), roblox: t(c.roblox, 20), apparence: t(c.apparence, 300), perso: t(c.perso, 160),
-      histoire: t(c.histoire, 1200), comp: t(c.comp, 200), statut: STATUTS_FICHE.indexOf(c.statut) >= 0 ? c.statut : "service"
-    };
-    if (!f.prenom && !f.nom) return "Indique au moins un prénom ou un nom.";
-    if (c.age === null || c.age === undefined || c.age === "") f.age = null;
-    else if (typeof c.age === "number" && c.age % 1 === 0 && c.age >= 18 && c.age <= 75) f.age = c.age;
-    else return "L'âge doit être compris entre 18 et 75 ans.";
-    let dept = D.departements.filter(function (x) { return x.id === c.dept; })[0];
-    if (!dept) return "Département inconnu.";
-    if (!dept.grades.some(function (g) { return g[0] === c.grade; })) return "Grade inconnu pour ce département.";
-    f.dept = dept.id; f.grade = c.grade;
-    if (f.roblox && !/^[A-Za-z0-9_]{3,20}$/.test(f.roblox)) return "Pseudo Roblox : 3 à 20 lettres, chiffres ou _.";
-    return f;
-  };
-  let nomFiche = function (f) { return ((f.prenom || "") + " " + (f.nom || "")).trim(); };
-  let demoAction = function (action, c) {
-    let d = demoLire(), par = sess.user ? sess.user.nom : "Admin (démo)", now = new Date().toISOString();
-    let t = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
-    let err = function (m) { throw new Error(m); };
-    let log = function (a) { d.journal.unshift({ le: now, par: par, action: a }); d.journal = d.journal.slice(0, 200); };
-    let niveauOk = function (n) { return typeof n === "number" && n % 1 === 0 && n >= 0 && n <= 5; };
-    // Comme le vrai serveur : rien ne passe hors du mode staff.
-    if (!S.modeStaff()) err("Réservé au staff, en mode staff.");
-    if (action === "habilitation") {
-      let m = d.membres.filter(function (x) { return x.id === c.id; })[0];
-      if (!m) err("Membre introuvable.");
-      if (c.niveau === null) delete m.override; else if (niveauOk(c.niveau)) m.override = c.niveau; else err("Niveau invalide (0 à 5).");
-      m.modifiePar = par; m.modifieLe = now;
-      log(c.niveau === null ? "Habilitation de " + m.nom + " rendue à ses rôles Discord" : "Habilitation de " + m.nom + " réglée sur le niveau " + c.niveau);
-    } else if (action === "alerte") {
-      if (ALERTS.indexOf(c.niveau) < 0) err("Niveau d'alerte inconnu.");
-      d.etat = { alerte: c.niveau, par: par, le: now };
-      log("Niveau d'alerte du site : " + D.alertes[c.niveau].code);
-    } else if (action === "communique.ajouter") {
-      let titre = t(c.titre, 120), texte = t(c.texte, 2000);
-      if (!titre || !texte) err("Titre et texte obligatoires.");
-      let niv = niveauOk(c.niveau) ? c.niveau : 0;
-      d.communiques.unshift({ id: "c" + Date.now(), date: dateParis(new Date()), titre: titre, texte: texte, niveau: niv, auteur: par, creeLe: now });
-      log("Communiqué publié : « " + titre + " »" + (niv ? " (niveau " + niv + ")" : ""));
-    } else if (action === "communique.supprimer") {
-      let cc = d.communiques.filter(function (x) { return x.id === c.id; })[0];
-      if (!cc) err("Communiqué introuvable.");
-      d.communiques = d.communiques.filter(function (x) { return x.id !== c.id; });
-      log("Communiqué supprimé : « " + cc.titre + " »");
-    } else if (action === "evenement.enregistrer") {
-      let ti = t(c.titre, 100), date = S.isoParis(c.date), duree = Number(c.duree);
-      if (!ti || !date) err("Titre et date obligatoires.");
-      if (!D.typesEvenement[c.type]) err("Type d'événement inconnu.");
-      if (!(duree >= 15 && duree <= 720)) err("Durée entre 15 et 720 minutes.");
-      let liste = (d.evenements || staticEvenements).slice();
-      let ev = { id: c.id || "evt-" + Date.now().toString(36), date: date, duree: duree, type: c.type, titre: ti, lieu: t(c.lieu, 120), texte: t(c.texte, 1000) };
-      let i = -1;
-      liste.forEach(function (x, j) { if (x.id === ev.id) i = j; });
-      if (i >= 0) liste[i] = ev; else liste.push(ev);
-      liste.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
-      d.evenements = liste;
-      log("Événement " + (i >= 0 ? "modifié" : "ajouté") + " : « " + ti + " »");
-    } else if (action === "fiche.enregistrer") {
-      let v = validerFiche(c, t);
-      if (typeof v === "string") err(v);
-      let fiches = (d.fiches || []).slice();
-      let lien = c.discordId ? String(c.discordId) : null;
-      if (lien && !d.membres.some(function (m) { return m.id === lien; })) err("Membre Discord introuvable.");
-      let i = -1;
-      fiches.forEach(function (f, j) { if (f.id === c.id) i = j; });
-      if (c.id && i < 0) err("Fiche introuvable.");
-      let autre = lien && v.statut !== "archive" && fiches.filter(function (f, j) { return j !== i && f.discordId === lien && f.statut !== "archive"; })[0];
-      if (autre) err("Ce membre a déjà une fiche active : " + nomFiche(autre) + ". Archive-la d'abord.");
-      let ancienne = i >= 0 ? fiches[i] : null;
-      let fiche = Object.assign(v, {
-        id: ancienne ? ancienne.id : "fiche-" + Date.now().toString(36), discordId: lien,
-        creePar: ancienne ? ancienne.creePar : par, creeLe: ancienne ? ancienne.creeLe : now, modifiePar: par, modifieLe: now
-      });
-      if (ancienne) fiches[i] = fiche; else fiches.unshift(fiche);
-      d.fiches = fiches;
-      log("Fiche " + (ancienne ? "modifiée" : "créée") + " : " + nomFiche(fiche) + (fiche.statut !== "service" ? " (" + (fiche.statut === "attente" ? "en attente" : "archivée") + ")" : ""));
-    } else if (action === "fiche.supprimer") {
-      let cibleF = (d.fiches || []).filter(function (f) { return f.id === c.id; })[0];
-      if (!cibleF) err("Fiche introuvable.");
-      d.fiches = d.fiches.filter(function (f) { return f.id !== c.id; });
-      log("Fiche supprimée : " + nomFiche(cibleF));
-    } else if (action === "evenement.supprimer") {
-      let l2 = (d.evenements || staticEvenements).slice();
-      let cible = l2.filter(function (x) { return x.id === c.id; })[0];
-      if (!cible) err("Événement introuvable.");
-      d.evenements = l2.filter(function (x) { return x.id !== c.id; });
-      log("Événement supprimé : « " + cible.titre + " »");
-    } else {
-      err("Action inconnue.");
-    }
-    demoEcrire(d);
-    return demoEtat(d);
-  };
-  let demoAppliquer = function () {
-    let d = demoLire();
-    D.config.alerte = d.etat && ALERTS.indexOf(d.etat.alerte) >= 0 ? d.etat.alerte : staticAlerte;
-    D.archives = d.communiques.filter(function (c) { return (c.niveau || 0) <= clearance; }).map(function (c) {
-      return { id: c.id, date: c.date, type: "communique", titre: c.titre, texte: c.texte, auteur: c.auteur, niveau: c.niveau || 0, dyn: true };
-    }).concat(staticArchives);
-    D.evenements = d.evenements || staticEvenements;
-  };
-
   let appelStaff = function (options) {
     return fetch("/api/staff", Object.assign({ credentials: "same-origin" }, options)).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
@@ -1534,16 +1362,12 @@
       });
     });
   };
+  let sansServeur = function () { return Promise.reject(new Error("Serveur indisponible : l'espace staff a besoin du Worker du site.")); };
   S.api = {
-    etat: function () {
-      if (sess.mode === "live") return appelStaff({});
-      return S.modeStaff() ? Promise.resolve(demoEtat(demoLire())) : Promise.reject(new Error("Réservé au staff, en mode staff."));
-    },
+    etat: function () { return sess.mode === "live" ? appelStaff({}) : sansServeur(); },
     action: function (action, corps) {
-      if (sess.mode === "live") {
-        return appelStaff({ method: "POST", headers: { "content-type": "application/json", "x-s73": "1" }, body: JSON.stringify(Object.assign({ action: action }, corps)) });
-      }
-      return new Promise(function (ok) { ok(demoAction(action, corps || {})); });
+      if (sess.mode !== "live") return sansServeur();
+      return appelStaff({ method: "POST", headers: { "content-type": "application/json", "x-s73": "1" }, body: JSON.stringify(Object.assign({ action: action }, corps)) });
     }
   };
   // Après une action du staff : recharge le contenu et prévient les pages.
@@ -1558,140 +1382,38 @@
       }
       doc.dispatchEvent(new CustomEvent("s73:dynamic"));
     };
-    if (sess.mode !== "live") { demoAppliquer(); fin(); return Promise.resolve(); }
+    if (sess.mode !== "live") { fin(); return Promise.resolve(); }
     return fetch("/api/contenu", { credentials: "same-origin", cache: "no-store" }).then(function (r) { return r.json(); })
       .then(function (p) { if (p && p.data) appliquerContenu(p); fin(); }, fin);
   };
 
-  // Démonstration : visiteur, membre (habilitation réglée dans la console
-  // staff de démonstration) ou staff (après le code d'accès, pour l'onglet).
-  let demoStaff = function () {
-    try { let x = JSON.parse(store.get("s73.demo.staff", true) || "null"); return x && x.nom ? x : null; } catch (e) { return null; }
-  };
   let niveauVu = function () {
     let voir = S.modeStaff() ? parseInt(store.get("s73.voir", true), 10) : NaN;
     return !isNaN(voir) && voir >= 0 && voir <= sess.reel ? voir : sess.reel;
   };
-  let passerEnDemo = function () {
-    sess.mode = "demo";
-    let st = demoStaff();
-    sess.fiche = null;
-    if (st) {
-      sess.admin = true;
-      sess.user = { id: "demo-admin", nom: st.nom, avatar: null };
-      sess.reel = 5;
-      sess.source = "admin";
-    } else if (store.get("s73.demo.profil") === "membre") {
-      let moi = demoLire().membres.filter(function (m) { return m.id === "demo-membre"; })[0] || {};
-      let h = habDe(moi);
-      sess.admin = false;
-      sess.user = { id: "demo-membre", nom: "Membre (démo)", avatar: null };
-      sess.reel = h.niveau;
-      sess.source = h.source;
-      sess.fiche = (demoLire().fiches || []).filter(function (f) { return f.discordId === "demo-membre" && f.statut !== "archive"; })[0] || null;
-    } else {
-      sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
-    }
-    clearance = niveauVu();
-    demoAppliquer();
+  // Serveur injoignable : visiteur, sans connexion ni mode staff.
+  let passerHorsLigne = function () {
+    sess.mode = "horsligne";
+    sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
+    clearance = 0;
   };
   let applySessionUI = function () {
     root.setAttribute("data-staff", S.modeStaff() ? "on" : "off");
     doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !S.modeStaff(); });
     doc.querySelectorAll("[data-public-only]").forEach(function (el) { el.hidden = S.modeStaff(); });
     doc.querySelectorAll("[data-session-nom]").forEach(function (el) { el.textContent = sess.user ? sess.user.nom : "Visiteur"; });
-    doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne · Discord" : "Démonstration"; });
+    doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne · Discord" : "Hors ligne"; });
     renderClrPop();
     updateClearanceUI();
     doc.dispatchEvent(new CustomEvent("s73:session"));
   };
   // Après un changement de session : tout le site se remet à jour.
   let sessionChangee = function (prev) {
-    if (sess.mode === "demo") demoAppliquer();
     rerender(prev);
     applySessionUI();
     doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: clearance, prev: prev } }));
     doc.dispatchEvent(new CustomEvent("s73:dynamic"));
     checkBadges();
-  };
-  S.demoConnexion = function (entrer) {
-    if (sess.mode !== "demo") return;
-    let prev = clearance;
-    if (entrer) store.set("s73.demo.profil", "membre"); else store.del("s73.demo.profil");
-    if (!entrer) { store.del("s73.demo.staff", true); staffId = ""; store.del("s73.staff", true); store.del("s73.voir", true); }
-    passerEnDemo();
-    sessionChangee(prev);
-    S.sfx(entrer ? "ok" : "tick");
-    S.toast(entrer
-      ? "<b>Connecté · Membre (démo).</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + "), réglée par le staff dans sa console."
-      : "<b>Déconnecté.</b> Tu consultes l'intranet en visiteur (niveau 0).");
-  };
-
-  // Empreinte SHA-256 (le code staff n'est jamais écrit en clair dans le site)
-  let sha256 = function (txt) {
-    let bin = unescape(encodeURIComponent(txt)), K = [], H = [], i, j, n = 0;
-    let frac = function (x) { return ((x - Math.floor(x)) * 4294967296) | 0; };
-    for (let c = 2; n < 64; c++) {
-      let premier = true;
-      for (j = 2; j * j <= c; j++) if (c % j === 0) { premier = false; break; }
-      if (!premier) continue;
-      if (n < 8) H[n] = frac(Math.pow(c, 1 / 2));
-      K[n++] = frac(Math.pow(c, 1 / 3));
-    }
-    let mots = [], len = bin.length;
-    for (i = 0; i < len; i++) mots[i >> 2] |= bin.charCodeAt(i) << (24 - (i % 4) * 8);
-    mots[len >> 2] |= 0x80 << (24 - (len % 4) * 8);
-    let total = (((len + 8) >> 6) + 1) * 16;
-    for (i = mots.length; i < total; i++) mots[i] = mots[i] || 0;
-    mots[total - 1] = len * 8;
-    let rot = function (x, k) { return (x >>> k) | (x << (32 - k)); };
-    for (i = 0; i < total; i += 16) {
-      let W = mots.slice(i, i + 16), a = H[0], b = H[1], cc = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
-      for (j = 0; j < 64; j++) {
-        if (j >= 16) {
-          let w15 = W[j - 15], w2 = W[j - 2];
-          W[j] = (W[j - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + W[j - 7] + (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0;
-        }
-        let t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + W[j]) | 0;
-        let t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & cc) ^ (b & cc))) | 0;
-        h = g; g = f; f = e; e = (d + t1) | 0; d = cc; cc = b; b = a; a = (t1 + t2) | 0;
-      }
-      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + cc) | 0; H[3] = (H[3] + d) | 0;
-      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
-    }
-    return H.map(function (x) { return ("00000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
-  };
-  S.util.sha256 = sha256;
-  // Même normalisation que scripts/build.mjs
-  let empreinteCode = function (code) { return sha256("site73-staff:" + String(code || "").replace(/\s+/g, "").toUpperCase()); };
-
-  // Code d'accès du mode staff (démonstration uniquement)
-  let ESSAIS = 5, BLOCAGE = 30000;
-  S.blocageStaff = function () {
-    let b = parseInt(store.get("s73.staff.bloque"), 10);
-    return b && b > Date.now() ? b - Date.now() : 0;
-  };
-  S.connexionStaffDemo = function (nom, code) {
-    if (sess.mode !== "demo") return { ok: false, message: "En ligne, l'accès staff passe par Discord." };
-    if (!D.config.codeStaffEmpreinte) return { ok: false, message: "Aucun code staff n'est configuré (config.codeStaff dans contenu/donnees.mjs)." };
-    let reste = S.blocageStaff();
-    if (reste) return { ok: false, bloque: reste, message: "Trop d'essais. Réessaie dans " + Math.ceil(reste / 1000) + " s." };
-    if (empreinteCode(code) !== D.config.codeStaffEmpreinte) {
-      let n = (parseInt(store.get("s73.staff.essais"), 10) || 0) + 1;
-      if (n >= ESSAIS) { store.set("s73.staff.bloque", String(Date.now() + BLOCAGE)); store.del("s73.staff.essais"); return { ok: false, bloque: BLOCAGE, message: "Code refusé. Accès bloqué pendant " + BLOCAGE / 1000 + " s." }; }
-      store.set("s73.staff.essais", String(n));
-      return { ok: false, message: "Code refusé. " + (ESSAIS - n) + " essai" + (ESSAIS - n > 1 ? "s" : "") + " avant blocage." };
-    }
-    store.del("s73.staff.essais");
-    let nomPropre = String(nom || "").replace(/[<>]/g, "").trim().slice(0, 40) || "Admin (démo)";
-    store.set("s73.demo.staff", JSON.stringify({ nom: nomPropre }), true);
-    let prev = clearance;
-    staffId = "demo-admin";
-    store.set("s73.staff", staffId, true);
-    passerEnDemo();
-    sessionChangee(prev);
-    S.animStaff("on");
-    return { ok: true };
   };
   S.entrerModeStaff = function () {
     if (!sess.admin) { if (!doc.getElementById("staff-guard")) S.go("staff.html"); return false; }
@@ -1706,14 +1428,12 @@
     let prev = clearance;
     activerStaff(false);
     store.del("s73.voir", true);
-    if (sess.mode === "demo") { store.del("s73.demo.staff", true); passerEnDemo(); }
-    else clearance = sess.reel;
+    clearance = sess.reel;
     sessionChangee(prev);
     S.animStaff("off");
   };
   doc.addEventListener("click", function (e) {
-    if (e.target.closest("[data-demo-login]")) S.demoConnexion(true);
-    else if (e.target.closest("[data-demo-logout]")) S.demoConnexion(false);
+    if (e.target.closest("[data-reessayer]")) location.reload();
     else if (e.target.closest("[data-staff-on]")) S.entrerModeStaff();
     else if (e.target.closest("[data-staff-off]")) S.quitterModeStaff();
   });
@@ -1727,30 +1447,34 @@
     }
   });
 
-  // Adresse relative : sur un hébergement sans serveur (Live Server, fichiers
-  // simples), elle tombe sur public/api/contenu.json, qui répond « demo »
-  // sans erreur 404. Sur Cloudflare, le Worker répond à sa place.
-  // Pourquoi le site est en démonstration alors qu'il est en ligne (affiché dans « Hab. » et au sas staff)
-  let raisonDemo = null;
-  S.texteRaisonDemo = function () {
-    if (!raisonDemo) return "";
+  // Pourquoi le serveur ne répond pas (affiché dans « Hab. » et au sas staff)
+  let raisonHorsLigne = null;
+  S.texteRaisonHorsLigne = function () {
+    let r = raisonHorsLigne;
+    if (!r) return "";
     let local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-    let r = raisonDemo;
-    let txt = r.code === "statique"
-      ? (local ? "Normal avec Live Server : lance « npm run dev » pour faire tourner le vrai serveur."
-        : "Le Worker Cloudflare ne tourne pas : le site est servi comme de simples fichiers. Redéploie avec GitHub (Import a repository) ou « npm run deploy », pas en glisser-déposer.")
-      : r.code === "http" ? (r.statut === 404 ? "Le serveur ne connaît pas api/contenu.json (code 404) : le Worker n'est pas déployé avec ce site."
-        : "Le serveur a répondu une erreur (code " + r.statut + ")" + (r.detail ? " : " + r.detail : "") + ".")
-      : r.code === "delai" ? "Le serveur n'a pas répondu à temps." : "Le serveur est injoignable.";
-    return txt + (local && r.code === "statique" ? "" : " Diagnostic : /api/etat");
+    if (r.code === "fichier") return "Page ouverte sans serveur (fichier local ou aperçu) : lance « npm run dev » dans le dossier site-73.";
+    if (r.code === "statique" || r.statut === 404) {
+      return local ? "Normal avec Live Server : lance « npm run dev » pour faire tourner le vrai serveur."
+        : "Le Worker Cloudflare ne tourne pas : le site est servi comme de simples fichiers. Redéploie avec « npm run deploy » ou l'import GitHub, pas en glisser-déposer.";
+    }
+    if (r.code === "http") return "Le serveur a répondu une erreur (code " + r.statut + ")" + (r.detail ? " : " + r.detail : "") + ". Diagnostic : /api/etat";
+    return r.code === "delai" ? "Le serveur n'a pas répondu à temps." : "Le serveur est injoignable.";
   };
+  let horsLigne = function (raison) {
+    raisonHorsLigne = raison;
+    if (window.console) console.warn("Site-73 : serveur indisponible. " + S.texteRaisonHorsLigne());
+    passerHorsLigne();
+  };
+  // Adresse relative, pour que le site marche aussi dans un sous-dossier.
+  // Sur Cloudflare, le Worker y répond avec le contenu et la session.
   let chargerSession = function () {
-    if (BUNDLE || location.protocol === "file:") { passerEnDemo(); return Promise.resolve(); }
+    if (BUNDLE || location.protocol === "file:") { horsLigne({ code: "fichier" }); return Promise.resolve(); }
     let ctrl = window.AbortController ? new AbortController() : null;
     let minuteur = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
     return fetch("api/contenu.json", { credentials: "same-origin", cache: "no-store", headers: { accept: "application/json" }, signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) {
-        if (r.ok) return r.json();
+        if (r.ok) return r.json().catch(function () { return null; });
         return r.json().catch(function () { return {}; }).then(function (j) {
           let e = new Error("http " + r.status);
           e.statut = r.status; e.detail = j && j.erreur;
@@ -1759,13 +1483,8 @@
       })
       .then(function (p) {
         clearTimeout(minuteur);
-        if (p && p.mode === "demo") {
-          raisonDemo = { code: "statique" };
-          if (window.console) console.warn("Site-73 : mode démonstration. " + S.texteRaisonDemo());
-          passerEnDemo();
-          return;
-        }
-        if (!p || p.mode !== "live" || !p.data) throw new Error("réponse inattendue");
+        // Réponse qui ne vient pas du Worker (hébergement de fichiers simples)
+        if (!p || p.mode !== "live" || !p.data) { horsLigne({ code: "statique" }); return; }
         appliquerContenu(p);
         sess.mode = "live";
         sess.avertissement = p.avertissement || null;
@@ -1783,9 +1502,7 @@
       })
       .catch(function (e) {
         clearTimeout(minuteur);
-        raisonDemo = e && e.statut ? { code: "http", statut: e.statut, detail: e.detail } : { code: e && e.name === "AbortError" ? "delai" : "reseau" };
-        if (window.console) console.warn("Site-73 : mode démonstration. " + S.texteRaisonDemo());
-        passerEnDemo();
+        horsLigne(e && e.statut ? { code: "http", statut: e.statut, detail: e.detail } : { code: e && e.name === "AbortError" ? "delai" : "reseau" });
       });
   };
   let apresSession = function () {

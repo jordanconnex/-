@@ -273,6 +273,8 @@ html[data-alert="noir"] .vignette { opacity: .8; animation: flicker 3.2s steps(1
 
 .bar-sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 60; }
 .bar {
+  /* Au-dessus de la barre de navigation mobile : ses menus (Hab., Plus) passent devant */
+  position: relative; z-index: 1;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px) saturate(1.2);
   -webkit-backdrop-filter: blur(10px) saturate(1.2);
@@ -1558,7 +1560,8 @@ html[data-fx="off"] .dial__sweep { animation: none; opacity: .35; }
 .clr__pop { display: grid; gap: 10px; }
 .clr__pop p { margin: 0; }
 .clr__pop .who { padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.clr__demo { justify-self: start; font-family: var(--font-mono); font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--signal-ink); background: var(--signal); padding: 2px 8px; }
+.clr__pop .clr__horsligne { display: inline-flex; align-items: center; gap: 8px; justify-self: start; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--a-rouge); }
+.clr__horsligne::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; animation: blink 1.2s infinite; }
 .clr__profils button { flex: 1; justify-content: center; }
 .clr__acts { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 .clr__login { width: 100%; }
@@ -1848,9 +1851,6 @@ html[data-motion="normal"] .sas__ring--2 { animation: spin 26s linear infinite r
 html[data-motion="normal"] .sas__ring--3 { animation: spin 13s linear infinite; }
 html[data-motion="normal"] .sas__beam { animation: sas-beam 2.8s ease-in-out infinite; }
 html[data-motion="normal"] .sas__scan { animation: rv-pop 1s var(--ease) backwards; }
-.sas.is-verif .sas__ring--1 { animation-duration: .7s; }
-.sas.is-verif .sas__beam { animation-duration: .6s; }
-.sas.is-verif .sas__emblem { color: var(--signal); }
 .sas.is-refus { --signal: var(--a-rouge); }
 .sas.is-refus .sas__emblem { color: var(--a-rouge); }
 html[data-motion="normal"] .sas.is-refus .sas__body { animation: shake .3s 2; }
@@ -1871,19 +1871,12 @@ html[data-motion="normal"] .sas__body { animation: rv-up .7s var(--ease) .5s bac
 .sas__etat i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; animation: blink 1.2s infinite; }
 .sas__etat--ok { color: var(--a-vert) !important; }
 .sas__etat--refus { color: var(--a-rouge) !important; }
-.sas__form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
-.sas__form .field small { text-transform: none; letter-spacing: 0; }
-.sas__code { font-family: var(--font-mono); letter-spacing: .3em; }
-.sas__actions, .sas__msg { grid-column: 1 / -1; }
-.sas__msg { min-height: 1.3em; font-family: var(--font-mono); font-size: .78rem; color: var(--a-rouge); }
 .sas__note { font-size: .82rem !important; color: var(--text-3) !important; max-width: 60ch; }
-.sas__note code { font-family: var(--font-mono); color: var(--text-2); }
 @media (max-width: 860px) {
   .sas { min-height: 0; }
   .sas__in { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .sas__scan { width: min(52vw, 210px); }
 }
-@media (max-width: 520px) { .sas__form { grid-template-columns: minmax(0, 1fr); } }
 
 /* ----- Console staff (adm) ----- */
 body[data-page="staff"] .staffbar, body[data-page="staff"] .ftr { display: none; }
@@ -2119,5 +2112,5 @@ html[data-motion="normal"] .ftr__staff svg { animation: blink 2.4s ease-in-out i
 html[data-motion="normal"] .idcard__img:not(.is-vu) { animation: photo-scan .9s var(--ease) both; }
 .field > span small { text-transform: none; letter-spacing: 0; }
 
-/* Raison du mode démonstration quand le site est en ligne */
+/* Pourquoi le serveur du site ne répond pas */
 .clr__raison, .sas__raison { font-size: .78rem !important; line-height: 1.45; color: var(--signal) !important; padding: 8px 10px; border: 1px dashed color-mix(in srgb, var(--signal) 55%, transparent); background: color-mix(in srgb, var(--signal) 7%, transparent); }

@@ -14,7 +14,7 @@ import etat from "./routes/etat.mjs";
 
 const ROUTES = {
   "/api/contenu": contenu,
-  "/api/contenu.json": contenu, // adresse utilisée par les pages (voir public/api/contenu.json)
+  "/api/contenu.json": contenu, // adresse (relative) utilisée par les pages
   "/api/auth/login": connexion,
   "/api/auth/callback": retourDiscord,
   "/api/auth/logout": deconnexion,

@@ -1,10 +1,9 @@
 /* ==========================================================================
    SITE-73 · CONSOLE STAFF
    Mode à part : un sas d'accès, puis une console à onglets. Il faut être
-   administrateur (rôle Discord en ligne, code d'accès en démonstration)
-   et activer le mode staff. Toutes les actions passent par S.api : le
-   serveur (/api/staff) vérifie la session Discord à chaque appel.
-   En mode démonstration, un faux serveur local répond à sa place.
+   administrateur (rôle Discord) et activer le mode staff. Toutes les
+   actions passent par S.api : le serveur (/api/staff) vérifie la session
+   Discord à chaque appel. Sans serveur, la console reste fermée.
    Chaque onglet est un panneau avec son propre titre dans staff.html.
    ========================================================================== */
 (function () {
@@ -49,72 +48,29 @@
 
     /* ---------- Sas d'accès ------------------------------------------ */
     let sasBody = $("#staff-guard-body");
-    let minuteurBlocage = null;
     let renderGuard = function () {
       let se = S.session();
-      clearInterval(minuteurBlocage);
       guard.classList.remove("is-refus");
-      if (se.mode === "live") {
-        if (!se.user) {
-          sasBody.innerHTML = '<p class="sas__etat"><i></i>Identité inconnue</p>' +
-            "<p>Connecte-toi avec ton compte Discord. Seuls les membres qui ont un rôle d'administrateur sur le serveur franchissent ce sas.</p>" +
-            '<a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>";
-        } else if (!se.admin) {
-          guard.classList.add("is-refus");
-          sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Accès refusé</p>' +
-            "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'a pas le rôle d'administrateur sur le serveur Discord. Tu peux consulter l'intranet selon ton habilitation (niveau " + se.reel + ").</p>" +
-            '<a class="btn" href="index.html">Retour à l\'intranet</a>';
-        } else {
-          sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Identité vérifiée par Discord</p>' +
-            '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>Administrateur du serveur</small></div></div>" +
-            "<p>Active le mode staff pour ouvrir la console et afficher les commandes du staff sur tout le site.</p>" +
-            '<button type="button" class="btn btn--signal" data-staff-on>' + S.icon.shield + "Activer le mode staff</button>";
-        }
-        return;
-      }
-      if (se.admin) {
-        sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Code vérifié</p>' +
+      if (se.mode !== "live") {
+        sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Serveur indisponible</p>' +
+          "<p>La console staff a besoin du serveur du site : la connexion passe par Discord et chaque action y est vérifiée.</p>" +
+          (S.texteRaisonHorsLigne() ? '<p class="sas__note sas__raison">⚠ ' + esc(S.texteRaisonHorsLigne()) + "</p>" : "") +
+          '<button type="button" class="btn btn--signal" data-reessayer>Réessayer</button>';
+      } else if (!se.user) {
+        sasBody.innerHTML = '<p class="sas__etat"><i></i>Identité inconnue</p>' +
+          "<p>Connecte-toi avec ton compte Discord. Seuls les membres qui ont un rôle d'administrateur sur le serveur franchissent ce sas.</p>" +
+          '<a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>";
+      } else if (!se.admin) {
+        guard.classList.add("is-refus");
+        sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Accès refusé</p>' +
+          "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'a pas le rôle d'administrateur sur le serveur Discord. Tu peux consulter l'intranet selon ton habilitation (niveau " + se.reel + ").</p>" +
+          '<a class="btn" href="index.html">Retour à l\'intranet</a>';
+      } else {
+        sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Identité vérifiée par Discord</p>' +
+          '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>Administrateur du serveur</small></div></div>" +
+          "<p>Active le mode staff pour ouvrir la console et afficher les commandes du staff sur tout le site.</p>" +
           '<button type="button" class="btn btn--signal" data-staff-on>' + S.icon.shield + "Activer le mode staff</button>";
-        return;
       }
-      sasBody.innerHTML = '<p class="sas__etat"><i></i>Vérification requise</p>' +
-        '<form class="sas__form" id="sas-form" autocomplete="off">' +
-          '<label class="field"><span>Nom de code <small>(journal)</small></span><input class="input" id="sas-nom" maxlength="40" placeholder="Dr Varenne"></label>' +
-          '<label class="field"><span>Code d\'accès staff</span><input class="input sas__code" id="sas-code" type="password" required autocomplete="off" spellcheck="false"></label>' +
-          '<div class="sas__actions"><button type="submit" class="btn btn--signal" id="sas-ok">' + S.icon.lock + "Vérifier</button></div>" +
-          '<p class="sas__msg" id="sas-msg" role="status" aria-live="polite"></p>' +
-        "</form>" +
-        '<p class="sas__note">Site hors ligne (démonstration) : l\'accès staff est protégé par un code, qui se règle dans <code>config.codeStaff</code>. En ligne, il passe par les rôles administrateur Discord, vérifiés par le serveur.</p>' +
-        (S.texteRaisonDemo && S.texteRaisonDemo() ? '<p class="sas__note sas__raison">⚠ ' + esc(S.texteRaisonDemo()) + "</p>" : "");
-      let form = $("#sas-form"), msg = $("#sas-msg"), ok = $("#sas-ok"), code = $("#sas-code");
-      let bloquer = function () {
-        let reste = S.blocageStaff();
-        ok.disabled = !!reste;
-        code.disabled = !!reste;
-        if (reste) msg.textContent = "Trop d'essais. Réessaie dans " + Math.ceil(reste / 1000) + " s.";
-        else { clearInterval(minuteurBlocage); if (/Trop d'essais|bloqué/.test(msg.textContent)) msg.textContent = ""; }
-      };
-      if (S.blocageStaff()) { bloquer(); minuteurBlocage = setInterval(bloquer, 500); }
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        ok.disabled = true;
-        guard.classList.add("is-verif");
-        S.sfx("tick");
-        setTimeout(function () {
-          guard.classList.remove("is-verif");
-          let r = S.connexionStaffDemo($("#sas-nom").value, code.value);
-          if (r.ok) return;
-          ok.disabled = false;
-          code.value = "";
-          msg.textContent = r.message;
-          guard.classList.remove("is-refus");
-          void guard.offsetWidth;
-          guard.classList.add("is-refus");
-          S.sfx("deny");
-          if (r.bloque) { bloquer(); minuteurBlocage = setInterval(bloquer, 500); }
-          else code.focus();
-        }, 650);
-      });
     };
 
     /* ---------- Onglets ------------------------------------------------ */
@@ -180,7 +136,7 @@
       majBarre();
       let se = S.session();
       $("#adm-id").innerHTML = '<span class="adm__badge"><i></i>Mode staff</span>' +
-        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user ? se.user.nom : "Staff") + "</b><small>Administrateur · " + (se.mode === "live" ? "Discord" : "démo") + "</small></div></div>";
+        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user ? se.user.nom : "Staff") + "</b><small>Administrateur · Discord</small></div></div>";
       ouvrir(onglet);
       // Le focus était dans le sas, qui vient de disparaître
       if (ouverture) { let tb = $('[aria-selected="true"]', nav); if (tb) tb.focus({ preventScroll: true }); }
@@ -384,7 +340,7 @@
     let MSG_PHOTO = {
       roblox: "✓ Photo Roblox sur la carte.", discord: "Photo de profil Discord du membre.", "discord-secours": "Pseudo Roblox introuvable : photo Discord du membre à la place.",
       introuvable: "Pseudo Roblox introuvable.", invalide: "3 à 20 caractères : lettres, chiffres ou _.", attente: "Recherche de l'avatar Roblox…",
-      demo: "La photo Roblox s'affiche quand le site est en ligne.", aucune: ""
+      horsligne: "La photo Roblox s'affiche quand le serveur du site répond.", aucune: ""
     };
     let dessinerCarte = function () {
       if (!ficheCarte) return;

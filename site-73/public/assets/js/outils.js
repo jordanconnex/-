@@ -722,22 +722,22 @@
     doc.addEventListener("s73:session", dessinerCarte);
     S.tiltCard($("#carnet-stage"), card);
     let compte = $("#carnet-compte");
-    let SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur", demo: "le mode démonstration" };
+    let SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur" };
     let renderCompte = function () {
       if (!compte) return;
       let se = S.session();
       if (!se.user) {
         compte.innerHTML = '<p class="label">Compte</p><p>Tu consultes l\'intranet en visiteur (niveau 0).</p>' +
           (se.mode === "live" ? '<a class="btn btn--signal btn--sm" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>"
-            : '<div class="hero__cta"><button type="button" class="btn btn--signal btn--sm" data-demo-login>' + S.icon.chat + "Se connecter (démo)</button></div>");
+            : '<p class="muted">Connexion Discord indisponible : le serveur du site ne répond pas.</p><button type="button" class="btn btn--sm" data-reessayer>Réessayer</button>');
         return;
       }
-      compte.innerHTML = '<p class="label">Compte' + (se.mode === "live" ? " Discord" : " · démonstration") + "</p>" +
+      compte.innerHTML = '<p class="label">Compte Discord</p>' +
         '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>" + (se.admin ? "Administrateur" + (S.modeStaff() ? " · mode staff" : "") : "Membre du serveur") + "</small></div></div>" +
         "<p>Habilitation niveau <b>" + se.reel + "</b> (" + esc(S.habName(se.reel)) + "), attribuée par " + esc(SRC[se.source] || SRC.defaut) + ".</p>" +
         '<div class="hero__cta">' +
         (S.modeStaff() ? '<a class="btn btn--sm btn--signal" href="staff.html">Console staff</a>' : se.admin ? '<button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' : "") +
-        (se.mode === "live" ? '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>' : '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>') + "</div>";
+        '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
     };
     doc.addEventListener("s73:session", renderCompte);
     renderCompte();
