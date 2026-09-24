@@ -243,7 +243,7 @@
   S.habName = habName;
 
   /* ---------- Session (connexion Discord) --------------------------- */
-  // mode "live" : le site parle à ses fonctions Netlify (/api/…) ;
+  // mode "live" : le site parle à son Worker Cloudflare (/api/…) ;
   // mode "demo" : aperçu sans serveur (fichier local, hébergement statique).
   // Le mode staff est à part : il faut être administrateur (rôle Discord en
   // ligne, code d'accès en démonstration) PUIS l'activer. Hors mode staff,
@@ -1372,7 +1372,7 @@
     reindex();
   };
 
-  // Faux serveur local du mode démonstration (aperçu sans fonctions Netlify)
+  // Faux serveur local du mode démonstration (aperçu sans Worker)
   var ilYa = function (h) { return new Date(Date.now() - h * 3600000).toISOString(); };
   var demoGraine = function () {
     return {

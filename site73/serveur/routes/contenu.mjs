@@ -1,8 +1,8 @@
 // GET /api/contenu : session du visiteur + contenu caviardé selon SON habilitation.
-import { json, lireSession, lireMembre, habilitationPourMembre, estAdmin, lireDynamique, contenuPour } from "../lib/commun.mjs";
+import { json, lireSession, lireMembre, habilitationPourMembre, estAdmin, lireDynamique, contenuPour } from "../commun.mjs";
 
-export default async (req) => {
-  const session = lireSession(req);
+export default async function contenu(req) {
+  const session = await lireSession(req);
   const [membre, dyn] = await Promise.all([session ? lireMembre(session.id) : null, lireDynamique()]);
   const hab = session ? habilitationPourMembre(membre, session) : { niveau: 0, source: "visiteur" };
   return json({
@@ -12,6 +12,4 @@ export default async (req) => {
       : null,
     data: contenuPour(hab.niveau, dyn)
   });
-};
-
-export const config = { path: "/api/contenu" };
+}

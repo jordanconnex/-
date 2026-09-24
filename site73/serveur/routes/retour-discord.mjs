@@ -3,13 +3,13 @@
 // et ouvre une session signée.
 import {
   env, rediriger, cookie, lireCookie, urlDuSite, retourSur, stockage,
-  creerSession, rolesAdmin, habilitationDesRoles
-} from "../lib/commun.mjs";
+  creerSession, rolesAdmin, idsAdmin, habilitationDesRoles, apiDiscord
+} from "../commun.mjs";
 
-const API = "https://discord.com/api/v10";
 const effacerEtat = cookie("s73_oauth", "", 0);
 
-export default async (req) => {
+export default async function retourDiscord(req) {
+  const API = apiDiscord();
   const url = new URL(req.url);
   const [etatAttendu, retourBrut] = (lireCookie(req, "s73_oauth") || "").split("|");
   const retour = retourSur(retourBrut);
@@ -46,8 +46,7 @@ export default async (req) => {
   const membreDiscord = await repMembre.json();
 
   const roles = Array.isArray(membreDiscord.roles) ? membreDiscord.roles : [];
-  const admin = roles.some((r) => rolesAdmin().includes(r)) ||
-    env("ADMIN_IDS").split(/[\s,;]+/).includes(utilisateur.id);
+  const admin = roles.some((r) => rolesAdmin().includes(r)) || idsAdmin().includes(utilisateur.id);
   const nom = membreDiscord.nick || utilisateur.global_name || utilisateur.username;
   const avatar = utilisateur.avatar
     ? `https://cdn.discordapp.com/avatars/${utilisateur.id}/${utilisateur.avatar}.png?size=64`
@@ -56,7 +55,7 @@ export default async (req) => {
   // 3. Fiche du membre (l'éventuel réglage du staff est conservé)
   const s = stockage();
   const cle = "membres/" + utilisateur.id;
-  const ancien = (await s.get(cle, { type: "json" })) || {};
+  const ancien = (await s.get(cle)) || {};
   const maintenant = new Date().toISOString();
   await s.setJSON(cle, {
     ...ancien,
@@ -71,8 +70,6 @@ export default async (req) => {
   });
 
   // 4. Session
-  const { jeton: session, maxAge } = creerSession({ id: utilisateur.id, nom, avatar, admin });
+  const { jeton: session, maxAge } = await creerSession({ id: utilisateur.id, nom, avatar, admin });
   return rediriger(retour + "?connexion=ok", [cookie("s73_session", session, maxAge), effacerEtat]);
-};
-
-export const config = { path: "/api/auth/callback" };
+}

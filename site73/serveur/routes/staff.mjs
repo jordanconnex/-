@@ -1,22 +1,21 @@
 // /api/staff : espace d'administration. Réservé aux administrateurs.
 //   GET  → membres, niveau d'alerte, communiqués, événements, journal
 //   POST → { action, ... } puis renvoie l'état à jour
-import crypto from "node:crypto";
 import {
-  json, lireSession, estAdmin, stockage, lireDynamique, habilitationPourMembre, journaliser,
-  donnees, ALERTES, TYPES_EVENEMENT, dateParis, isoParis
-} from "../lib/commun.mjs";
+  json, lireSession, estAdmin, stockage, lireDynamique, ecrireDynamique, habilitationPourMembre, journaliser,
+  donnees, ALERTES, TYPES_EVENEMENT, dateParis, isoParis, aleatoireHex
+} from "../commun.mjs";
 
 const texte = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const niveauValide = (n) => Number.isInteger(n) && n >= 0 && n <= 5;
 
 async function etatStaff() {
   const s = stockage();
-  const { blobs } = await s.list({ prefix: "membres/" });
+  const cles = await s.list({ prefix: "membres/" });
   const [membres, dyn, journal] = await Promise.all([
-    Promise.all(blobs.map((b) => s.get(b.key, { type: "json" }))),
+    Promise.all(cles.map((c) => s.get(c))),
     lireDynamique(),
-    s.get("journal", { type: "json" })
+    s.get("journal")
   ]);
   return {
     membres: membres.filter(Boolean).map((m) => {
@@ -35,8 +34,8 @@ async function etatStaff() {
   };
 }
 
-export default async (req) => {
-  const session = lireSession(req);
+export default async function staff(req) {
+  const session = await lireSession(req);
   if (!estAdmin(session)) return json({ erreur: "Accès réservé à l'administration." }, 403);
   if (req.method === "GET") return json(await etatStaff());
   if (req.method !== "POST") return json({ erreur: "Méthode non autorisée." }, 405);
@@ -56,7 +55,7 @@ export default async (req) => {
   switch (corps.action) {
     case "habilitation": {
       const cle = "membres/" + String(corps.id || "").replace(/\D/g, "");
-      const membre = await s.get(cle, { type: "json" });
+      const membre = await s.get(cle);
       if (!membre) return json({ erreur: "Membre introuvable." }, 404);
       if (corps.niveau === null) {
         delete membre.override;
@@ -75,7 +74,7 @@ export default async (req) => {
     }
     case "alerte": {
       if (!ALERTES.includes(corps.niveau)) return json({ erreur: "Niveau d'alerte inconnu." }, 400);
-      await s.setJSON("etat", { alerte: corps.niveau, par, le: maintenant });
+      await ecrireDynamique({ etat: { alerte: corps.niveau, par, le: maintenant } });
       await journaliser(par, `Niveau d'alerte du site : ${donnees.alertes[corps.niveau].code}`);
       break;
     }
@@ -83,17 +82,17 @@ export default async (req) => {
       const titre = texte(corps.titre, 120), contenu = texte(corps.texte, 2000);
       const niveau = niveauValide(corps.niveau) ? corps.niveau : 0;
       if (!titre || !contenu) return json({ erreur: "Titre et texte obligatoires." }, 400);
-      const liste = (await s.get("communiques", { type: "json" })) || [];
+      const liste = (await lireDynamique()).communiques;
       liste.unshift({ id: crypto.randomUUID(), date: dateParis(), titre, texte: contenu, niveau, auteur: par, creeLe: maintenant });
-      await s.setJSON("communiques", liste.slice(0, 100));
+      await ecrireDynamique({ communiques: liste.slice(0, 100) });
       await journaliser(par, `Communiqué publié : « ${titre} »` + (niveau ? ` (niveau ${niveau})` : ""));
       break;
     }
     case "communique.supprimer": {
-      const liste = (await s.get("communiques", { type: "json" })) || [];
+      const liste = (await lireDynamique()).communiques;
       const cible = liste.find((c) => c.id === corps.id);
       if (!cible) return json({ erreur: "Communiqué introuvable." }, 404);
-      await s.setJSON("communiques", liste.filter((c) => c.id !== corps.id));
+      await ecrireDynamique({ communiques: liste.filter((c) => c.id !== corps.id) });
       await journaliser(par, `Communiqué supprimé : « ${cible.titre} »`);
       break;
     }
@@ -104,20 +103,20 @@ export default async (req) => {
       if (!titre || !date) return json({ erreur: "Titre et date obligatoires." }, 400);
       if (!TYPES_EVENEMENT.includes(corps.type)) return json({ erreur: "Type d'événement inconnu." }, 400);
       if (!(duree >= 15 && duree <= 720)) return json({ erreur: "Durée entre 15 et 720 minutes." }, 400);
-      const liste = (await s.get("evenements", { type: "json" })) || structuredClone(donnees.evenements);
-      const ev = { id: corps.id || "evt-" + crypto.randomBytes(4).toString("hex"), date, duree, type: corps.type, titre, lieu, texte: contenu };
+      const liste = (await lireDynamique()).evenements || structuredClone(donnees.evenements);
+      const ev = { id: corps.id || "evt-" + aleatoireHex(4), date, duree, type: corps.type, titre, lieu, texte: contenu };
       const i = liste.findIndex((e) => e.id === ev.id);
       if (i >= 0) liste[i] = ev; else liste.push(ev);
       liste.sort((a, b) => new Date(a.date) - new Date(b.date));
-      await s.setJSON("evenements", liste);
+      await ecrireDynamique({ evenements: liste });
       await journaliser(par, `Événement ${i >= 0 ? "modifié" : "ajouté"} : « ${titre} »`);
       break;
     }
     case "evenement.supprimer": {
-      const liste = (await s.get("evenements", { type: "json" })) || structuredClone(donnees.evenements);
+      const liste = (await lireDynamique()).evenements || structuredClone(donnees.evenements);
       const cible = liste.find((e) => e.id === corps.id);
       if (!cible) return json({ erreur: "Événement introuvable." }, 404);
-      await s.setJSON("evenements", liste.filter((e) => e.id !== corps.id));
+      await ecrireDynamique({ evenements: liste.filter((e) => e.id !== corps.id) });
       await journaliser(par, `Événement supprimé : « ${cible.titre} »`);
       break;
     }
@@ -125,6 +124,4 @@ export default async (req) => {
       return json({ erreur: "Action inconnue." }, 400);
   }
   return json(await etatStaff());
-};
-
-export const config = { path: "/api/staff" };
+}

@@ -4,7 +4,8 @@
 // Le code staff n'y figure que sous forme d'empreinte.
 import { writeFileSync } from "node:fs";
 import donnees from "../contenu/donnees.mjs";
-import { caviarder, sansSecrets } from "../netlify/lib/caviardage.mjs";
+import { caviarder } from "../serveur/caviardage.mjs";
+import { sansSecrets } from "./secrets.mjs";
 
 const cible = new URL("../public/assets/js/data.js", import.meta.url);
 const entete = `/* FICHIER GÉNÉRÉ AUTOMATIQUEMENT — ne pas modifier.

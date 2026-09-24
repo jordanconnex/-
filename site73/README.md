@@ -1,6 +1,6 @@
 # Site-73 · site web du RP SCP
 
-Site du RP SCP « Site-73 » : 14 pages, connexion avec Discord, habilitations attribuées par le staff et espace d'administration. Hébergement prévu sur **Netlify** (fichiers statiques et fonctions serveur).
+Site du RP SCP « Site-73 » : 14 pages, connexion avec Discord, habilitations attribuées par le staff et espace d'administration. Hébergement sur **Cloudflare Workers** (offre gratuite) : les pages sont servies comme fichiers statiques, et un petit Worker gère la connexion Discord et l'espace staff.
 
 ## Comment marchent les habilitations
 - **Visiteur non connecté** : niveau 0. Tous les passages classifiés sont masqués.
@@ -28,15 +28,15 @@ Le staff passe par un mode à part :
 4. **Quitter le mode staff** fait disparaître toutes les commandes.
 
 Qui peut entrer :
-- **En ligne (Netlify + Discord)** : seuls les comptes administrateurs Discord. Le serveur vérifie la session à chaque action : même en trafiquant la page, un membre ne peut rien modifier.
+- **En ligne (Cloudflare + Discord)** : seuls les comptes administrateurs Discord. Le serveur vérifie la session à chaque action : même en trafiquant la page, un membre ne peut rien modifier.
 - **Sans serveur** (aperçu, fichier local, hébergement statique) : un **code d'accès staff**, réglé dans `config.codeStaff` du fichier `contenu/donnees.mjs` (par défaut `SITE73-O5`, **change-le**). Le site publié n'en contient que l'empreinte ; après 5 erreurs, l'accès est bloqué 30 secondes. Dans ce mode, tout reste enregistré dans le navigateur de la personne : une modification ne touche jamais les autres visiteurs. Pour que le staff pilote vraiment le site pour tout le monde, il faut la mise en ligne ci-dessous.
 
-## Mise en ligne (une seule fois)
+## Mise en ligne sur Cloudflare (une seule fois)
 
 ### 1. Créer l'application Discord
 1. Va sur <https://discord.com/developers/applications>, puis **New Application** (nom : « Site-73 »).
 2. Dans **OAuth2**, copie le **Client ID** et le **Client Secret** (bouton *Reset Secret*).
-3. Toujours dans **OAuth2 → Redirects**, ajoute `https://TON-SITE.netlify.app/api/auth/callback` (remplace par l'adresse réelle de ton site Netlify).
+3. L'adresse de retour (**OAuth2 → Redirects**) s'ajoute à l'étape 4, une fois l'adresse du site connue.
 
 Aucun bot n'est nécessaire.
 
@@ -46,10 +46,21 @@ Dans Discord : **Paramètres → Avancés → Mode développeur**. Ensuite :
 - **Paramètres du serveur → Rôles**, clic droit sur un rôle → **Copier l'identifiant du rôle** ;
 - clic droit sur un membre → **Copier l'identifiant de l'utilisateur**.
 
-### 3. Créer le site sur Netlify
-1. **Add new site → Import an existing project**, puis choisis ce dépôt GitHub.
-2. **Base directory** : `site73`. Le reste (build, dossier publié, fonctions) est lu dans `site73/netlify.toml`.
-3. Dans **Site configuration → Environment variables**, ajoute :
+### 3. Créer le Worker sur Cloudflare
+1. Crée un compte gratuit sur <https://dash.cloudflare.com>.
+2. **Workers & Pages → Create application → Import a repository**. Connecte ton compte GitHub et choisis ce dépôt.
+3. Réglages du projet :
+   - **Project name** : `site73`. Ce nom doit être identique au champ `name` de `wrangler.jsonc`, sinon le déploiement échoue.
+   - **Root directory** (dans *Advanced settings*) : `site73`.
+   - **Build command** : `npm run build`.
+   - **Deploy command** : `npx wrangler deploy` (valeur proposée par défaut).
+4. **Deploy**. Au premier déploiement, Cloudflare crée tout seul l'espace de stockage KV `SITE73` qui garde les membres, l'alerte, les communiqués, les événements et le journal.
+5. L'adresse du site s'affiche, par exemple `https://site73.ton-compte.workers.dev`.
+
+Le reste (fichiers publiés, Worker, stockage) est lu dans `site73/wrangler.jsonc`. À chaque envoi sur la branche de production (`main` par défaut), Cloudflare redéploie le site.
+
+### 4. Variables et secrets
+1. Dans Cloudflare : **Workers & Pages → site73 → Settings → Variables and Secrets → Add**. Choisis le type **Secret** pour `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (et, si tu veux, pour toutes les autres).
 
 | Variable | Valeur |
 |---|---|
@@ -61,15 +72,33 @@ Dans Discord : **Paramètres → Avancés → Mode développeur**. Ensuite :
 | `ADMIN_IDS` | *(facultatif)* identifiants d'utilisateurs admin |
 | `HABILITATION_ROLES` | *(facultatif)* `idRole:niveau`, ex. `123:2,456:3` |
 | `HABILITATION_PAR_DEFAUT` | *(facultatif)* niveau des membres sans rôle, 1 par défaut |
+| `SITE_URL` | *(facultatif)* adresse du site si tu utilises ton propre nom de domaine |
 
-4. Redéploie le site (**Deploys → Trigger deploy**).
+2. Dans Discord (**OAuth2 → Redirects**), ajoute `https://site73.ton-compte.workers.dev/api/auth/callback`, avec l'adresse réelle de l'étape 3.
 
-Les membres, l'alerte, les communiqués et les événements du staff sont stockés dans **Netlify Blobs**, inclus dans Netlify, sans configuration.
+Les variables s'appliquent tout de suite, et `wrangler.jsonc` (`"keep_vars": true`) les conserve à chaque déploiement.
+
+**Si le stockage n'a pas été créé tout seul** (erreur « KV namespace » au déploiement) : **Storage & Databases → KV → Create**, nom `site73`. Copie son identifiant, puis dans `wrangler.jsonc` remplace `{ "binding": "SITE73" }` par `{ "binding": "SITE73", "id": "<identifiant>" }`.
+
+### Limites de l'offre gratuite
+Les pages et fichiers statiques sont illimités. Chaque page ouverte appelle une fois le Worker (100 000 appels par jour), qui fait deux lectures KV (100 000 par jour). Chaque connexion Discord et chaque action du staff font une ou deux écritures (1 000 par jour). C'est largement assez pour un serveur de RP.
+
+Une modification du staff peut mettre jusqu'à une minute pour être vue partout dans le monde : c'est le délai de propagation de KV.
+
+### Essayer en local (facultatif)
+Dans le terminal de VS Code, depuis le dossier `site73` :
+```
+npm install
+cp .dev.vars.exemple .dev.vars
+npm run dev
+```
+Remplis `.dev.vars` (il n'est jamais envoyé sur GitHub), puis ouvre <http://localhost:8787>. Pour te connecter en local, ajoute aussi `http://localhost:8787/api/auth/callback` dans les Redirects Discord.
 
 ### Important
 - **Garde le dépôt GitHub privé** : `contenu/donnees.mjs` contient tout le texte classifié.
 - **Retirer un admin** : il perd l'accès à sa prochaine connexion, au plus tard 3 jours après. Pour couper tout de suite, change `SESSION_SECRET` : tout le monde devra se reconnecter.
-- Le fichier `_redirects` à la racine du dépôt empêche le site Complexe 25 (qui publie tout le dépôt) de servir les fichiers privés du Site-73.
+- Seul le dossier `public/` est publié. Le contenu classifié, le code du serveur et la configuration restent sur le serveur de Cloudflare.
+- Le fichier `_redirects` à la racine du dépôt empêche le site Complexe 25 (hébergé ailleurs, il publie tout le dépôt) de servir les fichiers privés du Site-73.
 
 ## Modifier le contenu
 Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`, le code staff du mode démonstration dans `config.codeStaff`.
@@ -81,7 +110,7 @@ Caviardage : `[[3|texte]]` n'est lisible qu'à partir de l'habilitation 3. `[DON
 Les communiqués, les événements et le niveau d'alerte se gèrent aussi depuis la console staff, sans toucher au code.
 
 ## Mode démonstration
-Ouvert sans serveur (fichier local, aperçu claude.ai, ancien hébergement), le site passe en **mode démonstration** :
+Ouvert sans serveur (fichier local, aperçu claude.ai, hébergement de fichiers simple), le site passe en **mode démonstration** :
 - on arrive en visiteur (niveau 0) ;
 - « Se connecter (démo) », dans le bouton « Hab. », connecte un membre de démonstration ; son habilitation est celle que le staff lui donne dans la console (niveau 2 par défaut) ;
 - le mode staff demande le code d'accès (voir plus haut). La console y fonctionne avec des données d'exemple, enregistrées seulement dans ton navigateur.
@@ -89,11 +118,14 @@ Ouvert sans serveur (fichier local, aperçu claude.ai, ancien hébergement), le 
 ## Structure
 ```
 site73/
-  netlify.toml, package.json    configuration Netlify
+  wrangler.jsonc, package.json  configuration Cloudflare
+  .dev.vars.exemple             liste des variables et secrets
   contenu/donnees.mjs           contenu complet (privé)
   scripts/build.mjs             génère la version publique caviardée
-  netlify/functions/            connexion Discord, contenu, espace staff
-  netlify/lib/                  session signée, stockage, caviardage
+  serveur/worker.mjs            Worker : aiguille les routes /api/…
+  serveur/routes/               connexion Discord, contenu, espace staff
+  serveur/commun.mjs            session signée, stockage KV, fusion du contenu
+  serveur/caviardage.mjs        masque les passages selon l'habilitation
   public/                       le site publié (14 pages)
 ```
 
