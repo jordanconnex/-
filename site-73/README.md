@@ -59,6 +59,18 @@ Dans Discord : **Paramètres → Avancés → Mode développeur**. Ensuite :
 
 Le reste (fichiers publiés, Worker, stockage) est lu dans `site-73/wrangler.jsonc`. À chaque envoi sur la branche de production (`main` par défaut), Cloudflare redéploie le site.
 
+#### Sans GitHub ni terminal : le Worker en un seul fichier
+`npm run worker-unique` fabrique `dist/worker.js` : le serveur **et** toutes les pages dans un seul fichier, sans `import`, à coller dans l'éditeur en ligne de Cloudflare. (Coller `serveur/worker.mjs` seul donne 8 erreurs : il a besoin des autres fichiers du dossier `serveur/`.) Ce fichier contient le texte classifié : ne le publie jamais.
+
+1. **Supprime l'ancien Worker** envoyé en glisser-déposer : **Workers & Pages → site-73 → Settings → Delete**. Sinon, ses anciens fichiers passent avant le code et le site reste bloqué.
+2. **Workers & Pages → Create → Worker → Start with Hello World!** Nom : `site-73` (l'adresse reste `https://site-73.<ton-compte>.workers.dev`), puis **Deploy**.
+3. **Edit code** : dans `worker.js`, sélectionne tout (Ctrl + A), efface, colle **tout** le fichier `dist/worker.js`, puis **Deploy**.
+4. **Settings → Bindings → Add → KV namespace** : nom de variable `SITE73`, crée un espace nommé `site-73`, puis **Add binding**.
+5. **Settings → Variables and Secrets** : ajoute les variables de la liste ci-dessous (`DISCORD_CLIENT_SECRET` et `SESSION_SECRET` en type *Secret*).
+6. Vérifie `https://site-73.<ton-compte>.workers.dev/api/etat` : tout doit être « ok ».
+
+À chaque modification du site, régénère `dist/worker.js` et recolle-le (étape 3) : la liaison KV et les variables restent en place.
+
 ### 4. Variables et secrets
 1. Dans Cloudflare : **Workers & Pages → site-73 → Settings → Variables and Secrets → Add**. Choisis le type **Secret** pour `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (et, si tu veux, pour toutes les autres).
 
@@ -126,7 +138,9 @@ site-73/
   .dev.vars.exemple             liste des variables et secrets
   contenu/donnees.mjs           contenu complet (privé)
   scripts/build.mjs             génère la version publique caviardée
+  scripts/worker-unique.mjs     génère dist/worker.js (Worker en un seul fichier)
   serveur/worker.mjs            Worker : aiguille les routes /api/…
+  serveur/unique.mjs            entrée du Worker en un seul fichier (pages intégrées)
   serveur/routes/               connexion Discord, contenu, espace staff, photo Roblox
   functions/api/                même code pour Cloudflare Pages
   serveur/commun.mjs            session signée, stockage KV, fusion du contenu

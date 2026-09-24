@@ -4,6 +4,7 @@
 /site-73/contenu/*          /404   404!
 /site-73/serveur/*          /404   404!
 /site-73/scripts/*          /404   404!
+/site-73/dist/*             /404   404!
 /site-73/node_modules/*     /404   404!
 /site-73/.wrangler/*        /404   404!
 /site-73/wrangler.jsonc     /404   404!
