@@ -8,7 +8,8 @@ export default async function contenu(req) {
   return json({
     mode: "live",
     session: session
-      ? { id: session.id, nom: session.nom, avatar: session.avatar, admin: estAdmin(session), habilitation: hab.niveau, source: hab.source }
+      ? { id: session.id, nom: session.nom, avatar: session.avatar, admin: estAdmin(session), habilitation: hab.niveau, source: hab.source,
+          fiche: membre && membre.fiche ? membre.fiche : null }
       : null,
     data: contenuPour(hab.niveau, dyn)
   });

@@ -1415,9 +1415,29 @@
       etat: d.etat || { alerte: staticAlerte, par: null, le: null },
       communiques: d.communiques,
       evenements: d.evenements || staticEvenements,
-      journal: d.journal.slice(0, 60)
+      journal: d.journal.slice(0, 60),
+      fiches: d.fiches || []
     };
   };
+  // Même contrôle des fiches que le vrai serveur (serveur/routes/staff.mjs)
+  let STATUTS_FICHE = ["service", "attente", "archive"];
+  let validerFiche = function (c, t) {
+    let f = {
+      prenom: t(c.prenom, 30), nom: t(c.nom, 30), roblox: t(c.roblox, 20), apparence: t(c.apparence, 300), perso: t(c.perso, 160),
+      histoire: t(c.histoire, 1200), comp: t(c.comp, 200), statut: STATUTS_FICHE.indexOf(c.statut) >= 0 ? c.statut : "service"
+    };
+    if (!f.prenom && !f.nom) return "Indique au moins un prénom ou un nom.";
+    if (c.age === null || c.age === undefined || c.age === "") f.age = null;
+    else if (typeof c.age === "number" && c.age % 1 === 0 && c.age >= 18 && c.age <= 75) f.age = c.age;
+    else return "L'âge doit être compris entre 18 et 75 ans.";
+    let dept = D.departements.filter(function (x) { return x.id === c.dept; })[0];
+    if (!dept) return "Département inconnu.";
+    if (!dept.grades.some(function (g) { return g[0] === c.grade; })) return "Grade inconnu pour ce département.";
+    f.dept = dept.id; f.grade = c.grade;
+    if (f.roblox && !/^[A-Za-z0-9_]{3,20}$/.test(f.roblox)) return "Pseudo Roblox : 3 à 20 lettres, chiffres ou _.";
+    return f;
+  };
+  let nomFiche = function (f) { return ((f.prenom || "") + " " + (f.nom || "")).trim(); };
   let demoAction = function (action, c) {
     let d = demoLire(), par = sess.user ? sess.user.nom : "Admin (démo)", now = new Date().toISOString();
     let t = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
@@ -1460,6 +1480,30 @@
       liste.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       d.evenements = liste;
       log("Événement " + (i >= 0 ? "modifié" : "ajouté") + " : « " + ti + " »");
+    } else if (action === "fiche.enregistrer") {
+      let v = validerFiche(c, t);
+      if (typeof v === "string") err(v);
+      let fiches = (d.fiches || []).slice();
+      let lien = c.discordId ? String(c.discordId) : null;
+      if (lien && !d.membres.some(function (m) { return m.id === lien; })) err("Membre Discord introuvable.");
+      let i = -1;
+      fiches.forEach(function (f, j) { if (f.id === c.id) i = j; });
+      if (c.id && i < 0) err("Fiche introuvable.");
+      let autre = lien && v.statut !== "archive" && fiches.filter(function (f, j) { return j !== i && f.discordId === lien && f.statut !== "archive"; })[0];
+      if (autre) err("Ce membre a déjà une fiche active : " + nomFiche(autre) + ". Archive-la d'abord.");
+      let ancienne = i >= 0 ? fiches[i] : null;
+      let fiche = Object.assign(v, {
+        id: ancienne ? ancienne.id : "fiche-" + Date.now().toString(36), discordId: lien,
+        creePar: ancienne ? ancienne.creePar : par, creeLe: ancienne ? ancienne.creeLe : now, modifiePar: par, modifieLe: now
+      });
+      if (ancienne) fiches[i] = fiche; else fiches.unshift(fiche);
+      d.fiches = fiches;
+      log("Fiche " + (ancienne ? "modifiée" : "créée") + " : " + nomFiche(fiche) + (fiche.statut !== "service" ? " (" + (fiche.statut === "attente" ? "en attente" : "archivée") + ")" : ""));
+    } else if (action === "fiche.supprimer") {
+      let cibleF = (d.fiches || []).filter(function (f) { return f.id === c.id; })[0];
+      if (!cibleF) err("Fiche introuvable.");
+      d.fiches = d.fiches.filter(function (f) { return f.id !== c.id; });
+      log("Fiche supprimée : " + nomFiche(cibleF));
     } else if (action === "evenement.supprimer") {
       let l2 = (d.evenements || staticEvenements).slice();
       let cible = l2.filter(function (x) { return x.id === c.id; })[0];
@@ -1530,6 +1574,7 @@
   let passerEnDemo = function () {
     sess.mode = "demo";
     let st = demoStaff();
+    sess.fiche = null;
     if (st) {
       sess.admin = true;
       sess.user = { id: "demo-admin", nom: st.nom, avatar: null };
@@ -1542,8 +1587,9 @@
       sess.user = { id: "demo-membre", nom: "Membre (démo)", avatar: null };
       sess.reel = h.niveau;
       sess.source = h.source;
+      sess.fiche = (demoLire().fiches || []).filter(function (f) { return f.discordId === "demo-membre" && f.statut !== "archive"; })[0] || null;
     } else {
-      sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur";
+      sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
     }
     clearance = niveauVu();
     demoAppliquer();
@@ -1704,8 +1750,9 @@
           sess.admin = !!p.session.admin;
           sess.reel = p.session.habilitation;
           sess.source = p.session.source;
+          sess.fiche = p.session.fiche || null;
         } else {
-          sess.user = null; sess.admin = false; sess.reel = 0; sess.source = "visiteur";
+          sess.user = null; sess.admin = false; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
         }
         clearance = niveauVu();
       })
@@ -1742,7 +1789,7 @@
 
   /* ---------- Apparitions au défilement & compteurs ------------------ */
   let LISTES = ".cells, .sectors, .groups, .units, .steps, .badges, .evt-list, .tl, .articles, .codes, .clearance, .classes, .pclasses, .glossary, .zone-index, .st-list, .comms, .stats, .seen-grid, .faq, .plan-list, .status, .hero__facts, .st-journal, .ticks";
-  let BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .cons__card, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
+  let BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .al-choix, .adm__card, .adm__stats, .adm__form, .adm__apercu, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
   let observateur = null;
   let compter = function (el) {
     if (reduced || el.getAttribute("data-compte")) return;
@@ -1873,7 +1920,7 @@
   // Onde au clic sur les boutons
   doc.addEventListener("pointerdown", function (e) {
     if (reduced) return;
-    let b = e.target.closest(".btn, .seg button, .cons__nav button, .cons__rac, .staffbar__btn");
+    let b = e.target.closest(".btn, .seg button, .adm__nav button, .adm__rac, .al-carte, .staffbar__btn");
     if (!b || b.disabled) return;
     let r = b.getBoundingClientRect();
     let zone = doc.createElement("span");
@@ -1886,7 +1933,7 @@
   });
 
   // Lueur qui suit le pointeur sur les cartes
-  let LUEUR = ".stat, .st-item, .badge, .cons__card, .cons__rac, .status__cell, .unit, .group, .step, .evt, .article, .code-card";
+  let LUEUR = ".stat, .st-item, .badge, .adm__card, .adm__rac, .adm__stat, .fiche, .status__cell, .unit, .group, .step, .evt, .article, .code-card";
   let lueurRaf = 0, lueurEv = null;
   doc.addEventListener("pointermove", function (e) {
     if (reduced || e.pointerType === "touch") return;

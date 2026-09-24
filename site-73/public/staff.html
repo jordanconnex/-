@@ -46,71 +46,77 @@
       </div>
     </section>
 
-    <!-- Console staff -->
-    <div class="cons" id="staff-app" hidden>
-      <aside class="cons__side" aria-label="Console staff">
-        <div class="cons__who" id="cons-who"></div>
-        <nav class="cons__nav" id="cons-nav" role="tablist" aria-label="Sections de la console">
-          <button type="button" role="tab" id="tab-tableau" aria-controls="p-tableau" aria-selected="true" data-onglet="tableau">Tableau de bord</button>
-          <button type="button" role="tab" id="tab-alerte" aria-controls="p-alerte" aria-selected="false" data-onglet="alerte">Alerte<span class="cons__pill" data-cons-alerte></span></button>
-          <button type="button" role="tab" id="tab-membres" aria-controls="p-membres" aria-selected="false" data-onglet="membres">Habilitations<span class="cons__pill" data-cons-count="membres"></span></button>
-          <button type="button" role="tab" id="tab-communiques" aria-controls="p-communiques" aria-selected="false" data-onglet="communiques">Communiqués<span class="cons__pill" data-cons-count="communiques"></span></button>
-          <button type="button" role="tab" id="tab-evenements" aria-controls="p-evenements" aria-selected="false" data-onglet="evenements">Événements<span class="cons__pill" data-cons-count="evenements"></span></button>
-          <button type="button" role="tab" id="tab-journal" aria-controls="p-journal" aria-selected="false" data-onglet="journal">Journal</button>
-          <i class="cons__ind" aria-hidden="true"></i>
+    <!-- Console staff : un menu à gauche, un panneau par onglet (chacun avec son titre) -->
+    <div class="adm" id="staff-app" hidden>
+      <h1 class="sr-only">Console staff du Site-73</h1>
+      <aside class="adm__side" aria-label="Console staff">
+        <div class="adm__id" id="adm-id"></div>
+        <nav class="adm__nav" id="adm-nav" role="tablist" aria-label="Sections de la console" aria-orientation="vertical">
+          <button type="button" role="tab" id="tab-tableau" aria-controls="p-tableau" aria-selected="false" tabindex="-1" data-onglet="tableau"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Tableau de bord</span></button>
+          <button type="button" role="tab" id="tab-alerte" aria-controls="p-alerte" aria-selected="false" tabindex="-1" data-onglet="alerte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg><span>Alerte</span><b class="adm__pill" data-cons-alerte></b></button>
+          <button type="button" role="tab" id="tab-membres" aria-controls="p-membres" aria-selected="false" tabindex="-1" data-onglet="membres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6"/><path d="M16 4a4 4 0 0 1 0 8M22 21c0-3-1.5-5-4-5.7"/></svg><span>Habilitations</span><b class="adm__pill" data-cons-count="membres"></b></button>
+          <button type="button" role="tab" id="tab-fiches" aria-controls="p-fiches" aria-selected="false" tabindex="-1" data-onglet="fiches"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 16.5c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3M14 10h4M14 13.5h3"/></svg><span>Fiches</span><b class="adm__pill" data-cons-count="fiches"></b></button>
+          <button type="button" role="tab" id="tab-communiques" aria-controls="p-communiques" aria-selected="false" tabindex="-1" data-onglet="communiques"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 11v3l12 5V6L3 11z"/><path d="M15 9h3a3 3 0 0 1 0 6h-3"/><path d="M6 15l1 5h3l-1-4"/></svg><span>Communiqués</span><b class="adm__pill" data-cons-count="communiques"></b></button>
+          <button type="button" role="tab" id="tab-evenements" aria-controls="p-evenements" aria-selected="false" tabindex="-1" data-onglet="evenements"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Événements</span><b class="adm__pill" data-cons-count="evenements"></b></button>
+          <button type="button" role="tab" id="tab-journal" aria-controls="p-journal" aria-selected="false" tabindex="-1" data-onglet="journal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg><span>Journal</span></button>
         </nav>
-        <div class="cons__foot">
+        <div class="adm__out">
           <a class="btn btn--sm" href="index.html">Voir le site</a>
           <button type="button" class="btn btn--sm btn--danger" data-staff-off>Quitter le mode staff</button>
         </div>
       </aside>
 
-      <div class="cons__main">
-        <header class="cons__head">
-          <div>
-            <p class="eyebrow">Console staff · <span data-session-mode>—</span></p>
-            <h1 class="cons__title" id="cons-title">Tableau de bord</h1>
-          </div>
-          <p class="cons__clock mono"><span>Heure du site</span><b data-clock>--:--:--</b></p>
-        </header>
-        <p class="muted" id="st-loading">Chargement des données du staff…</p>
+      <div class="adm__main">
+        <p class="adm__load" id="st-loading" role="status">Chargement des données du staff…</p>
 
-        <section class="cons__panel" id="p-tableau" role="tabpanel" aria-labelledby="tab-tableau" data-panneau="tableau">
-          <div class="stats st-resume" id="st-resume"></div>
-          <div class="cons__grid">
-            <div class="cons__card cons__card--alerte" id="st-dash-alerte"></div>
-            <div class="cons__card">
-              <p class="label">Raccourcis</p>
-              <div class="cons__raccourcis">
-                <button type="button" class="cons__rac" data-aller="communiques"><b>Publier</b><span>un communiqué</span></button>
-                <button type="button" class="cons__rac" data-aller="evenements"><b>Programmer</b><span>un événement</span></button>
-                <button type="button" class="cons__rac" data-aller="membres"><b>Régler</b><span>une habilitation</span></button>
-                <button type="button" class="cons__rac" data-aller="alerte"><b>Déclencher</b><span>une alerte</span></button>
+        <section class="adm__panel" id="p-tableau" role="tabpanel" aria-labelledby="h-tableau" data-panneau="tableau" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Console staff · <span data-session-mode>—</span></p>
+            <h2 class="adm__title" id="h-tableau">Tableau de bord</h2>
+            <p class="adm__lede">L'état du site en un coup d'œil. Chaque action du staff est inscrite au journal.</p>
+          </header>
+          <div class="adm__stats" id="st-resume"></div>
+          <div class="adm__grid">
+            <div class="adm__card adm__card--alerte" id="st-dash-alerte"></div>
+            <div class="adm__card">
+              <h3 class="label">Raccourcis</h3>
+              <div class="adm__raccourcis">
+                <button type="button" class="adm__rac" data-aller="communiques"><b>Publier</b><span>un communiqué</span></button>
+                <button type="button" class="adm__rac" data-aller="evenements"><b>Programmer</b><span>un événement</span></button>
+                <button type="button" class="adm__rac" data-aller="membres"><b>Régler</b><span>une habilitation</span></button>
+                <button type="button" class="adm__rac" data-aller="alerte"><b>Déclencher</b><span>une alerte</span></button>
               </div>
             </div>
-            <div class="cons__card">
-              <p class="label">Prochains événements</p>
+            <div class="adm__card">
+              <h3 class="label">Prochains événements</h3>
               <ul class="st-mini" id="st-dash-evt"></ul>
             </div>
-            <div class="cons__card">
-              <p class="label">Dernières actions</p>
+            <div class="adm__card">
+              <h3 class="label">Dernières actions</h3>
               <ol class="st-mini" id="st-dash-journal"></ol>
             </div>
           </div>
         </section>
 
-        <section class="cons__panel" id="p-alerte" role="tabpanel" aria-labelledby="tab-alerte" data-panneau="alerte" hidden>
-          <p class="sec__lede">Le niveau choisi s'affiche pour tous les visiteurs : bandeau, couleurs, halo, alarme au chargement. Pratique pour lancer un événement en Code Rouge.</p>
-          <div class="st-alerte">
-            <div class="st-alerte__jauge" id="st-alerte-jauge" aria-hidden="true"></div>
-            <div class="seg" id="st-alerte-seg" role="radiogroup" aria-label="Niveau d'alerte"></div>
-            <p id="st-alerte-info"></p>
-            <div><button type="button" class="btn btn--signal" id="st-alerte-apply" disabled>Appliquer à tout le site</button></div>
+        <section class="adm__panel" id="p-alerte" role="tabpanel" aria-labelledby="h-alerte" data-panneau="alerte" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Tout le site</p>
+            <h2 class="adm__title" id="h-alerte">Niveau d'alerte</h2>
+            <p class="adm__lede">Le niveau choisi s'affiche pour tous les visiteurs : bandeau, couleurs, halo, et une alarme au chargement. Choisis un niveau, puis applique-le.</p>
+          </header>
+          <div class="al-choix" id="st-alerte-seg" role="radiogroup" aria-label="Niveau d'alerte"></div>
+          <div class="al-bas">
+            <p id="st-alerte-info" aria-live="polite"></p>
+            <button type="button" class="btn btn--signal" id="st-alerte-apply" disabled>Appliquer à tout le site</button>
           </div>
         </section>
 
-        <section class="cons__panel" id="p-membres" role="tabpanel" aria-labelledby="tab-membres" data-panneau="membres" hidden>
-          <p class="sec__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff prend le dessus sur les rôles.</p>
+        <section class="adm__panel" id="p-membres" role="tabpanel" aria-labelledby="h-membres" data-panneau="membres" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Membres du serveur</p>
+            <h2 class="adm__title" id="h-membres">Habilitations</h2>
+            <p class="adm__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff passe avant les rôles.</p>
+          </header>
           <div class="toolbar">
             <label class="search"><span class="sr-only">Rechercher un membre</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-q" type="search" placeholder="Nom, pseudo ou identifiant Discord…" autocomplete="off"></label>
             <label class="sort"><span>Niveau</span>
@@ -118,7 +124,7 @@
             </label>
           </div>
           <p class="db-count" id="st-membres-count" aria-live="polite"></p>
-          <div class="table-wrap">
+          <div class="table-wrap adm__table">
             <table class="table st-table">
               <thead><tr><th scope="col">Membre</th><th scope="col">Habilitation</th><th scope="col">Origine</th><th scope="col">Dernière visite</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
               <tbody id="st-membres"></tbody>
@@ -126,52 +132,114 @@
           </div>
         </section>
 
-        <section class="cons__panel" id="p-communiques" role="tabpanel" aria-labelledby="tab-communiques" data-panneau="communiques" hidden>
-          <div class="two">
-            <div>
-              <h2 class="h2">Nouveau communiqué</h2>
-              <p class="sec__lede">Il s'affiche sur l'accueil et dans les archives. Tu peux masquer un passage avec [[3|texte]] : seuls les niveaux 3 et plus le liront.</p>
-              <form class="gen__form" id="st-comm-form">
-                <label class="field full"><span>Titre</span><input class="input" id="st-comm-titre" maxlength="120" required autocomplete="off"></label>
-                <label class="field full"><span>Texte</span><textarea class="textarea" id="st-comm-texte" rows="5" maxlength="2000" required></textarea></label>
-                <label class="field full"><span>Visible par</span>
-                  <select class="select" id="st-comm-niveau"><option value="0">Tout le monde, même sans connexion</option><option value="1">Habilitation 1 et plus</option><option value="2">Habilitation 2 et plus</option><option value="3">Habilitation 3 et plus</option><option value="4">Habilitation 4 et plus</option><option value="5">Habilitation 5 uniquement</option></select></label>
-                <div class="gen__actions"><button type="submit" class="btn btn--signal">Publier le communiqué</button></div>
-              </form>
+        <section class="adm__panel" id="p-fiches" role="tabpanel" aria-labelledby="h-fiches" data-panneau="fiches" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Dossiers du personnel</p>
+            <h2 class="adm__title" id="h-fiches">Fiches</h2>
+            <p class="adm__lede">Crée et valide les fiches personnage des joueurs : carte d'accès avec leur photo Roblox, texte prêt à copier sur Discord. Une fiche liée à un membre s'affiche dans son carnet.</p>
+          </header>
+          <div class="adm__cols adm__cols--fiche">
+            <form class="adm__form" id="st-fiche-form" novalidate>
+              <h3 class="label" id="st-fiche-mode">Nouvelle fiche</h3>
+              <input type="hidden" id="st-fiche-id">
+              <label class="field"><span>Membre Discord</span><select class="select" id="st-fiche-membre"></select></label>
+              <div class="adm__duo">
+                <label class="field"><span>Prénom</span><input class="input" id="st-fiche-prenom" maxlength="30" autocomplete="off"></label>
+                <label class="field"><span>Nom</span><input class="input" id="st-fiche-nom" maxlength="30" autocomplete="off"></label>
+              </div>
+              <div class="adm__duo">
+                <label class="field"><span>Âge</span><input class="input" id="st-fiche-age" type="number" min="18" max="75" inputmode="numeric"></label>
+                <label class="field"><span>Statut</span><select class="select" id="st-fiche-statut"><option value="service">En service</option><option value="attente">En attente</option><option value="archive">Archivée</option></select></label>
+              </div>
+              <div class="adm__duo">
+                <label class="field"><span>Département</span><select class="select" id="st-fiche-dept"></select></label>
+                <label class="field"><span>Grade</span><select class="select" id="st-fiche-grade"></select></label>
+              </div>
+              <label class="field"><span>Pseudo Roblox <small>(photo de la carte)</small></span><input class="input" id="st-fiche-roblox" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PseudoRoblox"><small class="hint" id="st-fiche-photo" aria-live="polite"></small></label>
+              <label class="field"><span>Apparence</span><textarea class="textarea" id="st-fiche-apparence" rows="2" maxlength="300"></textarea></label>
+              <label class="field"><span>Personnalité</span><input class="input" id="st-fiche-perso" maxlength="160" autocomplete="off"></label>
+              <label class="field"><span>Histoire</span><textarea class="textarea" id="st-fiche-histoire" rows="4" maxlength="1200"></textarea></label>
+              <label class="field"><span>Compétences</span><input class="input" id="st-fiche-comp" maxlength="200" autocomplete="off"></label>
+              <p class="adm__erreur" id="st-fiche-erreur" role="alert"></p>
+              <div class="adm__actions">
+                <button type="submit" class="btn btn--signal" id="st-fiche-submit">Enregistrer la fiche</button>
+                <button type="button" class="btn" id="st-fiche-cancel" hidden>Annuler</button>
+              </div>
+            </form>
+            <div class="adm__apercu">
+              <div class="creator__caption"><span>Carte d'accès · aperçu</span><span>Format ID-1</span></div>
+              <div class="idcard-stage" id="st-fiche-stage"><div class="idcard" id="st-fiche-card"></div></div>
+              <div class="output">
+                <div class="output__head"><span>Fiche pour Discord</span><button type="button" class="btn btn--sm" id="st-fiche-copy">Copier</button></div>
+                <pre id="st-fiche-texte"></pre>
+              </div>
             </div>
+          </div>
+          <div class="adm__registre">
+            <div class="toolbar">
+              <label class="search"><span class="sr-only">Rechercher une fiche</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-fiche-q" type="search" placeholder="Nom, matricule, pseudo…" autocomplete="off"></label>
+              <label class="sort"><span>Statut</span><select class="select" id="st-fiche-filtre"><option value="all">Toutes</option><option value="service">En service</option><option value="attente">En attente</option><option value="archive">Archivées</option></select></label>
+            </div>
+            <p class="db-count" id="st-fiches-count" aria-live="polite"></p>
+            <ul class="fiches" id="st-fiches"></ul>
+          </div>
+        </section>
+
+        <section class="adm__panel" id="p-communiques" role="tabpanel" aria-labelledby="h-communiques" data-panneau="communiques" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Accueil et archives</p>
+            <h2 class="adm__title" id="h-communiques">Communiqués</h2>
+            <p class="adm__lede">Un communiqué s'affiche sur l'accueil et dans les archives. Pour masquer un passage, écris <code>[[3|texte]]</code> : seuls les niveaux 3 et plus le liront.</p>
+          </header>
+          <div class="adm__cols">
+            <form class="adm__form" id="st-comm-form">
+              <h3 class="label">Nouveau communiqué</h3>
+              <label class="field"><span>Titre</span><input class="input" id="st-comm-titre" maxlength="120" required autocomplete="off"></label>
+              <label class="field"><span>Texte</span><textarea class="textarea" id="st-comm-texte" rows="6" maxlength="2000" required></textarea></label>
+              <label class="field"><span>Visible par</span>
+                <select class="select" id="st-comm-niveau"><option value="0">Tout le monde, même sans connexion</option><option value="1">Habilitation 1 et plus</option><option value="2">Habilitation 2 et plus</option><option value="3">Habilitation 3 et plus</option><option value="4">Habilitation 4 et plus</option><option value="5">Habilitation 5 uniquement</option></select></label>
+              <div class="adm__actions"><button type="submit" class="btn btn--signal">Publier le communiqué</button></div>
+            </form>
             <div>
-              <h2 class="h2">Communiqués en ligne</h2>
+              <h3 class="label">En ligne</h3>
               <ul class="st-list" id="st-comm-list"></ul>
             </div>
           </div>
         </section>
 
-        <section class="cons__panel" id="p-evenements" role="tabpanel" aria-labelledby="tab-evenements" data-panneau="evenements" hidden>
-          <div class="two">
-            <div>
-              <p class="eyebrow" id="st-evt-mode">Nouvel événement</p>
-              <h2 class="h2" id="st-evt-title">Calendrier</h2>
-              <p class="sec__lede">Les horaires sont à l'heure de Paris. Le prochain événement s'affiche sur l'accueil avec son compte à rebours.</p>
-              <form class="gen__form" id="st-evt-form">
-                <input type="hidden" id="st-evt-id">
-                <label class="field full"><span>Titre</span><input class="input" id="st-evt-titre" maxlength="100" required autocomplete="off"></label>
+        <section class="adm__panel" id="p-evenements" role="tabpanel" aria-labelledby="h-evenements" data-panneau="evenements" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Calendrier du RP</p>
+            <h2 class="adm__title" id="h-evenements">Événements</h2>
+            <p class="adm__lede">Horaires à l'heure de Paris. Le prochain événement s'affiche sur l'accueil avec son compte à rebours.</p>
+          </header>
+          <div class="adm__cols">
+            <form class="adm__form" id="st-evt-form">
+              <h3 class="label" id="st-evt-mode">Nouvel événement</h3>
+              <input type="hidden" id="st-evt-id">
+              <label class="field"><span>Titre</span><input class="input" id="st-evt-titre" maxlength="100" required autocomplete="off"></label>
+              <div class="adm__duo">
                 <label class="field"><span>Type</span><select class="select" id="st-evt-type"></select></label>
                 <label class="field"><span>Durée (minutes)</span><input class="input" id="st-evt-duree" type="number" min="15" max="720" step="15" value="120" required></label>
-                <label class="field full"><span>Date et heure</span><input class="input" id="st-evt-date" type="datetime-local" required></label>
-                <label class="field full"><span>Lieu</span><input class="input" id="st-evt-lieu" maxlength="120" autocomplete="off" placeholder="Niveau −1 · Salle de briefing"></label>
-                <label class="field full"><span>Description</span><textarea class="textarea" id="st-evt-texte" rows="4" maxlength="1000"></textarea></label>
-                <div class="gen__actions"><button type="submit" class="btn btn--signal" id="st-evt-submit">Ajouter l'événement</button><button type="button" class="btn" id="st-evt-cancel" hidden>Annuler</button></div>
-              </form>
-            </div>
+              </div>
+              <label class="field"><span>Date et heure</span><input class="input" id="st-evt-date" type="datetime-local" required></label>
+              <label class="field"><span>Lieu</span><input class="input" id="st-evt-lieu" maxlength="120" autocomplete="off" placeholder="Niveau −1 · Salle de briefing"></label>
+              <label class="field"><span>Description</span><textarea class="textarea" id="st-evt-texte" rows="4" maxlength="1000"></textarea></label>
+              <div class="adm__actions"><button type="submit" class="btn btn--signal" id="st-evt-submit">Ajouter l'événement</button><button type="button" class="btn" id="st-evt-cancel" hidden>Annuler</button></div>
+            </form>
             <div>
-              <h2 class="h2">Programme</h2>
+              <h3 class="label">Programme</h3>
               <ul class="st-list" id="st-evt-list"></ul>
             </div>
           </div>
         </section>
 
-        <section class="cons__panel" id="p-journal" role="tabpanel" aria-labelledby="tab-journal" data-panneau="journal" hidden>
-          <p class="sec__lede">Les 60 dernières actions du staff, avec leur auteur.</p>
+        <section class="adm__panel" id="p-journal" role="tabpanel" aria-labelledby="h-journal" data-panneau="journal" hidden>
+          <header class="adm__head">
+            <p class="eyebrow">Traçabilité</p>
+            <h2 class="adm__title" id="h-journal">Journal des actions</h2>
+            <p class="adm__lede">Les 60 dernières actions du staff, avec leur auteur.</p>
+          </header>
           <ol class="st-journal" id="st-journal"></ol>
         </section>
       </div>

@@ -8,14 +8,40 @@ import {
 
 const texte = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const niveauValide = (n) => Number.isInteger(n) && n >= 0 && n <= 5;
+const STATUTS_FICHE = ["service", "attente", "archive"];
+const CHAMPS_FICHE = ["prenom", "nom", "age", "dept", "grade", "roblox", "apparence", "perso", "histoire", "comp", "statut"];
+
+// Fiche personnage envoyée par la console : chaque champ est vérifié et borné.
+function validerFiche(c) {
+  const f = {
+    prenom: texte(c.prenom, 30), nom: texte(c.nom, 30),
+    roblox: texte(c.roblox, 20), apparence: texte(c.apparence, 300), perso: texte(c.perso, 160),
+    histoire: texte(c.histoire, 1200), comp: texte(c.comp, 200),
+    statut: STATUTS_FICHE.includes(c.statut) ? c.statut : "service"
+  };
+  if (!f.prenom && !f.nom) return { erreur: "Indique au moins un prénom ou un nom." };
+  if (c.age === null || c.age === undefined || c.age === "") f.age = null;
+  else if (Number.isInteger(c.age) && c.age >= 18 && c.age <= 75) f.age = c.age;
+  else return { erreur: "L'âge doit être compris entre 18 et 75 ans." };
+  const dept = donnees.departements.find((d) => d.id === c.dept);
+  if (!dept) return { erreur: "Département inconnu." };
+  if (!dept.grades.some((g) => g[0] === c.grade)) return { erreur: "Grade inconnu pour ce département." };
+  f.dept = dept.id;
+  f.grade = c.grade;
+  if (f.roblox && !/^[A-Za-z0-9_]{3,20}$/.test(f.roblox)) return { erreur: "Pseudo Roblox : 3 à 20 lettres, chiffres ou _." };
+  return { fiche: f };
+}
+const nomFiche = (f) => (f.prenom + " " + f.nom).trim();
+const pourMembre = (f) => Object.fromEntries(CHAMPS_FICHE.map((k) => [k, f[k]]));
 
 async function etatStaff() {
   const s = stockage();
   const cles = await s.list({ prefix: "membres/" });
-  const [membres, dyn, journal] = await Promise.all([
+  const [membres, dyn, journal, fiches] = await Promise.all([
     Promise.all(cles.map((c) => s.get(c))),
     lireDynamique(),
-    s.get("journal")
+    s.get("journal"),
+    s.get("fiches")
   ]);
   return {
     membres: membres.filter(Boolean).map((m) => {
@@ -30,8 +56,20 @@ async function etatStaff() {
     etat: dyn.etat || { alerte: donnees.config.alerte, par: null, le: null },
     communiques: dyn.communiques,
     evenements: Array.isArray(dyn.evenements) ? dyn.evenements : donnees.evenements,
-    journal: (journal || []).slice(0, 60)
+    journal: (journal || []).slice(0, 60),
+    fiches: fiches || []
   };
+}
+
+// Recopie la fiche active dans la fiche du membre lié (lue par /api/contenu)
+async function lierFiche(s, discordId, fiche) {
+  if (!discordId) return;
+  const cle = "membres/" + discordId;
+  const membre = await s.get(cle);
+  if (!membre) return;
+  if (fiche && fiche.statut !== "archive") membre.fiche = pourMembre(fiche);
+  else delete membre.fiche;
+  await s.setJSON(cle, membre);
 }
 
 export default async function staff(req) {
@@ -118,6 +156,38 @@ export default async function staff(req) {
       if (!cible) return json({ erreur: "Événement introuvable." }, 404);
       await ecrireDynamique({ evenements: liste.filter((e) => e.id !== corps.id) });
       await journaliser(par, `Événement supprimé : « ${cible.titre} »`);
+      break;
+    }
+    case "fiche.enregistrer": {
+      const v = validerFiche(corps);
+      if (v.erreur) return json({ erreur: v.erreur }, 400);
+      const discordId = corps.discordId ? String(corps.discordId).replace(/\D/g, "") : null;
+      if (discordId && !(await s.get("membres/" + discordId))) return json({ erreur: "Membre Discord introuvable." }, 404);
+      const liste = (await s.get("fiches")) || [];
+      const i = corps.id ? liste.findIndex((f) => f.id === corps.id) : -1;
+      if (corps.id && i < 0) return json({ erreur: "Fiche introuvable." }, 404);
+      const autre = discordId && v.fiche.statut !== "archive" && liste.find((f, j) => j !== i && f.discordId === discordId && f.statut !== "archive");
+      if (autre) return json({ erreur: `Ce membre a déjà une fiche active : ${nomFiche(autre)}. Archive-la d'abord.` }, 409);
+      const ancienne = i >= 0 ? liste[i] : null;
+      const fiche = {
+        ...v.fiche, id: ancienne ? ancienne.id : "fiche-" + aleatoireHex(6), discordId: discordId || null,
+        creePar: ancienne ? ancienne.creePar : par, creeLe: ancienne ? ancienne.creeLe : maintenant,
+        modifiePar: par, modifieLe: maintenant
+      };
+      if (ancienne) liste[i] = fiche; else liste.unshift(fiche);
+      await s.setJSON("fiches", liste.slice(0, 500));
+      if (ancienne && ancienne.discordId && ancienne.discordId !== fiche.discordId) await lierFiche(s, ancienne.discordId, null);
+      await lierFiche(s, fiche.discordId, fiche);
+      await journaliser(par, `Fiche ${ancienne ? "modifiée" : "créée"} : ${nomFiche(fiche)}` + (fiche.statut !== "service" ? ` (${fiche.statut === "attente" ? "en attente" : "archivée"})` : ""));
+      break;
+    }
+    case "fiche.supprimer": {
+      const liste = (await s.get("fiches")) || [];
+      const cible = liste.find((f) => f.id === corps.id);
+      if (!cible) return json({ erreur: "Fiche introuvable." }, 404);
+      await s.setJSON("fiches", liste.filter((f) => f.id !== corps.id));
+      await lierFiche(s, cible.discordId, null);
+      await journaliser(par, `Fiche supprimée : ${nomFiche(cible)}`);
       break;
     }
     default:

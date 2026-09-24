@@ -1270,25 +1270,9 @@
       let v = {};
       Object.keys(F).forEach(function (k) { v[k] = F[k].value.trim(); });
       current = v;
-      let card = S.renderIdCard($("#join-card"), v, afficherPhoto);
-      let d = card.dept, g = card.grade, lvl = card.lvl;
+      S.renderIdCard($("#join-card"), v, afficherPhoto);
       let age = parseInt(v.age, 10);
-      let txt = [
-        "**FICHE PERSONNAGE · SITE-73**",
-        "> **Nom :** " + (card.isD ? card.matricule + " (anciennement " + ((v.prenom + " " + v.nom).trim() || "inconnu") + ")" : card.fullName),
-        "> **Âge :** " + (isNaN(age) ? "—" : age + " ans"),
-        "> **Département :** " + d.nom,
-        "> **Grade :** " + g[0],
-        "> **Habilitation :** niveau " + lvl + " (" + S.habName(lvl) + ")",
-        "> **Matricule :** " + card.matricule,
-        "> **Roblox :** " + (v.roblox || "—"),
-        "",
-        "**Apparence :** " + (v.apparence || "—"),
-        "**Personnalité :** " + (v.perso || "—"),
-        "**Histoire :** " + (v.histoire || "—"),
-        "**Compétences :** " + (v.comp || "—")
-      ].join("\n");
-      $("#join-output").textContent = txt;
+      $("#join-output").textContent = S.texteFiche(v);
       let warn = $("#join-age-hint");
       if (warn) warn.textContent = !v.age ? "" : isNaN(age) || age < 18 || age > 75 ? "L'âge doit être compris entre 18 et 75 ans." : "";
     };
@@ -1409,9 +1393,10 @@
     }
     return photosRoblox[cle];
   };
-  let photoDiscord = function () {
-    let u = S.isLive() && S.session().user;
-    return u && u.avatar ? String(u.avatar).replace(/size=\d+/, "size=256") : null;
+  // v.avatar : photo Discord d'un autre membre (console staff) ; sinon celle du membre connecté
+  let photoDiscord = function (v) {
+    let url = v && "avatar" in v ? v.avatar : (S.isLive() && S.session().user ? S.session().user.avatar : null);
+    return url && /^https:\/\/cdn\.discordapp\.com\//.test(url) ? String(url).replace(/size=\d+/, "size=256") : null;
   };
   S.photoCarte = function (card, v, rapport) {
     let zone = card.querySelector(".idcard__photo");
@@ -1433,14 +1418,14 @@
       img.onerror = function () {
         img.remove();
         zone.classList.remove("has-photo");
-        if (source === "roblox") poser(photoDiscord(), "discord", "Photo de profil Discord");
+        if (source === "roblox") poser(photoDiscord(v), "discord", "Photo de profil Discord");
       };
       img.src = url;
       zone.insertBefore(img, zone.querySelector("b"));
       zone.setAttribute("data-source", source);
     };
     let pseudo = String(v.roblox || "").trim();
-    let discord = photoDiscord();
+    let discord = photoDiscord(v);
     if (!pseudo) { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord" : "aucune"); return; }
     if (!PSEUDO_ROBLOX.test(pseudo)) { poser(discord, "discord", "Photo de profil Discord"); dire("invalide"); return; }
     if (!S.isLive()) { poser(null); dire("demo"); return; }
@@ -1457,15 +1442,41 @@
       if (card.__photo === jeton) chercherRoblox(pseudo).then(conclure);
     }, photosRoblox[cle] ? 0 : 500);
   };
-  S.renderIdCard = function (card, v, rapport) {
+  // Département, grade, habilitation et matricule d'une fiche (carte, textes, listes)
+  S.infosFiche = function (v) {
     let d = D.departements.filter(function (x) { return x.id === v.dept; })[0] || D.departements[1];
     let g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
-    let lvl = g[1];
     let isD = d.id === "classe-d";
-    let seed = ((v.prenom || "") + (v.nom || "") + d.id).toLowerCase();
-    let num = String(1000 + (U.hash(seed) % 9000));
-    let matricule = isD ? "D-" + num : "73-" + d.code + "-" + num;
-    let fullName = isD ? "D-" + num : (((v.prenom || "") + " " + (v.nom || "Nom")).trim());
+    let num = String(1000 + (U.hash(((v.prenom || "") + (v.nom || "") + d.id).toLowerCase()) % 9000));
+    return {
+      dept: d, grade: g, lvl: g[1], isD: isD, num: num,
+      matricule: isD ? "D-" + num : "73-" + d.code + "-" + num,
+      fullName: isD ? "D-" + num : (((v.prenom || "") + " " + (v.nom || "Nom")).trim())
+    };
+  };
+  // Fiche au format Discord (page Rejoindre et console staff)
+  S.texteFiche = function (v, extra) {
+    let f = S.infosFiche(v), age = parseInt(v.age, 10);
+    return [
+      "**FICHE PERSONNAGE · SITE-73**",
+      "> **Nom :** " + (f.isD ? f.matricule + " (anciennement " + (((v.prenom || "") + " " + (v.nom || "")).trim() || "inconnu") + ")" : f.fullName),
+      "> **Âge :** " + (isNaN(age) ? "—" : age + " ans"),
+      "> **Département :** " + f.dept.nom,
+      "> **Grade :** " + f.grade[0],
+      "> **Habilitation :** niveau " + f.lvl + " (" + S.habName(f.lvl) + ")",
+      "> **Matricule :** " + f.matricule,
+      "> **Roblox :** " + (v.roblox || "—")
+    ].concat(extra || []).concat([
+      "",
+      "**Apparence :** " + (v.apparence || "—"),
+      "**Personnalité :** " + (v.perso || "—"),
+      "**Histoire :** " + (v.histoire || "—"),
+      "**Compétences :** " + (v.comp || "—")
+    ]).join("\n");
+  };
+  S.renderIdCard = function (card, v, rapport) {
+    let f = S.infosFiche(v);
+    let d = f.dept, g = f.grade, lvl = f.lvl, isD = f.isD, num = f.num, matricule = f.matricule, fullName = f.fullName;
     card.style.setProperty("--dc", PHOTO_COLORS[d.id] || "#B9C4C9");
     card.style.setProperty("--lc", LEVEL_COLORS[lvl]);
     card.innerHTML =

@@ -705,14 +705,22 @@
   function carnetPage() {
     let root = $("#carnet-badges");
     if (!root) return;
-    let fiche = null;
-    try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
     let card = $("#carnet-card");
-    let info = S.renderIdCard(card, fiche || { prenom: "Visiteur", nom: "anonyme", dept: "classe-d", grade: "Sujet D-XXXX" });
+    // Fiche officielle enregistrée par le staff (liée au compte), sinon brouillon de la page Rejoindre
+    let dessinerCarte = function () {
+      let officielle = S.session().fiche, fiche = officielle;
+      if (!fiche) { try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; } }
+      let info = S.renderIdCard(card, fiche || { prenom: "Visiteur", nom: "anonyme", dept: "classe-d", grade: "Sujet D-XXXX" });
+      $("#carnet-who").innerHTML = officielle
+        ? '<span class="chip" style="--c:' + (officielle.statut === "attente" ? "var(--signal)" : "var(--c-sur)") + '">' + (officielle.statut === "attente" ? "Fiche officielle · en attente" : "Fiche officielle · validée par le staff") + "</span> " +
+          "<b>" + esc(info.fullName) + "</b> · " + esc(info.dept.nom) + " · " + esc(info.grade[0])
+        : fiche
+          ? "<b>" + esc(info.fullName) + "</b> · " + esc(info.dept.nom) + " · " + esc(info.grade[0]) + ' <span class="muted">(brouillon, pas encore validé par le staff)</span>'
+          : "Tu n'as pas encore de fiche. Le site t'a attribué un matricule de Classe-D en attendant.";
+    };
+    dessinerCarte();
+    doc.addEventListener("s73:session", dessinerCarte);
     S.tiltCard($("#carnet-stage"), card);
-    $("#carnet-who").innerHTML = fiche
-      ? "<b>" + esc(info.fullName) + "</b> · " + esc(info.dept.nom) + " · " + esc(info.grade[0])
-      : "Tu n'as pas encore de fiche. Le site t'a attribué un matricule de Classe-D en attendant.";
     let compte = $("#carnet-compte");
     let SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur", demo: "le mode démonstration" };
     let renderCompte = function () {
