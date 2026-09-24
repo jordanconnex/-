@@ -4,7 +4,7 @@
 // « npm run deploy ». Il contient tout le contenu classifié : ne le publie
 // jamais (dist/ est ignoré par git).
 import { build } from "esbuild";
-import { mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { join, relative, sep } from "node:path";
@@ -37,10 +37,10 @@ const parcourir = (dossier) => {
 parcourir(PUBLIC);
 
 mkdirSync(ici("../dist"), { recursive: true });
-await build({
+const resultat = await build({
   entryPoints: [ici("../serveur/unique.mjs")],
   outfile: ici("../dist/worker.js"),
-  bundle: true, format: "esm", platform: "neutral", target: "es2022",
+  bundle: true, format: "esm", platform: "neutral", target: "es2022", write: false,
   legalComments: "none", logLevel: "warning",
   banner: { js: "// Site-73 · Worker Cloudflare en un seul fichier (généré par « npm run worker-unique », ne pas modifier).\n// Contient le contenu classifié du site : ne le publie jamais, ne le mets pas sur GitHub.\n// Il faut une liaison KV nommée SITE73 et les variables Discord (voir le guide)." },
   plugins: [{
@@ -51,5 +51,9 @@ await build({
     }
   }]
 });
+// esbuild écrit les déclarations du haut des fichiers en « var » : on les
+// remet en « let » (le contenu des pages tient sur une seule ligne, il n'est pas touché).
+const code = resultat.outputFiles[0].text.replace(/^var /gm, "let ");
+writeFileSync(ici("../dist/worker.js"), code);
 const taille = statSync(ici("../dist/worker.js")).size;
 console.log("dist/worker.js généré : " + Object.keys(fichiers).length + " fichiers intégrés, " + Math.round(taille / 1024) + " Ko.");
