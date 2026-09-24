@@ -134,12 +134,15 @@
     // Prochain événement
     var next = $("#home-next");
     if (next) {
-      var ev = S.upcoming()[0];
-      if (!ev) {
-        next.innerHTML = '<p class="label">Prochain événement</p><p class="next__title">Aucun événement programmé</p><a class="btn" href="evenements.html">Voir le calendrier</a>';
-      } else {
-        var T = D.typesEvenement[ev.type];
-        var renderNext = function () {
+      var ev = null, T = null;
+      var renderNext = function () {
+        ev = S.upcoming()[0];
+        if (!ev) {
+          next.innerHTML = '<p class="label">Prochain événement</p><p class="next__title">Aucun événement programmé</p><div class="next__cta"><a class="btn" href="evenements.html">Voir le calendrier</a></div>';
+          return;
+        }
+        T = D.typesEvenement[ev.type];
+        (function () {
           var on = S.isMarked("planning", ev.id);
           next.style.setProperty("--c", T.couleur);
           next.innerHTML =
@@ -150,23 +153,24 @@
             '<div class="next__cta"><button type="button" class="btn' + (on ? " btn--signal" : "") + '" data-plan aria-pressed="' + on + '">' + (on ? "Dans mon planning" : "Ajouter à mon planning") + "</button>" +
               '<a class="btn" href="evenements.html#evt-' + ev.id + '">Calendrier</a></div>';
           updT();
-        };
-        var updT = function () {
+        })();
+      };
+      var updT = function () {
           var el = $("[data-next-timer]", next);
-          if (!el) return;
+          if (!el || !ev) return;
           var ms = new Date(ev.date).getTime() - Date.now();
           el.textContent = ms > 0 ? S.formatCountdown(ms) : "En cours";
         };
         next.addEventListener("click", function (e) {
-          if (!e.target.closest("[data-plan]")) return;
+          if (!e.target.closest("[data-plan]") || !ev) return;
           var on = !S.isMarked("planning", ev.id);
           S.mark("planning", ev.id, on);
           renderNext();
           if (on) S.toast("<b>Ajouté à ton planning.</b> " + esc(ev.titre) + ", " + esc(S.fmtEvent(ev.date)) + ".");
         });
         doc.addEventListener("s73:tick", updT);
+        doc.addEventListener("s73:dynamic", renderNext);
         renderNext();
-      }
     }
 
     // Dossier du jour
@@ -195,12 +199,17 @@
     // Communiqués
     var comms = $("#home-comms");
     if (comms) {
-      var list = D.archives.filter(function (a) { return a.type === "communique"; })
-        .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 3);
-      comms.innerHTML = list.map(function (c) {
-        return '<li class="comm"><time datetime="' + c.date + '">' + esc(U.fmtDate(c.date)) + '</time><div><h3><a class="comm__link" href="archives.html#arc-' + c.date + '">' + esc(c.titre) + "</a></h3><p data-comm></p></div></li>";
-      }).join("");
-      $$("[data-comm]", comms).forEach(function (p, i) { S.redactInto(p, list[i].texte); });
+      var renderComms = function () {
+        var list = D.archives.filter(function (a) { return a.type === "communique"; })
+          .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 3);
+        comms.innerHTML = list.map(function (c) {
+          return '<li class="comm"><time datetime="' + c.date + '">' + esc(U.fmtDate(c.date)) + '</time><div><h3><a class="comm__link" href="archives.html#arc-' + esc(c.id || c.date) + '">' + esc(c.titre) + "</a></h3>" +
+            (c.auteur ? '<p class="comm__by">Publié par ' + esc(c.auteur) + (c.niveau ? " · niveau " + c.niveau : "") + "</p>" : "") + "<p data-comm></p></div></li>";
+        }).join("");
+        $$("[data-comm]", comms).forEach(function (p, i) { S.redactInto(p, list[i].texte); });
+      };
+      doc.addEventListener("s73:dynamic", renderComms);
+      renderComms();
     }
 
     // Progression du carnet
@@ -713,7 +722,8 @@
           (mine ? '<span class="clearance__mine">Votre niveau</span>' : "") +
           '<span class="clearance__num">' + h.niveau + '</span><span class="clearance__name">' + esc(h.nom) + "</span>" +
           "<p>" + esc(h.texte) + "</p>" +
-          (mine ? '<span class="label">Actif</span>' : '<button type="button" class="btn btn--sm" data-lvl="' + h.niveau + '">Adopter</button>') + "</div>";
+          (mine ? '<span class="label">Actif</span>' : S.canChooseClearance() && (!S.isLive() || h.niveau <= S.session().reel)
+            ? '<button type="button" class="btn btn--sm" data-lvl="' + h.niveau + '">' + (S.isLive() ? "Voir comme" : "Adopter") + "</button>" : "") + "</div>";
       }).join("");
     };
     clr.addEventListener("click", function (e) {
@@ -721,6 +731,7 @@
       if (b) S.setClearance(b.getAttribute("data-lvl"));
     });
     doc.addEventListener("s73:clearance", renderClr);
+    doc.addEventListener("s73:session", renderClr);
     renderClr();
 
     $("#staff-classes").innerHTML = D.classesPersonnel.map(function (c) {
@@ -755,13 +766,16 @@
     var TYPES = { communique: "Communiqué", incident: "Incident", historique: "Historique" };
     var state = { type: "all", q: "" };
     var filt = $("#arch-filters"), search = $("#arch-search"), count = $("#arch-count");
-    var counts = { all: D.archives.length };
-    D.archives.forEach(function (a) { counts[a.type] = (counts[a.type] || 0) + 1; });
     var colors = { all: "var(--text-2)", communique: "var(--signal)", incident: "var(--a-rouge)", historique: "var(--c-attente)" };
-    filt.innerHTML = ["all", "communique", "incident", "historique"].map(function (k) {
-      return '<button type="button" aria-pressed="' + (k === "all") + '" data-k="' + k + '" style="--c:' + colors[k] + '">' +
-        (k === "all" ? "Tout" : TYPES[k] + "s") + " <b>" + (counts[k] || 0) + "</b></button>";
-    }).join("");
+    var drawFilt = function () {
+      var counts = { all: D.archives.length };
+      D.archives.forEach(function (a) { counts[a.type] = (counts[a.type] || 0) + 1; });
+      filt.innerHTML = ["all", "communique", "incident", "historique"].map(function (k) {
+        return '<button type="button" aria-pressed="' + (k === state.type) + '" data-k="' + k + '" style="--c:' + colors[k] + '">' +
+          (k === "all" ? "Tout" : TYPES[k] + "s") + " <b>" + (counts[k] || 0) + "</b></button>";
+      }).join("");
+    };
+    drawFilt();
     var render = function () {
       var q = norm(state.q.trim());
       var list = D.archives.filter(function (a) {
@@ -776,8 +790,9 @@
         var y = a.date.slice(0, 4);
         if (y !== year) { year = y; html += '<li class="tl__year" aria-hidden="true">' + y + "</li>"; }
         var p = a.date.split("-");
-        html += '<li class="tl__item" id="arc-' + a.date + '" data-type="' + a.type + '"><time class="tl__date" datetime="' + a.date + '"><b>' + parseInt(p[2], 10) + "</b>" + U.MOIS[+p[1] - 1] + " " + p[0] + "</time>" +
-          '<div class="tl__body"><span class="chip" style="--c:' + colors[a.type] + '">' + TYPES[a.type] + "</span><h3>" + esc(a.titre) + '</h3><p data-i="' + i + '"></p></div></li>';
+        html += '<li class="tl__item" id="arc-' + esc(a.id || a.date) + '" data-type="' + a.type + '"><time class="tl__date" datetime="' + a.date + '"><b>' + parseInt(p[2], 10) + "</b>" + U.MOIS[+p[1] - 1] + " " + p[0] + "</time>" +
+          '<div class="tl__body"><span class="chip" style="--c:' + colors[a.type] + '">' + TYPES[a.type] + (a.niveau ? " · niveau " + a.niveau : "") + "</span><h3>" + esc(a.titre) + '</h3><p data-i="' + i + '"></p>' +
+          (a.auteur ? '<p class="comm__by">Publié par ' + esc(a.auteur) + "</p>" : "") + "</div></li>";
       });
       tl.innerHTML = html;
       $$("[data-i]", tl).forEach(function (p) { S.redactInto(p, list[+p.getAttribute("data-i")].texte); });
@@ -790,6 +805,7 @@
       render();
     });
     search.addEventListener("input", function () { state.q = search.value; render(); });
+    doc.addEventListener("s73:dynamic", function () { drawFilt(); render(); });
     render();
   }
 
@@ -924,6 +940,11 @@
         if (a[0] == null) { print("Habilitation actuelle : niveau " + S.getClearance() + " · " + S.habName(S.getClearance()) + "."); return; }
         var n = parseInt(a[0], 10);
         if (isNaN(n) || n < 0 || n > 5) { print("Valeur attendue : 0 à 5.", "t-err"); return; }
+        if (!S.canChooseClearance()) {
+          print("Refusé. Ton habilitation est attribuée par l'administration du serveur.", "t-err");
+          if (!S.session().user) print("Connecte-toi avec Discord depuis le bouton « Hab. » en haut de page.", "t-dim");
+          return;
+        }
         if (n === 5) print("Vérification de l'accréditation O5… validée. Le Conseil vous observe.", "t-dim");
         S.setClearance(n, { silent: true });
         print("Habilitation réglée sur le niveau " + n + " · " + S.habName(n) + ".", "t-hl");
@@ -945,6 +966,12 @@
         setTimeout(function () { S.go(p.file + ".html"); }, 300);
       }},
       qui: { desc: "Identité de la session", run: function () {
+        var se = S.session();
+        if (se.mode === "live") {
+          print(se.user ? se.user.nom + " · connecté avec Discord · " + (se.admin ? "administrateur" : "membre") + " · habilitation niveau " + S.getClearance()
+            : "Visiteur non connecté · habilitation niveau 0");
+          return;
+        }
         var fiche = null;
         try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
         var nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";

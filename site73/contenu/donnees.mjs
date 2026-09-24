@@ -1,8 +1,15 @@
 /* ==========================================================================
-   SITE-73 — CONTENU DU SITE
+   SITE-73 · CONTENU DU SITE (SOURCE)
    --------------------------------------------------------------------------
    Tout le contenu du site est ici : modifie ce fichier pour mettre à jour
    les dossiers, les communiqués, le règlement, les départements, etc.
+
+   Ce fichier N'EST PAS envoyé tel quel aux visiteurs :
+   - au déploiement, scripts/build.mjs génère public/assets/js/data.js
+     où tous les passages classifiés sont remplacés par des « ▒▒▒ » ;
+   - chaque visiteur reçoit ensuite, via /api/contenu, uniquement les
+     passages autorisés par SON habilitation (vérifiée côté serveur).
+   Garde le dépôt GitHub privé : sinon ce fichier y est lisible.
 
    Caviardage (texte masqué selon l'habilitation du visiteur) :
      [[3|texte]]            -> visible à partir du niveau 3, sinon barre noire
@@ -10,18 +17,18 @@
      [SUPPRIMÉ]             -> idem, version courte
    ========================================================================== */
 
-window.S73 = window.S73 || {};
-
-window.S73.data = {
+const donnees = {
   /* ---------------------------------------------------------------------- */
   config: {
     nom: "Site-73",
     // Lien d'invitation Discord du serveur. Laisse vide tant qu'il n'est pas prêt :
     // les boutons Discord afficheront alors « Lien bientôt disponible ».
     discord: "",
-    // Niveau d'alerte officiel affiché par défaut : vert | jaune | orange | rouge | noir
+    // Niveau d'alerte de départ : vert | jaune | orange | rouge | noir.
+    // Une fois le site en ligne, le staff le change depuis l'espace staff.
     alerte: "vert",
-    // Habilitation par défaut d'un nouveau visiteur (0 à 5)
+    // Habilitation utilisée seulement en mode démonstration (aperçu sans serveur).
+    // En ligne, l'habilitation vient des rôles Discord et de l'espace staff.
     habilitationParDefaut: 2,
     // Date et heure du dernier incident (compteur « depuis le dernier incident »)
     dernierIncident: { date: "2026-09-02T14:37:00+02:00", ref: "Incident 73-2026-17" },
@@ -491,7 +498,7 @@ window.S73.data = {
 /* ==========================================================================
    CONTENU DES PAGES ÉVÉNEMENTS, PROTOCOLES, LABORATOIRE, ENTRAÎNEMENT, CARNET
    ========================================================================== */
-Object.assign(window.S73.data, {
+Object.assign(donnees, {
 
   /* Événements RP. date au format ISO avec fuseau ; duree en minutes.
      type : evenement | formation | promotion | recrutement | special        */
@@ -769,3 +776,5 @@ Object.assign(window.S73.data, {
     { id: "omega",        code: "Ω",   nom: "Protocole Oméga",       texte: "Entrer le code du Conseil O5.", secret: true }
   ]
 });
+
+export default donnees;

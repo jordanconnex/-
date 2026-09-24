@@ -1,0 +1,6 @@
+# Le site Complexe 25 publie tout le dépôt : on bloque les fichiers privés du Site-73
+# (contenu classifié, fonctions serveur, scripts). Le Site-73 a son propre site Netlify.
+/site73/contenu/*   /404   404!
+/site73/netlify/*   /404   404!
+/site73/scripts/*   /404   404!
+/site73/.env*       /404   404!

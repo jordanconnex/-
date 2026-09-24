@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Staff · Site-73</title>
+  <meta name="description" content="Espace d'administration du Site-73 : habilitations des membres, niveau d'alerte, communiqués et événements.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Plan du site · Site-73">
+  <meta property="og:description" content="Espace d'administration du Site-73 : habilitations des membres, niveau d'alerte, communiqués et événements.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="staff">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="staff">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">O5</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Administration · Accès restreint</p>
+          <h1 class="sign__title">Staff</h1>
+          <p class="sign__lede">Habilitations des membres, niveau d'alerte, communiqués et événements. Chaque action est inscrite au journal.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-ADM-001</dd></div>
+          <div><dt>Connecté</dt><dd data-session-nom>Visiteur</dd></div>
+          <div><dt>Mode</dt><dd data-session-mode>—</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="staff-guard" aria-labelledby="guard-title">
+      <div class="wrap">
+        <div class="guard">
+          <span class="guard__lock" data-emblem aria-hidden="true"></span>
+          <div>
+            <p class="eyebrow">Niveau O5 requis</p>
+            <h2 class="h2" id="guard-title">Accès réservé à l'administration</h2>
+            <div class="guard__body" id="staff-guard-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="staff-app" hidden>
+      <section class="sec sec--tight" aria-label="Résumé">
+        <div class="wrap">
+          <p class="muted" id="st-loading">Chargement des données du staff…</p>
+          <div class="stats st-resume" id="st-resume"></div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" id="st-alerte" aria-labelledby="st-alerte-title">
+        <div class="wrap">
+          <div class="sec__head">
+            <p class="eyebrow">Tout le site</p>
+            <h2 class="h2" id="st-alerte-title">Niveau d'alerte officiel</h2>
+            <p class="sec__lede">Le niveau choisi s'affiche pour tous les visiteurs : bandeau, couleurs, halo. Pratique pour lancer un événement en Code Rouge.</p>
+          </div>
+          <div class="st-alerte">
+            <div class="seg" id="st-alerte-seg" role="radiogroup" aria-label="Niveau d'alerte"></div>
+            <p id="st-alerte-info"></p>
+            <div><button type="button" class="btn btn--signal" id="st-alerte-apply" disabled>Appliquer à tout le site</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" id="st-hab" aria-labelledby="st-hab-title">
+        <div class="wrap">
+          <div class="sec__head">
+            <p class="eyebrow">Membres</p>
+            <h2 class="h2" id="st-hab-title">Habilitations</h2>
+            <p class="sec__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff prend le dessus sur les rôles.</p>
+          </div>
+          <div class="toolbar">
+            <label class="search"><span class="sr-only">Rechercher un membre</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-q" type="search" placeholder="Nom, pseudo ou identifiant Discord…" autocomplete="off"></label>
+            <label class="sort"><span>Niveau</span>
+              <select class="select" id="st-niveau"><option value="all">Tous</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+            </label>
+          </div>
+          <p class="db-count" id="st-membres-count" aria-live="polite"></p>
+          <div class="table-wrap">
+            <table class="table st-table">
+              <thead><tr><th scope="col">Membre</th><th scope="col">Habilitation</th><th scope="col">Origine</th><th scope="col">Dernière visite</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody id="st-membres"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" id="st-comm" aria-labelledby="st-comm-title">
+        <div class="wrap two">
+          <div>
+            <div class="sec__head">
+              <p class="eyebrow">Publier</p>
+              <h2 class="h2" id="st-comm-title">Communiqué</h2>
+              <p class="sec__lede">Il s'affiche sur l'accueil et dans les archives. Tu peux masquer un passage avec [[3|texte]] : seuls les niveaux 3 et plus le liront.</p>
+            </div>
+            <form class="gen__form" id="st-comm-form">
+              <label class="field full"><span>Titre</span><input class="input" id="st-comm-titre" maxlength="120" required autocomplete="off"></label>
+              <label class="field full"><span>Texte</span><textarea class="textarea" id="st-comm-texte" rows="5" maxlength="2000" required></textarea></label>
+              <label class="field full"><span>Visible par</span>
+                <select class="select" id="st-comm-niveau"><option value="0">Tout le monde, même sans connexion</option><option value="1">Habilitation 1 et plus</option><option value="2">Habilitation 2 et plus</option><option value="3">Habilitation 3 et plus</option><option value="4">Habilitation 4 et plus</option><option value="5">Habilitation 5 uniquement</option></select></label>
+              <div class="gen__actions"><button type="submit" class="btn btn--signal">Publier le communiqué</button></div>
+            </form>
+          </div>
+          <div>
+            <div class="sec__head"><p class="eyebrow">Publiés depuis l'espace staff</p><h2 class="h2">Communiqués en ligne</h2></div>
+            <ul class="st-list" id="st-comm-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" id="st-evt" aria-labelledby="st-evt-title">
+        <div class="wrap two">
+          <div>
+            <div class="sec__head">
+              <p class="eyebrow" id="st-evt-mode">Nouvel événement</p>
+              <h2 class="h2" id="st-evt-title">Calendrier</h2>
+              <p class="sec__lede">Les horaires sont à l'heure de Paris. Le prochain événement s'affiche sur l'accueil avec son compte à rebours.</p>
+            </div>
+            <form class="gen__form" id="st-evt-form">
+              <input type="hidden" id="st-evt-id">
+              <label class="field full"><span>Titre</span><input class="input" id="st-evt-titre" maxlength="100" required autocomplete="off"></label>
+              <label class="field"><span>Type</span><select class="select" id="st-evt-type"></select></label>
+              <label class="field"><span>Durée (minutes)</span><input class="input" id="st-evt-duree" type="number" min="15" max="720" step="15" value="120" required></label>
+              <label class="field full"><span>Date et heure</span><input class="input" id="st-evt-date" type="datetime-local" required></label>
+              <label class="field full"><span>Lieu</span><input class="input" id="st-evt-lieu" maxlength="120" autocomplete="off" placeholder="Niveau −1 · Salle de briefing"></label>
+              <label class="field full"><span>Description</span><textarea class="textarea" id="st-evt-texte" rows="4" maxlength="1000"></textarea></label>
+              <div class="gen__actions"><button type="submit" class="btn btn--signal" id="st-evt-submit">Ajouter l'événement</button><button type="button" class="btn" id="st-evt-cancel" hidden>Annuler</button></div>
+            </form>
+          </div>
+          <div>
+            <div class="sec__head"><p class="eyebrow">Programme</p><h2 class="h2">Événements</h2></div>
+            <ul class="st-list" id="st-evt-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" id="st-journal-sec" aria-labelledby="st-journal-title">
+        <div class="wrap">
+          <div class="sec__head">
+            <p class="eyebrow">Traçabilité</p>
+            <h2 class="h2" id="st-journal-title">Journal des actions</h2>
+            <p class="sec__lede">Les 60 dernières actions du staff, avec leur auteur.</p>
+          </div>
+          <ol class="st-journal" id="st-journal"></ol>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

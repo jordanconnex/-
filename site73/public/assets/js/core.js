@@ -89,7 +89,8 @@
     { id: "laboratoire",  file: "laboratoire",  label: "Laboratoire",  lieu: "Niveau −3",  groupe: "outils" },
     { id: "entrainement", file: "entrainement", label: "Entraînement", lieu: "Niveau −4",  groupe: "outils" },
     { id: "terminal",     file: "terminal",     label: "Terminal",     lieu: "Niveau −1",  groupe: "outils" },
-    { id: "carnet",       file: "carnet",       label: "Mon carnet",   lieu: "Personnel",  groupe: "outils" }
+    { id: "carnet",       file: "carnet",       label: "Mon carnet",   lieu: "Personnel",  groupe: "outils" },
+    { id: "staff",        file: "staff",        label: "Staff",        lieu: "Direction",  groupe: "outils", staff: true }
   ];
   var GROUPES = { site: "Le site", communaute: "Communauté", outils: "Outils" };
   S.pages = PAGES;
@@ -219,8 +220,27 @@
   var habName = function (n) { return D.habilitations[n].nom; };
   S.habName = habName;
 
+  /* ---------- Session (connexion Discord) --------------------------- */
+  // mode "live" : le site parle à ses fonctions Netlify (/api/…) ;
+  // mode "demo" : aperçu sans serveur, profils et niveaux au choix.
+  var sess = { mode: "demo", user: null, admin: false, reel: clearance, source: "demo" };
+  S.session = function () { return sess; };
+  S.isLive = function () { return sess.mode === "live"; };
+  S.isAdmin = function () { return !!sess.admin; };
+  S.canChooseClearance = function () { return sess.mode === "demo" || sess.admin; };
+  S.loginUrl = function () {
+    var p = byId[currentPage];
+    return "/api/auth/login?retour=" + encodeURIComponent(p && p.id !== "accueil" ? "/" + p.file + ".html" : "/");
+  };
+  S.avatar = function (u, cls) {
+    var ini = String(u && u.nom || "?").replace(/[^A-Za-zÀ-ÿ0-9 ]/g, "").split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase() || "?";
+    var bg = u && u.avatar && sess.mode === "live" ? ' style="background-image:url(\'' + String(u.avatar).replace(/['"()\\]/g, "") + '\')"' : "";
+    return '<span class="av ' + (cls || "") + '"' + bg + ' aria-hidden="true">' + esc(ini) + "</span>";
+  };
+
   /* ---------- Caviardage ---------------------------------------------- */
   var TOKEN_SRC = /\[\[(\d)\|([\s\S]*?)\]\]|\[(DONNÉES SUPPRIMÉES|SUPPRIMÉ)\]/.source;
+  var FILLER = /^[▒\s]+$/;
   var supOnly = function (t) {
     return esc(t).replace(/\[(DONNÉES SUPPRIMÉES|SUPPRIMÉ)\]/g, '<span class="sup">[$1]</span>');
   };
@@ -233,7 +253,7 @@
       out += esc(text.slice(last, m.index));
       if (m[1]) {
         var n = +m[1], inner = m[2];
-        if (lvl >= n) {
+        if (lvl >= n && !FILLER.test(inner)) {
           var fresh = prev != null && n > prev ? " is-new" : "";
           out += '<span class="rv' + fresh + '" data-lvl="' + n + '" title="Déclassifié · niveau ' + n + '">' + supOnly(inner) + "</span>";
         } else {
@@ -250,12 +270,12 @@
   };
   S.redactPlain = function (text) {
     return text.replace(/\[\[(\d)\|([\s\S]*?)\]\]/g, function (_, n, inner) {
-      return clearance >= +n ? inner : "\u0000" + "█".repeat(Math.min(Math.max(inner.length, 6), 42)) + "\u0001";
+      return clearance >= +n && !FILLER.test(inner) ? inner : "\u0000" + "█".repeat(Math.min(Math.max(inner.length, 6), 42)) + "\u0001";
     });
   };
   S.redactSpeech = function (text) {
     return text.replace(/\[\[(\d)\|([\s\S]*?)\]\]/g, function (_, n, inner) {
-      return clearance >= +n ? inner : " Passage censuré. ";
+      return clearance >= +n && !FILLER.test(inner) ? inner : " Passage censuré. ";
     });
   };
   S.redactInto = function (el, text) {
@@ -280,16 +300,27 @@
   S.setClearance = function (n, opts) {
     n = Math.max(0, Math.min(5, parseInt(n, 10)));
     if (isNaN(n)) return;
+    if (!S.canChooseClearance()) {
+      S.toast("<b>Habilitation attribuée par l'administration.</b> " + (sess.user ? "Demande au staff du serveur pour évoluer." : "Connecte-toi avec Discord pour recevoir la tienne."), { warn: true });
+      return;
+    }
+    if (sess.mode === "live") {
+      n = Math.min(n, sess.reel);
+      store.set("s73.voir", n, true);
+    } else {
+      store.set("s73.hab", n);
+      sess.reel = n;
+    }
     var prev = clearance;
     clearance = n;
-    store.set("s73.hab", n);
     updateClearanceUI();
     rerender(prev);
     doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: n, prev: prev } }));
     if (!(opts && opts.silent)) {
       var diff = n > prev ? "Informations déclassifiées." : n < prev ? "Informations reclassifiées." : "Aucun changement.";
-      S.toast("<b>Habilitation · niveau " + n + "</b> " + esc(habName(n)) + ". " + diff);
+      S.toast("<b>" + (sess.mode === "live" ? "Aperçu comme niveau " : "Habilitation · niveau ") + n + "</b> " + esc(habName(n)) + ". " + diff);
     }
+    renderClrPop();
     S.sfx("ok");
     checkBadges();
   };
@@ -309,8 +340,11 @@
     void bar.offsetWidth;
     bar.classList.add("is-denied");
     S.sfx("deny");
-    S.toast("<b>Accès refusé.</b> Niveau " + bar.getAttribute("data-lvl") + " requis, votre habilitation est de niveau " +
-      clearance + ". Modifiez-la avec le bouton « Hab. » en haut de page.", { warn: true });
+    var lvl = bar.getAttribute("data-lvl");
+    var fin = S.canChooseClearance() ? " Modifiez-la avec le bouton « Hab. » en haut de page."
+      : sess.user ? " Seul le staff du serveur peut relever votre habilitation."
+      : ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous avec Discord</a> pour recevoir la vôtre.';
+    S.toast("<b>Accès refusé.</b> Niveau " + lvl + " requis, votre habilitation est de niveau " + clearance + "." + fin, { warn: true, duration: 6000 });
   }
 
   /* ---------- Niveau d'alerte ---------------------------------------- */
@@ -376,7 +410,7 @@
     lecteur: function (c) { return count(c.seen) >= 5; },
     archiviste: function (c) { return D.scp.every(function (s) { return c.seen[s.id]; }); },
     favoris: function (c) { return count(c.fav) >= 3; },
-    visite: function (c) { return PAGES.every(function (p) { return c.pages[p.id]; }); },
+    visite: function (c) { return PAGES.every(function (p) { return (p.staff && !sess.admin) || c.pages[p.id]; }); },
     thaumiel: function () { return clearance === 5; },
     reglement: function (c) { return D.reglement.every(function (ch) { return c.rules[ch.id]; }); },
     apte: function (c) { return (c.stats.exam || 0) >= D.quiz.length - 1; },
@@ -468,16 +502,12 @@
 
   /* ---------- En-tête -------------------------------------------------- */
   var linkFor = function (p, cls, withLieu) {
-    return '<a class="' + cls + '" href="' + p.file + '.html" data-nav="' + p.id + '">' +
+    return '<a class="' + cls + '" href="' + p.file + '.html" data-nav="' + p.id + '"' + (p.staff ? " data-staff-only hidden" : "") + ">" +
       (withLieu ? "<b>" + esc(p.label) + "</b><small>" + esc(p.lieu) + "</small>" : esc(p.label)) + "</a>";
   };
   var buildHeader = function () {
     var slot = doc.getElementById("s73-header");
     if (!slot) return;
-    var levels = D.habilitations.map(function (h) {
-      return '<li><button type="button" class="clr__opt" role="menuitemradio" data-lvl="' + h.niveau + '" aria-checked="false">' +
-        "<b>" + h.niveau + "</b><span>" + esc(h.nom) + "</span><small>" + (h.niveau === 5 ? "O5" : "N" + h.niveau) + "</small></button></li>";
-    }).join("");
     var top = PAGES.filter(function (p) { return p.top; }).map(function (p) { return linkFor(p, "nav__link"); }).join("");
     var more = Object.keys(GROUPES).map(function (g) {
       var list = PAGES.filter(function (p) { return !p.top && p.groupe === g; });
@@ -486,7 +516,7 @@
     }).join("");
     var drawer = Object.keys(GROUPES).map(function (g) {
       return '<p class="drawer__grp">' + GROUPES[g] + "</p>" + PAGES.filter(function (p) { return p.groupe === g; }).map(function (p) {
-        return '<a href="' + p.file + '.html" data-nav="' + p.id + '">' + esc(p.label) + "<small>" + esc(p.lieu) + "</small></a>";
+        return '<a href="' + p.file + '.html" data-nav="' + p.id + '"' + (p.staff ? " data-staff-only hidden" : "") + ">" + esc(p.label) + "<small>" + esc(p.lieu) + "</small></a>";
       }).join("");
     }).join("");
 
@@ -509,8 +539,7 @@
           '<div class="clr">' +
             '<button type="button" class="clr__btn" id="clr-btn" aria-haspopup="true" aria-expanded="false" aria-controls="clr-pop" title="Votre niveau d\'habilitation">' +
               '<span class="clr__lbl">Hab.</span><b data-hab-num></b></button>' +
-            '<div class="clr__pop" id="clr-pop" hidden><p><b>Niveau d\'habilitation</b><br>Il détermine les informations visibles dans les dossiers et les archives.</p>' +
-              '<ul class="clr__list" role="menu" aria-label="Choisir un niveau">' + levels + "</ul></div>" +
+            '<div class="clr__pop" id="clr-pop" hidden></div>' +
           "</div>" +
           '<a class="icon-btn carnet-btn" href="carnet.html" data-nav="carnet" title="Mon carnet de service">' + ICON.medal + '<span class="count" data-badge-count>0</span></a>' +
           '<button type="button" class="icon-btn menu-btn" id="menu-btn" aria-expanded="false" aria-controls="drawer" aria-label="Ouvrir le menu">' + ICON.menu + "</button>" +
@@ -550,6 +579,8 @@
       if (pop.hidden) S.openClearance(); else closePop();
     });
     pop.addEventListener("click", function (e) {
+      var pr = e.target.closest("[data-profil]");
+      if (pr) { S.setDemoProfil(pr.getAttribute("data-profil")); return; }
       var o = e.target.closest(".clr__opt");
       if (!o) return;
       S.setClearance(o.getAttribute("data-lvl"));
@@ -571,6 +602,48 @@
     doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawerEl.hidden) { S.closeDrawer(); mb.focus(); } });
   };
 
+  var levelsHtml = function (max) {
+    return '<ul class="clr__list" role="menu" aria-label="Choisir un niveau">' + D.habilitations.filter(function (h) { return h.niveau <= max; }).map(function (h) {
+      return '<li><button type="button" class="clr__opt" role="menuitemradio" data-lvl="' + h.niveau + '" aria-checked="' + (h.niveau === clearance) + '">' +
+        "<b>" + h.niveau + "</b><span>" + esc(h.nom) + "</span><small>" + (h.niveau === 5 ? "O5" : "N" + h.niveau) + "</small></button></li>";
+    }).join("") + "</ul>";
+  };
+  var SOURCES = {
+    role: "Attribuée par tes rôles sur le serveur Discord.",
+    staff: "Attribuée par l'administration du site.",
+    defaut: "Niveau par défaut des membres. Le staff peut le relever.",
+    admin: "Administrateur : accès complet."
+  };
+  function renderClrPop() {
+    var pop = doc.getElementById("clr-pop"), btn = doc.getElementById("clr-btn");
+    if (!pop) return;
+    var who = sess.user ? '<div class="who">' + S.avatar(sess.user) + "<div><b>" + esc(sess.user.nom) + "</b><small>" +
+      (sess.admin ? "Administrateur" : "Membre du serveur") + (sess.mode === "demo" ? " · démo" : "") + "</small></div></div>" : "";
+    var out = "";
+    if (sess.mode === "demo") {
+      var profil = store.get("s73.demo.profil") || "membre";
+      out = '<p class="clr__demo">Mode démonstration</p>' +
+        "<p>En ligne, chacun se connecte avec Discord et reçoit l'habilitation donnée par le staff. Ici, choisis un profil pour tester.</p>" +
+        '<div class="seg clr__profils" role="radiogroup" aria-label="Profil de démonstration">' + [["visiteur", "Visiteur"], ["membre", "Membre"], ["admin", "Admin"]].map(function (x) {
+          return '<button type="button" role="radio" data-profil="' + x[0] + '" aria-checked="' + (profil === x[0]) + '" style="--c: var(--signal)">' + x[1] + "</button>";
+        }).join("") + "</div>" +
+        (profil === "visiteur" ? "" : '<p class="label">Niveau d\'habilitation</p>' + levelsHtml(5)) +
+        (sess.admin ? '<div class="clr__acts"><a class="btn btn--sm" href="staff.html">Espace staff</a></div>' : "");
+    } else if (!sess.user) {
+      out = "<p><b>Visiteur · niveau 0</b><br>Connecte-toi avec ton compte Discord : l'administration du serveur t'attribue ton habilitation.</p>" +
+        '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>";
+    } else if (sess.admin) {
+      out = who + "<p>Tu as accès à tout. Prévisualise le site comme un membre d'un autre niveau :</p>" + levelsHtml(sess.reel) +
+        '<div class="clr__acts"><a class="btn btn--sm btn--signal" href="staff.html">Espace staff</a><a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
+    } else {
+      out = who + "<p><b>Habilitation · niveau " + sess.reel + " · " + esc(habName(sess.reel)) + "</b><br>" + esc(SOURCES[sess.source] || SOURCES.defaut) + "</p>" +
+        '<div class="clr__acts"><a class="btn btn--sm" href="carnet.html">Mon carnet</a><a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
+    }
+    pop.innerHTML = out;
+    if (btn) btn.innerHTML = (sess.user ? S.avatar(sess.user, "av--sm") : "") + '<span class="clr__lbl">Hab.</span><b data-hab-num>' + clearance + "</b>";
+  }
+  S.renderClrPop = renderClrPop;
+
   var markNav = function (id) {
     doc.querySelectorAll("[data-nav]").forEach(function (a) {
       if (a.getAttribute("data-nav") === id) a.setAttribute("aria-current", "page");
@@ -586,7 +659,7 @@
     if (!slot) return;
     var cols = Object.keys(GROUPES).map(function (g) {
       return "<div><h2>" + GROUPES[g] + '</h2><ul class="ftr__links">' + PAGES.filter(function (p) { return p.groupe === g; }).map(function (p) {
-        return '<li><a href="' + p.file + '.html">' + esc(p.label) + "</a></li>";
+        return "<li" + (p.staff ? " data-staff-only hidden" : "") + '><a href="' + p.file + '.html">' + esc(p.label) + "</a></li>";
       }).join("") + "</ul></div>";
     }).join("");
     slot.outerHTML =
@@ -810,7 +883,9 @@
       "<section><h3>Description</h3><p data-part=\"desc\"></p></section>" +
       '<footer class="doc__foot"><span>Consulté avec une habilitation de niveau <b>' + clearance + "</b> (" + esc(habName(clearance)) + ")." +
         (clearance < 4 ? " Certaines informations restent masquées." : "") + "</span>" +
-        '<button type="button" data-open-hab>Changer d\'habilitation</button></footer>';
+        (S.canChooseClearance() ? '<button type="button" data-open-hab>Changer d\'habilitation</button>'
+          : sess.user ? "<span>Habilitation attribuée par l'administration.</span>"
+          : '<a href="' + S.loginUrl() + '">Se connecter avec Discord</a>') + "</footer>";
     S.redactInto(art.querySelector('[data-part="proc"]'), s.procedures);
     S.redactInto(art.querySelector('[data-part="desc"]'), s.description);
     modal.querySelector("[data-pos]").textContent = (modalIndex + 1) + " / " + modalList.length;
@@ -977,7 +1052,7 @@
   });
 
   /* ---------- Séquence de démarrage -------------------------------- */
-  var booting = false;
+  var booting = false, bootPending = false;
   var boot = function () {
     if (!settings.boot || !store.ok(true) || store.get("s73.boot", true) || reduced) { store.set("s73.boot", "1", true); return; }
     store.set("s73.boot", "1", true);
@@ -999,7 +1074,8 @@
       "> Conditions en surface : " + (w.temp > 0 ? "+" : "") + w.temp + " °C, vent " + w.vent + " km/h",
       "> Chargement de " + D.scp.length + " dossiers de confinement ... <span class=\"ok\">OK</span>",
       "> Niveau d'alerte : <span class=\"hl\">" + esc(D.alertes[alertLevel].code.toUpperCase()) + "</span>",
-      "> Habilitation détectée : <span class=\"hl\">NIVEAU " + clearance + " · " + esc(habName(clearance).toUpperCase()) + "</span>"
+      "> Identité : <span class=\"hl\">" + (sess.user ? esc(sess.user.nom.toUpperCase()) + (sess.mode === "live" ? " (DISCORD)" : " (DÉMO)") : "VISITEUR NON CONNECTÉ") + "</span>",
+      "> Habilitation : <span class=\"hl\">NIVEAU " + clearance + " · " + esc(habName(clearance).toUpperCase()) + "</span>"
     ];
     var timers = [], done = false;
     var finish = function () {
@@ -1164,6 +1240,253 @@
   };
   S.currentPage = function () { return currentPage; };
 
+  /* ---------- Session : chargement, démonstration, API staff -------- */
+  var staticArchives = D.archives.slice(), staticEvenements = (D.evenements || []).slice(), staticAlerte = D.config.alerte;
+  var dateParis;
+  try {
+    var dpFmt = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
+    dateParis = function (d) { return dpFmt.format(d); };
+  } catch (e) { dateParis = function (d) { return d.toISOString().slice(0, 10); }; }
+  // "2026-09-26T21:00" (heure de Paris) → ISO avec le bon décalage (été/hiver)
+  S.isoParis = function (local) {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local || "")) return null;
+    var dec = function (d) {
+      try {
+        var nom = new Intl.DateTimeFormat("en-US", { timeZone: D.config.fuseau, timeZoneName: "shortOffset" }).formatToParts(d)
+          .filter(function (x) { return x.type === "timeZoneName"; })[0].value;
+        var m = /GMT(?:([+-]\d+)(?::(\d+))?)?/.exec(nom);
+        var h = m && m[1] ? +m[1] : 0;
+        return h * 60 + (m && m[2] ? (h < 0 ? -1 : 1) * +m[2] : 0);
+      } catch (e) { return 120; }
+    };
+    var approx = new Date(local + ":00Z");
+    if (isNaN(approx)) return null;
+    var min = dec(new Date(approx.getTime() - dec(approx) * 60000)), a = Math.abs(min);
+    return local + ":00" + (min >= 0 ? "+" : "-") + pad(Math.floor(a / 60)) + ":" + pad(a % 60);
+  };
+
+  var reindex = function () {
+    scpById = {}; D.scp.forEach(function (x) { scpById[x.id] = x; });
+    zoneById = {}; D.zones.forEach(function (z) { zoneById[z.id] = z; });
+    S.scpById = scpById; S.zoneById = zoneById; pIndex = null;
+  };
+  var appliquerContenu = function (p) {
+    Object.keys(p.data).forEach(function (k) { D[k] = p.data[k]; });
+    reindex();
+  };
+
+  // Faux serveur local du mode démonstration (aperçu sans fonctions Netlify)
+  var ilYa = function (h) { return new Date(Date.now() - h * 3600000).toISOString(); };
+  var demoGraine = function () {
+    return {
+      membres: [
+        { id: "demo-admin", nom: "Admin (démo)", pseudo: "vous", admin: true, derniereVisite: ilYa(0) },
+        { id: "100000000000000001", nom: "Exemple · Élise Varenne", pseudo: "exemple.varenne", roleHab: 2, derniereVisite: ilYa(3) },
+        { id: "100000000000000002", nom: "Exemple · Hugo Ferrand", pseudo: "exemple.ferrand", roleHab: 3, derniereVisite: ilYa(20) },
+        { id: "100000000000000003", nom: "Exemple · Karim Belkacem", pseudo: "exemple.belkacem", roleHab: 2, override: 4, modifiePar: "Admin (démo)", modifieLe: ilYa(48), derniereVisite: ilYa(30) },
+        { id: "100000000000000004", nom: "Exemple · D-9341", pseudo: "exemple.dclasse", derniereVisite: ilYa(70) },
+        { id: "100000000000000005", nom: "Exemple · Nora Castel", pseudo: "exemple.castel", roleHab: 1, derniereVisite: ilYa(120) }
+      ],
+      etat: null, communiques: [], evenements: null,
+      journal: [{ le: ilYa(48), par: "Admin (démo)", action: "Habilitation de Exemple · Karim Belkacem réglée sur le niveau 4" }]
+    };
+  };
+  var demoLire = function () {
+    try { var d = JSON.parse(store.get("s73.demo.db") || "null"); if (d && d.membres) return d; } catch (e) { /* graine */ }
+    return demoGraine();
+  };
+  var demoEcrire = function (d) { store.set("s73.demo.db", JSON.stringify(d)); };
+  var habDe = function (m) {
+    if (m.admin) return { niveau: 5, source: "admin" };
+    if (typeof m.override === "number") return { niveau: m.override, source: "staff" };
+    if (typeof m.roleHab === "number") return { niveau: m.roleHab, source: "role" };
+    return { niveau: 1, source: "defaut" };
+  };
+  var demoEtat = function (d) {
+    return {
+      membres: d.membres.map(function (m) {
+        var h = habDe(m);
+        return Object.assign({}, m, { habilitation: h.niveau, source: h.source, override: typeof m.override === "number" ? m.override : null, admin: !!m.admin });
+      }).sort(function (a, b) { return (b.derniereVisite || "").localeCompare(a.derniereVisite || ""); }),
+      etat: d.etat || { alerte: staticAlerte, par: null, le: null },
+      communiques: d.communiques,
+      evenements: d.evenements || staticEvenements,
+      journal: d.journal.slice(0, 60)
+    };
+  };
+  var demoAction = function (action, c) {
+    var d = demoLire(), par = sess.user ? sess.user.nom : "Admin (démo)", now = new Date().toISOString();
+    var t = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
+    var err = function (m) { throw new Error(m); };
+    var log = function (a) { d.journal.unshift({ le: now, par: par, action: a }); d.journal = d.journal.slice(0, 200); };
+    var niveauOk = function (n) { return typeof n === "number" && n % 1 === 0 && n >= 0 && n <= 5; };
+    if (action === "habilitation") {
+      var m = d.membres.filter(function (x) { return x.id === c.id; })[0];
+      if (!m) err("Membre introuvable.");
+      if (c.niveau === null) delete m.override; else if (niveauOk(c.niveau)) m.override = c.niveau; else err("Niveau invalide (0 à 5).");
+      m.modifiePar = par; m.modifieLe = now;
+      log(c.niveau === null ? "Habilitation de " + m.nom + " rendue à ses rôles Discord" : "Habilitation de " + m.nom + " réglée sur le niveau " + c.niveau);
+    } else if (action === "alerte") {
+      if (ALERTS.indexOf(c.niveau) < 0) err("Niveau d'alerte inconnu.");
+      d.etat = { alerte: c.niveau, par: par, le: now };
+      log("Niveau d'alerte du site : " + D.alertes[c.niveau].code);
+    } else if (action === "communique.ajouter") {
+      var titre = t(c.titre, 120), texte = t(c.texte, 2000);
+      if (!titre || !texte) err("Titre et texte obligatoires.");
+      var niv = niveauOk(c.niveau) ? c.niveau : 0;
+      d.communiques.unshift({ id: "c" + Date.now(), date: dateParis(new Date()), titre: titre, texte: texte, niveau: niv, auteur: par, creeLe: now });
+      log("Communiqué publié : « " + titre + " »" + (niv ? " (niveau " + niv + ")" : ""));
+    } else if (action === "communique.supprimer") {
+      var cc = d.communiques.filter(function (x) { return x.id === c.id; })[0];
+      if (!cc) err("Communiqué introuvable.");
+      d.communiques = d.communiques.filter(function (x) { return x.id !== c.id; });
+      log("Communiqué supprimé : « " + cc.titre + " »");
+    } else if (action === "evenement.enregistrer") {
+      var ti = t(c.titre, 100), date = S.isoParis(c.date), duree = Number(c.duree);
+      if (!ti || !date) err("Titre et date obligatoires.");
+      if (!D.typesEvenement[c.type]) err("Type d'événement inconnu.");
+      if (!(duree >= 15 && duree <= 720)) err("Durée entre 15 et 720 minutes.");
+      var liste = (d.evenements || staticEvenements).slice();
+      var ev = { id: c.id || "evt-" + Date.now().toString(36), date: date, duree: duree, type: c.type, titre: ti, lieu: t(c.lieu, 120), texte: t(c.texte, 1000) };
+      var i = -1;
+      liste.forEach(function (x, j) { if (x.id === ev.id) i = j; });
+      if (i >= 0) liste[i] = ev; else liste.push(ev);
+      liste.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      d.evenements = liste;
+      log("Événement " + (i >= 0 ? "modifié" : "ajouté") + " : « " + ti + " »");
+    } else if (action === "evenement.supprimer") {
+      var l2 = (d.evenements || staticEvenements).slice();
+      var cible = l2.filter(function (x) { return x.id === c.id; })[0];
+      if (!cible) err("Événement introuvable.");
+      d.evenements = l2.filter(function (x) { return x.id !== c.id; });
+      log("Événement supprimé : « " + cible.titre + " »");
+    } else {
+      err("Action inconnue.");
+    }
+    demoEcrire(d);
+    return demoEtat(d);
+  };
+  var demoAppliquer = function () {
+    var d = demoLire();
+    D.config.alerte = d.etat && ALERTS.indexOf(d.etat.alerte) >= 0 ? d.etat.alerte : staticAlerte;
+    D.archives = d.communiques.filter(function (c) { return (c.niveau || 0) <= clearance; }).map(function (c) {
+      return { id: c.id, date: c.date, type: "communique", titre: c.titre, texte: c.texte, auteur: c.auteur, niveau: c.niveau || 0, dyn: true };
+    }).concat(staticArchives);
+    D.evenements = d.evenements || staticEvenements;
+  };
+
+  var appelStaff = function (options) {
+    return fetch("/api/staff", Object.assign({ credentials: "same-origin" }, options)).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.erreur || "Erreur du serveur (" + r.status + ").");
+        return j;
+      });
+    });
+  };
+  S.api = {
+    etat: function () { return sess.mode === "live" ? appelStaff({}) : Promise.resolve(demoEtat(demoLire())); },
+    action: function (action, corps) {
+      if (sess.mode === "live") {
+        return appelStaff({ method: "POST", headers: { "content-type": "application/json", "x-s73": "1" }, body: JSON.stringify(Object.assign({ action: action }, corps)) });
+      }
+      return new Promise(function (ok) { ok(demoAction(action, corps || {})); });
+    }
+  };
+  // Après une action du staff : recharge le contenu et prévient les pages.
+  S.rafraichirContenu = function (action) {
+    var fin = function () {
+      if (action === "alerte") { store.del("s73.alerte", true); alertLevel = D.config.alerte; applyAlert(); doc.dispatchEvent(new CustomEvent("s73:alert", { detail: { level: alertLevel } })); }
+      doc.dispatchEvent(new CustomEvent("s73:dynamic"));
+    };
+    if (sess.mode !== "live") { demoAppliquer(); fin(); return Promise.resolve(); }
+    return fetch("/api/contenu", { credentials: "same-origin" }).then(function (r) { return r.json(); })
+      .then(function (p) { if (p && p.data) appliquerContenu(p); fin(); }, fin);
+  };
+
+  var passerEnDemo = function () {
+    sess.mode = "demo";
+    var profil = store.get("s73.demo.profil") || "membre";
+    sess.admin = profil === "admin";
+    sess.user = profil === "visiteur" ? null : { id: "demo", nom: profil === "admin" ? "Admin (démo)" : "Membre (démo)", avatar: null };
+    sess.source = "demo";
+    sess.reel = clearance;
+    demoAppliquer();
+  };
+  var applySessionUI = function () {
+    doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !sess.admin; });
+    doc.querySelectorAll("[data-session-nom]").forEach(function (el) { el.textContent = sess.user ? sess.user.nom : "Visiteur"; });
+    doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne · Discord" : "Démonstration"; });
+    renderClrPop();
+    updateClearanceUI();
+    doc.dispatchEvent(new CustomEvent("s73:session"));
+  };
+  S.setDemoProfil = function (p) {
+    if (sess.mode !== "demo" || ["visiteur", "membre", "admin"].indexOf(p) < 0) return;
+    store.set("s73.demo.profil", p);
+    var niveau = p === "visiteur" ? 0 : p === "admin" ? 5 : Math.min(Math.max(clearance, 1), 4);
+    var prev = clearance;
+    clearance = niveau;
+    store.set("s73.hab", niveau);
+    passerEnDemo();
+    rerender(prev);
+    applySessionUI();
+    doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: niveau, prev: prev } }));
+    doc.dispatchEvent(new CustomEvent("s73:dynamic"));
+    S.toast("<b>Profil de démonstration : " + { visiteur: "visiteur", membre: "membre", admin: "administrateur" }[p] + ".</b> " +
+      (p === "admin" ? "L'espace staff est dans le menu « Plus »." : p === "visiteur" ? "Sans connexion, seul le niveau 0 est lisible." : "Choisis un niveau d'habilitation pour tester."));
+    checkBadges();
+  };
+
+  var chargerSession = function () {
+    if (BUNDLE || location.protocol === "file:") { passerEnDemo(); return Promise.resolve(); }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var minuteur = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return fetch("/api/contenu", { credentials: "same-origin", headers: { accept: "application/json" }, signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (p) {
+        clearTimeout(minuteur);
+        if (!p || p.mode !== "live" || !p.data) throw new Error("réponse inattendue");
+        appliquerContenu(p);
+        sess.mode = "live";
+        if (p.session) {
+          sess.user = { id: p.session.id, nom: p.session.nom, avatar: p.session.avatar };
+          sess.admin = !!p.session.admin;
+          sess.reel = p.session.habilitation;
+          sess.source = p.session.source;
+        } else {
+          sess.user = null; sess.admin = false; sess.reel = 0; sess.source = "visiteur";
+        }
+        var voir = sess.admin ? parseInt(store.get("s73.voir", true), 10) : NaN;
+        clearance = !isNaN(voir) && voir >= 0 && voir <= sess.reel ? voir : sess.reel;
+      })
+      .catch(function () { clearTimeout(minuteur); passerEnDemo(); });
+  };
+  var apresSession = function () {
+    alertLevel = store.get("s73.alerte", true);
+    if (ALERTS.indexOf(alertLevel) < 0) alertLevel = D.config.alerte;
+    applyAlert();
+    doc.querySelectorAll("[data-last-update]").forEach(function (el) {
+      el.textContent = fmtDate(D.archives.map(function (a) { return a.date; }).sort().pop());
+    });
+    applySessionUI();
+  };
+  var MESSAGES = {
+    ok: [false, function () { return "<b>Connecté · " + esc(sess.user ? sess.user.nom : "") + ".</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + ")."; }],
+    fermee: [false, "<b>Déconnecté.</b> À bientôt au Site-73."],
+    annulee: [true, "<b>Connexion annulée.</b>"],
+    expiree: [true, "<b>La connexion a expiré.</b> Réessaie depuis le bouton « Hab. »."],
+    serveur: [true, "<b>Accès refusé.</b> Ce compte Discord n'est pas membre du serveur du Site-73."],
+    discord: [true, "<b>Discord n'a pas répondu.</b> Réessaie dans un instant."],
+    config: [true, "<b>Connexion indisponible.</b> La connexion Discord n'est pas encore configurée sur ce site."]
+  };
+  var messageConnexion = function () {
+    var q = /[?&]connexion=([a-z]+)/.exec(location.search);
+    if (!q || !MESSAGES[q[1]]) return;
+    var m = MESSAGES[q[1]];
+    setTimeout(function () { S.toast(typeof m[1] === "function" ? m[1]() : m[1], { warn: m[0], duration: 6000 }); }, booting ? 2600 : 300);
+    try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignoré */ }
+  };
+
   /* ---------- Démarrage ----------------------------------------------- */
   buildHeader();
   buildFooter();
@@ -1224,9 +1547,12 @@
       requestAnimationFrame(function () { requestAnimationFrame(function () { doors.classList.remove("is-closed"); }); });
     } else {
       store.del("s73.doors", true);
-      boot();
+      bootPending = true;
     }
   }
+
+  // Les modules de pages attendent la session avant de s'afficher.
+  S.donneesPretes = chargerSession().then(apresSession);
 
   // Appelé par les modules de pages une fois tout construit.
   S.ready = function () {
@@ -1235,7 +1561,8 @@
     if (hr >= 0 && hr < 5) carnet.flags.nuit = true;
     saveCarnet();
     badgeReady = true;
-    if (BUNDLE) boot();
+    if (BUNDLE || bootPending) boot();
+    messageConnexion();
     setTimeout(function () { if (!booting) checkBadges(); }, 700);
     if (BUNDLE) {
       if (S._startHash) setTimeout(function () { scrollToHash(S._startHash); }, 80);

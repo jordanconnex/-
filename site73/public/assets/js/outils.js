@@ -28,7 +28,8 @@
     var list = $("#evt-list");
     if (!list) return;
     var T = D.typesEvenement;
-    var all = (D.evenements || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+    var trier = function () { return (D.evenements || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); }); };
+    var all = trier();
     var state = { type: "all" };
     var status = function (e) {
       var t0 = new Date(e.date).getTime(), t1 = t0 + e.duree * 60000, now = Date.now();
@@ -66,6 +67,7 @@
       if (ev && cd) cd.outerHTML = countdownBlocks(new Date(ev.date).getTime() - Date.now());
       $$("[data-evt-count]", list).forEach(function (el) {
         var e = all.filter(function (x) { return x.id === el.getAttribute("data-evt-count"); })[0];
+        if (!e) return;
         var st = status(e);
         el.textContent = st === "avenir" ? "dans " + S.formatCountdown(new Date(e.date).getTime() - Date.now()) : st === "encours" ? "En cours" : "Terminé";
       });
@@ -74,7 +76,7 @@
 
     // --- Calendrier
     var cal = $("#evt-cal");
-    var first = S.upcoming()[0] || all[all.length - 1];
+    var first = S.upcoming()[0] || all[all.length - 1] || { date: new Date().toISOString() };
     var viewY = +first.date.slice(0, 4), viewM = +first.date.slice(5, 7) - 1;
     var today = dayKey(new Date());
     var renderCal = function () {
@@ -183,6 +185,7 @@
       }
     });
     doc.addEventListener("s73:carnet", function () { drawFilters(); renderList(); });
+    doc.addEventListener("s73:dynamic", function () { all = trier(); drawFilters(); renderList(); renderHero(); renderCal(); });
     drawFilters();
     renderList();
 
@@ -708,6 +711,25 @@
     $("#carnet-who").innerHTML = fiche
       ? "<b>" + esc(info.fullName) + "</b> · " + esc(info.dept.nom) + " · " + esc(info.grade[0])
       : "Tu n'as pas encore de fiche. Le site t'a attribué un matricule de Classe-D en attendant.";
+    var compte = $("#carnet-compte");
+    var SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur", demo: "le mode démonstration" };
+    var renderCompte = function () {
+      if (!compte) return;
+      var se = S.session();
+      if (!se.user) {
+        compte.innerHTML = '<p class="label">Compte</p><p>Tu consultes l\'intranet en visiteur (niveau 0).</p>' +
+          (se.mode === "live" ? '<a class="btn btn--signal btn--sm" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>"
+            : '<p class="muted">Mode démonstration : choisis un profil avec le bouton « Hab. ».</p>');
+        return;
+      }
+      compte.innerHTML = '<p class="label">Compte' + (se.mode === "live" ? " Discord" : " · démonstration") + "</p>" +
+        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>" + (se.admin ? "Administrateur" : "Membre du serveur") + "</small></div></div>" +
+        "<p>Habilitation niveau <b>" + se.reel + "</b> (" + esc(S.habName(se.reel)) + "), attribuée par " + esc(SRC[se.source] || SRC.defaut) + ".</p>" +
+        '<div class="hero__cta">' + (se.admin ? '<a class="btn btn--sm btn--signal" href="staff.html">Espace staff</a>' : "") +
+        (se.mode === "live" ? '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>' : "") + "</div>";
+    };
+    doc.addEventListener("s73:session", renderCompte);
+    renderCompte();
 
     var render = function () {
       var c = S.carnet();
@@ -795,8 +817,12 @@
   }
 
   /* ---------- Lancement de tous les modules ------------------------ */
-  (S.pageModules || []).concat([evenements, protocoles, laboratoire, entrainement, carnetPage]).forEach(function (fn) {
-    try { fn(); } catch (e) { if (window.console) console.error("[Site-73] " + (fn.name || "module"), e); }
-  });
-  if (S.ready) S.ready();
+  var lancer = function () {
+    (S.pageModules || []).concat([evenements, protocoles, laboratoire, entrainement, carnetPage, S.staffModule]).forEach(function (fn) {
+      if (typeof fn !== "function") return;
+      try { fn(); } catch (e) { if (window.console) console.error("[Site-73] " + (fn.name || "module"), e); }
+    });
+    if (S.ready) S.ready();
+  };
+  if (S.donneesPretes && S.donneesPretes.then) S.donneesPretes.then(lancer, lancer); else lancer();
 })();
