@@ -10,6 +10,7 @@ import retourDiscord from "./routes/retour-discord.mjs";
 import deconnexion from "./routes/deconnexion.mjs";
 import staff from "./routes/staff.mjs";
 import roblox from "./routes/roblox.mjs";
+import etat from "./routes/etat.mjs";
 
 const ROUTES = {
   "/api/contenu": contenu,
@@ -18,7 +19,8 @@ const ROUTES = {
   "/api/auth/callback": retourDiscord,
   "/api/auth/logout": deconnexion,
   "/api/staff": staff,
-  "/api/roblox": roblox
+  "/api/roblox": roblox,
+  "/api/etat": etat
 };
 
 const introuvable = () => new Response(
@@ -45,7 +47,9 @@ export default {
       return await route(req);
     } catch (e) {
       console.error("Site-73 :", e && e.stack || e);
-      return json({ erreur: "Erreur du serveur." }, 500);
+      // Erreurs de configuration : le message aide à corriger, il ne contient aucun secret
+      const config = e && /^(Stockage KV|SESSION_SECRET)/.test(e.message);
+      return json({ erreur: config ? e.message : "Erreur du serveur.", diagnostic: "/api/etat" }, 500);
     }
   }
 };

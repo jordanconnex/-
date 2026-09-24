@@ -2118,3 +2118,6 @@ html[data-motion="normal"] .ftr__staff svg { animation: blink 2.4s ease-in-out i
 @keyframes photo-scan { from { clip-path: inset(0 0 100% 0); filter: brightness(2.2) saturate(0); } 60% { filter: brightness(1.2) saturate(.5); } to { clip-path: inset(0 0 0 0); filter: none; } }
 html[data-motion="normal"] .idcard__img:not(.is-vu) { animation: photo-scan .9s var(--ease) both; }
 .field > span small { text-transform: none; letter-spacing: 0; }
+
+/* Raison du mode démonstration quand le site est en ligne */
+.clr__raison, .sas__raison { font-size: .78rem !important; line-height: 1.45; color: var(--signal) !important; padding: 8px 10px; border: 1px dashed color-mix(in srgb, var(--signal) 55%, transparent); background: color-mix(in srgb, var(--signal) 7%, transparent); }

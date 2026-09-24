@@ -84,7 +84,8 @@
           '<div class="sas__actions"><button type="submit" class="btn btn--signal" id="sas-ok">' + S.icon.lock + "Vérifier</button></div>" +
           '<p class="sas__msg" id="sas-msg" role="status" aria-live="polite"></p>' +
         "</form>" +
-        '<p class="sas__note">Site hors ligne (démonstration) : l\'accès staff est protégé par un code, qui se règle dans <code>config.codeStaff</code>. En ligne, il passe par les rôles administrateur Discord, vérifiés par le serveur.</p>';
+        '<p class="sas__note">Site hors ligne (démonstration) : l\'accès staff est protégé par un code, qui se règle dans <code>config.codeStaff</code>. En ligne, il passe par les rôles administrateur Discord, vérifiés par le serveur.</p>' +
+        (S.texteRaisonDemo && S.texteRaisonDemo() ? '<p class="sas__note sas__raison">⚠ ' + esc(S.texteRaisonDemo()) + "</p>" : "");
       let form = $("#sas-form"), msg = $("#sas-msg"), ok = $("#sas-ok"), code = $("#sas-code");
       let bloquer = function () {
         let reste = S.blocageStaff();

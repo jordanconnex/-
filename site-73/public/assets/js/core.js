@@ -690,7 +690,8 @@
       (sess.admin ? "Administrateur" : "Membre du serveur") + (demo ? " · démo" : "") + "</small></div></div>" : "";
     let sortir = demo ? '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>'
       : '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
-    let out = demo ? '<p class="clr__demo">Mode démonstration</p>' : "";
+    let out = demo ? '<p class="clr__demo">Mode démonstration</p>' + (S.texteRaisonDemo() ? '<p class="clr__raison">⚠ ' + esc(S.texteRaisonDemo()) + "</p>" : "") : "";
+    if (!demo && sess.admin && sess.avertissement) out += '<p class="clr__raison">⚠ ' + esc(sess.avertissement) + "</p>";
     if (S.modeStaff()) {
       out += who + '<p class="clr__staff"><i></i>Mode staff actif</p>' +
         "<p>Ton niveau réel est " + sess.reel + ". Prévisualise le site comme le verrait un membre :</p>" + levelsHtml(sess.reel) +
@@ -1729,22 +1730,46 @@
   // Adresse relative : sur un hébergement sans serveur (Live Server, fichiers
   // simples), elle tombe sur public/api/contenu.json, qui répond « demo »
   // sans erreur 404. Sur Cloudflare, le Worker répond à sa place.
+  // Pourquoi le site est en démonstration alors qu'il est en ligne (affiché dans « Hab. » et au sas staff)
+  let raisonDemo = null;
+  S.texteRaisonDemo = function () {
+    if (!raisonDemo) return "";
+    let local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    let r = raisonDemo;
+    let txt = r.code === "statique"
+      ? (local ? "Normal avec Live Server : lance « npm run dev » pour faire tourner le vrai serveur."
+        : "Le Worker Cloudflare ne tourne pas : le site est servi comme de simples fichiers. Redéploie avec GitHub (Import a repository) ou « npm run deploy », pas en glisser-déposer.")
+      : r.code === "http" ? (r.statut === 404 ? "Le serveur ne connaît pas api/contenu.json (code 404) : le Worker n'est pas déployé avec ce site."
+        : "Le serveur a répondu une erreur (code " + r.statut + ")" + (r.detail ? " : " + r.detail : "") + ".")
+      : r.code === "delai" ? "Le serveur n'a pas répondu à temps." : "Le serveur est injoignable.";
+    return txt + (local && r.code === "statique" ? "" : " Diagnostic : /api/etat");
+  };
   let chargerSession = function () {
     if (BUNDLE || location.protocol === "file:") { passerEnDemo(); return Promise.resolve(); }
     let ctrl = window.AbortController ? new AbortController() : null;
     let minuteur = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
     return fetch("api/contenu.json", { credentials: "same-origin", cache: "no-store", headers: { accept: "application/json" }, signal: ctrl ? ctrl.signal : undefined })
-      .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          let e = new Error("http " + r.status);
+          e.statut = r.status; e.detail = j && j.erreur;
+          throw e;
+        });
+      })
       .then(function (p) {
         clearTimeout(minuteur);
         if (p && p.mode === "demo") {
-          if (window.console) console.info("Site-73 : aucun serveur sur cet hébergement, le site passe en mode démonstration.");
+          raisonDemo = { code: "statique" };
+          if (window.console) console.warn("Site-73 : mode démonstration. " + S.texteRaisonDemo());
           passerEnDemo();
           return;
         }
         if (!p || p.mode !== "live" || !p.data) throw new Error("réponse inattendue");
         appliquerContenu(p);
         sess.mode = "live";
+        sess.avertissement = p.avertissement || null;
+        if (p.avertissement && window.console) console.warn("Site-73 : " + p.avertissement);
         if (p.session) {
           sess.user = { id: p.session.id, nom: p.session.nom, avatar: p.session.avatar };
           sess.admin = !!p.session.admin;
@@ -1756,7 +1781,12 @@
         }
         clearance = niveauVu();
       })
-      .catch(function () { clearTimeout(minuteur); passerEnDemo(); });
+      .catch(function (e) {
+        clearTimeout(minuteur);
+        raisonDemo = e && e.statut ? { code: "http", statut: e.statut, detail: e.detail } : { code: e && e.name === "AbortError" ? "delai" : "reseau" };
+        if (window.console) console.warn("Site-73 : mode démonstration. " + S.texteRaisonDemo());
+        passerEnDemo();
+      });
   };
   let apresSession = function () {
     alertLevel = D.config.alerte;
