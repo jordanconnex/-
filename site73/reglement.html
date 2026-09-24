@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Règlement · Site-73</title>
+  <meta name="description" content="Règlement de la communauté et du roleplay du Site-73 : principes RP, personnages, SCP, hiérarchie, sanctions et examen d'aptitude.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Règlement · Site-73">
+  <meta property="og:description" content="Règlement de la communauté et du roleplay du Site-73 : principes RP, personnages, SCP, hiérarchie, sanctions et examen d'aptitude.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+</head>
+<body data-page="reglement">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="reglement">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">§</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Règlement intérieur · Communauté & RP</p>
+          <h1 class="sign__title">Règlement</h1>
+          <p class="sign__lede">Les règles qui gardent le Site-73 jouable pour tout le monde. Lis-les avant ta première session, puis passe l'examen d'aptitude.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-REG-005</dd></div>
+          <div><dt>Chapitres</dt><dd data-chapter-count>5</dd></div>
+          <div><dt>Articles</dt><dd data-article-count>30</dd></div>
+          <div><dt>Mise à jour</dt><dd data-last-update></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="rules" aria-label="Articles du règlement">
+      <div class="wrap rules-layout">
+        <aside class="rules-toc">
+          <label class="search"><span class="sr-only">Rechercher dans le règlement</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="rules-search" type="search" placeholder="Rechercher un mot…" autocomplete="off"></label>
+          <nav id="rules-toc-nav" aria-label="Sommaire du règlement"></nav>
+        </aside>
+        <div id="rules-body"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="sanctions" aria-labelledby="sanctions-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Barème</p>
+          <h2 class="h2" id="sanctions-title">Sanctions</h2>
+          <p class="sec__lede">Le staff adapte la sanction à la gravité et à la récidive. Ce barème sert de repère.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Sanction</th><th scope="col">Motifs typiques</th><th scope="col">Durée</th></tr></thead>
+            <tbody id="rules-sanctions"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="glossaire" aria-labelledby="glossaire-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Vocabulaire</p>
+          <h2 class="h2" id="glossaire-title">Glossaire</h2>
+        </div>
+        <dl class="glossary" id="rules-glossary"></dl>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="examen" aria-labelledby="examen-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Évaluation</p>
+          <h2 class="h2" id="examen-title">Examen d'aptitude</h2>
+          <p class="sec__lede">Six questions sur les règles essentielles. Cinq bonnes réponses suffisent pour être déclaré apte au service.</p>
+        </div>
+        <div class="quiz" id="rules-quiz"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

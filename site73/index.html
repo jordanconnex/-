@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Site-73 · Fondation SCP RP</title>
+  <meta name="description" content="Site-73 : serveur de jeu de rôle dans l'univers de la Fondation SCP. Dossiers d'anomalies, plan interactif du site, règlement et création de personnage.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Site-73 · Fondation SCP RP">
+  <meta property="og:description" content="Six cents mètres sous le massif alpin, le Site-73 contient ce que le monde ne doit jamais voir. Rejoins le personnel.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+</head>
+<body data-page="accueil">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="accueil">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <div id="home">
+
+      <div class="ticker" aria-label="Informations du site">
+        <span class="ticker__label">Info site</span>
+        <div class="ticker__view"><div class="ticker__track" id="home-ticker"></div></div>
+      </div>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero__in">
+          <div class="hero__copy">
+            <p class="eyebrow">Fondation SCP · Installation de confinement alpine</p>
+            <h1 class="hero__title" id="hero-title">Site<i>-</i>73</h1>
+            <p class="hero__motto"><span>Sécuriser</span><span>Contenir</span><span>Protéger</span></p>
+            <p class="hero__lede">Six cents mètres sous le massif alpin, le Site-73 contient ce que le monde ne doit jamais voir. <strong>Chercheur, garde, agent FIM ou Classe-D : choisis ton rôle et rejoins le personnel.</strong></p>
+            <div class="hero__cta">
+              <a class="btn btn--signal" href="rejoindre.html">Rejoindre le site
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></a>
+              <a class="btn" href="confinement.html">Consulter les dossiers</a>
+            </div>
+            <dl class="hero__facts">
+              <div><dt>Altitude</dt><dd>2 140 m</dd></div>
+              <div><dt>Profondeur</dt><dd>−600 m</dd></div>
+              <div><dt>Anomalies</dt><dd data-scp-count>18</dd></div>
+              <div><dt>En service</dt><dd>depuis 1987</dd></div>
+            </dl>
+          </div>
+
+          <div class="hero__visual" aria-hidden="true">
+            <div class="dial">
+              <div class="dial__glow"></div>
+              <div class="dial__sweep"></div>
+              <svg viewBox="0 0 400 400">
+                <defs><path id="dial-ring" d="M200 200 m-150 0 a150 150 0 1 1 300 0 a150 150 0 1 1 -300 0"/></defs>
+                <circle cx="200" cy="200" r="197" fill="none" stroke="#34464E" stroke-width="1"/>
+                <g class="dial__ticks">
+                  <circle cx="200" cy="200" r="185" fill="none" stroke="#56696C" stroke-width="8" stroke-dasharray="1.2 14.94"/>
+                  <circle cx="200" cy="200" r="183" fill="none" stroke="#A5B5B3" stroke-width="14" stroke-dasharray="2.4 93.42"/>
+                </g>
+                <circle cx="200" cy="200" r="170" fill="none" stroke="#243239" stroke-width="1"/>
+                <g class="dial__ring">
+                  <text class="dial__text"><textPath href="#dial-ring" textLength="930" lengthAdjust="spacing">SÉCURISER · CONTENIR · PROTÉGER · SÉCURISER · CONTENIR · PROTÉGER ·</textPath></text>
+                </g>
+                <circle cx="200" cy="200" r="132" fill="none" stroke="#34464E" stroke-width="1" stroke-dasharray="2 6"/>
+                <path d="M200 6 V40 M200 360 V394 M6 200 H40 M360 200 H394" stroke="#7A8E8C" stroke-width="1"/>
+                <text class="dial__label" x="208" y="30">ALT. 2140 M</text>
+                <text class="dial__label" x="208" y="378">PROF. −600 M</text>
+                <svg class="dial__emblem" x="112" y="112" width="176" height="176" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="41.5" fill="none" stroke="currentColor" stroke-width="8"/>
+                  <circle cx="50" cy="50" r="18.5" fill="none" stroke="currentColor" stroke-width="6"/>
+                  <g fill="currentColor" stroke="#0C1215" stroke-width="3.5" paint-order="stroke">
+                    <path d="M45 1.5H55V16.5H62.5L50 31L37.5 16.5H45Z"/>
+                    <path transform="rotate(120 50 50)" d="M45 1.5H55V16.5H62.5L50 31L37.5 16.5H45Z"/>
+                    <path transform="rotate(240 50 50)" d="M45 1.5H55V16.5H62.5L50 31L37.5 16.5H45Z"/>
+                  </g>
+                </svg>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--tight" id="statut" aria-labelledby="statut-title">
+        <div class="wrap">
+          <h2 class="sr-only" id="statut-title">État du site</h2>
+          <div class="status">
+            <div class="status__cell status__alert">
+              <p class="label">Niveau d'alerte</p>
+              <p class="status__big" data-alert-code>Code Vert</p>
+              <p class="status__txt"><span data-alert-title></span>. <span data-alert-text></span></p>
+              <div class="seg" id="home-alert-seg" role="radiogroup" aria-label="Prévisualiser un niveau d'alerte"></div>
+              <button type="button" class="btn btn--sm" id="home-alert-reset" hidden>Revenir au niveau officiel</button>
+            </div>
+            <div class="status__cell">
+              <p class="label">Depuis le dernier incident</p>
+              <p class="status__big mono" data-since>—</p>
+              <p class="status__txt"><span data-since-ref></span> · <a class="link" href="archives.html">archives</a></p>
+            </div>
+            <div class="status__cell">
+              <p class="label">Anomalies répertoriées</p>
+              <p class="status__big" data-scp-count>18</p>
+              <div class="stack" id="home-stack" aria-hidden="true"></div>
+              <ul class="legend" id="home-legend"></ul>
+            </div>
+            <div class="status__cell">
+              <p class="label">Heure du site</p>
+              <p class="status__big mono" data-clock>--:--:--</p>
+              <p class="status__txt"><span data-date></span><br><span data-personnel>412</span> membres du personnel actifs</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" aria-labelledby="memo-title">
+        <div class="wrap split">
+          <article class="memo paper">
+            <dl class="memo__head">
+              <dt>De</dt><dd>Direction du Site-73</dd>
+              <dt>À</dt><dd>Tout nouveau membre du personnel</dd>
+              <dt>Objet</dt><dd>Votre affectation</dd>
+              <dt>Réf.</dt><dd>NS-73-001</dd>
+            </dl>
+            <h2 class="memo__title" id="memo-title">Bienvenue au Site-73.</h2>
+            <p>Le Site-73 est un serveur de jeu de rôle dans l'univers de la Fondation SCP. Vous y incarnez un membre du personnel d'une installation creusée sous le massif alpin : chercheur, garde, médecin, technicien, agent FIM ou sujet de Classe-D.</p>
+            <p>Chaque jour, le personnel étudie, surveille et confine les anomalies répertoriées dans nos dossiers. Les animateurs organisent des événements : brèches, transferts, incursions de groupes hostiles. Vos choix ont des conséquences, et la mort d'un personnage est définitive.</p>
+            <p>Lisez le règlement, créez votre fiche et présentez-vous à la Porte A. Le reste s'apprend sur le terrain.</p>
+            <div class="memo__sign">
+              <span>La Direction du Site-73</span>
+              <span class="doc__stamp">Approuvé<br>Niveau 1</span>
+            </div>
+          </article>
+          <aside class="daily" id="home-daily" aria-label="Dossier du jour"></aside>
+        </div>
+      </section>
+
+      <section class="sec sec--line" aria-labelledby="secteurs-title">
+        <div class="wrap">
+          <div class="sec__head">
+            <p class="eyebrow">Accès rapide</p>
+            <h2 class="h2" id="secteurs-title">Secteurs de l'intranet</h2>
+            <p class="sec__lede">Chaque section de l'intranet est rattachée au niveau du site où ses archives sont conservées.</p>
+          </div>
+          <div class="sectors">
+            <a class="sector" href="confinement.html">
+              <span class="sector__code">Niveau −5</span>
+              <span class="sector__title">Dossiers SCP</span>
+              <span class="sector__txt"><span data-scp-count>18</span> anomalies sous confinement. Procédures et descriptions, caviardées selon ton habilitation.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="sector" href="plan.html">
+              <span class="sector__code">0 → −600 m</span>
+              <span class="sector__title">Plan du site</span>
+              <span class="sector__txt">Coupe interactive des huit niveaux, de la Porte A au silo de l'Ogive Alpha. Lance une simulation de brèche.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="sector" href="personnel.html">
+              <span class="sector__code">Niveau −1</span>
+              <span class="sector__title">Personnel</span>
+              <span class="sector__txt">Départements, grades, niveaux d'habilitation, unités FIM et groupes d'intérêt.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="sector" href="archives.html">
+              <span class="sector__code">Niveau −7</span>
+              <span class="sector__title">Archives</span>
+              <span class="sector__txt">Communiqués, rapports d'incident et histoire du site depuis 1987.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="sector" href="reglement.html">
+              <span class="sector__code">Niveau −1</span>
+              <span class="sector__title">Règlement</span>
+              <span class="sector__txt">Règles de la communauté et du RP, barème des sanctions, glossaire et examen d'aptitude.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+            <a class="sector" href="rejoindre.html">
+              <span class="sector__code">Porte A</span>
+              <span class="sector__title">Rejoindre</span>
+              <span class="sector__txt">Procédure d'intégration et générateur de fiche personnage avec carte d'accès.</span>
+              <span class="sector__go">Entrer<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h17M14 6l6 6-6 6"/></svg></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec sec--line" aria-labelledby="comms-title">
+        <div class="wrap">
+          <div class="sec__row">
+            <div class="sec__head">
+              <p class="eyebrow">Communiqués</p>
+              <h2 class="h2" id="comms-title">Dernières annonces</h2>
+            </div>
+            <a class="btn" href="archives.html">Toutes les archives</a>
+          </div>
+          <ol class="comms" id="home-comms"></ol>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="wrap">
+          <div class="cta-band">
+            <div class="cta-band__in">
+              <div>
+                <h2>Le Site-73 recrute.</h2>
+                <p>Chercheurs, gardes, médecins, techniciens et Classe-D : présente-toi au poste de contrôle de la Porte A.</p>
+              </div>
+              <div class="hero__cta">
+                <a class="btn btn--signal" data-discord href="rejoindre.html">Rejoindre le Discord</a>
+                <a class="btn" href="rejoindre.html#fiche">Créer ma fiche</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>
