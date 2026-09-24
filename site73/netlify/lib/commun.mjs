@@ -120,6 +120,7 @@ export async function journaliser(par, action) {
 /* ---------- Contenu envoyé au navigateur ------------------------------ */
 export function contenuPour(niveau, dyn) {
   const base = structuredClone(donnees);
+  delete base.config.codeStaff; // inutile en ligne (Discord), jamais envoyé
   if (dyn.etat && ALERTES.includes(dyn.etat.alerte)) base.config.alerte = dyn.etat.alerte;
   const communiques = (dyn.communiques || [])
     .filter((c) => (c.niveau || 0) <= niveau)

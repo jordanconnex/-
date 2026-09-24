@@ -5,17 +5,31 @@ Site du RP SCP « Site-73 » : 14 pages, connexion avec Discord, habilitations a
 ## Comment marchent les habilitations
 - **Visiteur non connecté** : niveau 0. Tous les passages classifiés sont masqués.
 - **Membre** : il se connecte avec son compte Discord. Le site vérifie qu'il est membre de ton serveur et lit ses rôles. Son habilitation vient, dans cet ordre :
-  1. du réglage fait par un admin dans l'espace staff ;
+  1. du réglage fait par un admin dans la console staff ;
   2. sinon, de ses rôles Discord (variable `HABILITATION_ROLES`) ;
   3. sinon, du niveau par défaut (`HABILITATION_PAR_DEFAUT`, 1 si rien n'est indiqué).
-- **Administrateur** : rôle Discord listé dans `ADMIN_ROLES`, ou identifiant listé dans `ADMIN_IDS`. Il lit tout (niveau 5) et accède à l'**espace staff** (`staff.html`) :
-  - régler l'habilitation de chaque membre ;
-  - changer le niveau d'alerte de tout le site ;
-  - publier ou supprimer des communiqués, avec un niveau de visibilité ;
-  - ajouter, modifier ou supprimer des événements ;
-  - consulter le journal des actions du staff.
+- **Administrateur** : rôle Discord listé dans `ADMIN_ROLES`, ou identifiant listé dans `ADMIN_IDS`. Il lit tout (niveau 5) et peut activer le **mode staff**.
 
 La protection est réelle : le serveur n'envoie à chaque navigateur que les passages autorisés par son habilitation. Un membre ne peut pas lire un passage de niveau supérieur, même en fouillant le code de la page.
+
+## Le mode staff
+Le site public est en **lecture seule** : visiteurs et membres ne peuvent changer ni le niveau d'alerte, ni leur habilitation, ni rien d'autre.
+
+Le staff passe par un mode à part :
+1. **Sas d'accès** (`staff.html`, lien « Accès staff » en bas de chaque page) : l'identité est vérifiée avant d'entrer.
+2. **Mode staff activé** : un bandeau jaune apparaît en haut de chaque page, avec un cadre autour de l'écran. Il permet de changer l'alerte officielle (après confirmation) et de voir le site comme un membre de niveau 0 à 5.
+3. **Console staff** à onglets :
+   - tableau de bord (alerte, raccourcis, prochains événements, dernières actions) ;
+   - niveau d'alerte de tout le site ;
+   - habilitation de chaque membre ;
+   - communiqués, avec un niveau de visibilité ;
+   - événements ;
+   - journal des actions du staff.
+4. **Quitter le mode staff** fait disparaître toutes les commandes.
+
+Qui peut entrer :
+- **En ligne (Netlify + Discord)** : seuls les comptes administrateurs Discord. Le serveur vérifie la session à chaque action : même en trafiquant la page, un membre ne peut rien modifier.
+- **Sans serveur** (aperçu, fichier local, hébergement statique) : un **code d'accès staff**, réglé dans `config.codeStaff` du fichier `contenu/donnees.mjs` (par défaut `SITE73-O5`, **change-le**). Le site publié n'en contient que l'empreinte ; après 5 erreurs, l'accès est bloqué 30 secondes. Dans ce mode, tout reste enregistré dans le navigateur de la personne : une modification ne touche jamais les autres visiteurs. Pour que le staff pilote vraiment le site pour tout le monde, il faut la mise en ligne ci-dessous.
 
 ## Mise en ligne (une seule fois)
 
@@ -58,16 +72,19 @@ Les membres, l'alerte, les communiqués et les événements du staff sont stock�
 - Le fichier `_redirects` à la racine du dépôt empêche le site Complexe 25 (qui publie tout le dépôt) de servir les fichiers privés du Site-73.
 
 ## Modifier le contenu
-Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`.
+Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`, le code staff du mode démonstration dans `config.codeStaff`.
 
 Au déploiement, `npm run build` génère `public/assets/js/data.js`, où les passages classifiés sont remplacés par des « ▒ ». Si tu modifies le contenu et veux l'essayer en local, lance `npm run build`.
 
 Caviardage : `[[3|texte]]` n'est lisible qu'à partir de l'habilitation 3. `[DONNÉES SUPPRIMÉES]` reste toujours masqué.
 
-Les communiqués, les événements et le niveau d'alerte se gèrent aussi depuis l'espace staff, sans toucher au code.
+Les communiqués, les événements et le niveau d'alerte se gèrent aussi depuis la console staff, sans toucher au code.
 
 ## Mode démonstration
-Ouvert sans serveur (fichier local, aperçu claude.ai, ancien hébergement), le site passe en **mode démonstration**. Le bouton « Hab. » propose alors trois profils : Visiteur, Membre ou Admin. L'espace staff y fonctionne avec des données d'exemple, enregistrées seulement dans ton navigateur.
+Ouvert sans serveur (fichier local, aperçu claude.ai, ancien hébergement), le site passe en **mode démonstration** :
+- on arrive en visiteur (niveau 0) ;
+- « Se connecter (démo) », dans le bouton « Hab. », connecte un membre de démonstration ; son habilitation est celle que le staff lui donne dans la console (niveau 2 par défaut) ;
+- le mode staff demande le code d'accès (voir plus haut). La console y fonctionne avec des données d'exemple, enregistrées seulement dans ton navigateur.
 
 ## Structure
 ```

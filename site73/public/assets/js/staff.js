@@ -1,7 +1,9 @@
 /* ==========================================================================
-   SITE-73 · ESPACE STAFF
-   Réservé aux administrateurs. Toutes les actions passent par S.api :
-   le serveur (/api/staff) vérifie la session Discord à chaque appel.
+   SITE-73 · CONSOLE STAFF
+   Mode à part : un sas d'accès, puis une console à onglets. Il faut être
+   administrateur (rôle Discord en ligne, code d'accès en démonstration)
+   et activer le mode staff. Toutes les actions passent par S.api : le
+   serveur (/api/staff) vérifie la session Discord à chaque appel.
    En mode démonstration, un faux serveur local répond à sa place.
    ========================================================================== */
 (function () {
@@ -29,31 +31,150 @@
     var guard = $("#staff-guard");
     var etat = null, filtre = { q: "", niveau: "all" }, confirmer = null;
 
-    /* ---------- Garde d'accès ---------------------------------------- */
+    /* ---------- Sas d'accès ------------------------------------------ */
+    var sasBody = $("#staff-guard-body");
+    var minuteurBlocage = null;
     var renderGuard = function () {
       var se = S.session();
-      $("#staff-guard-body").innerHTML = se.mode === "live"
-        ? (se.user
-          ? "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'a pas le rôle d'administrateur sur le serveur Discord.</p>"
-          : '<p>Connecte-toi avec ton compte Discord. Seuls les membres qui ont un rôle d\'administrateur sur le serveur accèdent à cet espace.</p><a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>")
-        : '<p>Mode démonstration : ouvre le menu <b>« Hab. »</b> en haut de page et choisis le profil <b>Admin</b> pour essayer l\'espace staff.</p><button type="button" class="btn btn--signal" data-demo-admin>Passer en profil Admin</button>';
+      clearInterval(minuteurBlocage);
+      guard.classList.remove("is-refus");
+      if (se.mode === "live") {
+        if (!se.user) {
+          sasBody.innerHTML = '<p class="sas__etat"><i></i>Identité inconnue</p>' +
+            "<p>Connecte-toi avec ton compte Discord. Seuls les membres qui ont un rôle d'administrateur sur le serveur franchissent ce sas.</p>" +
+            '<a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>";
+        } else if (!se.admin) {
+          guard.classList.add("is-refus");
+          sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Accès refusé</p>' +
+            "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'a pas le rôle d'administrateur sur le serveur Discord. Tu peux consulter l'intranet selon ton habilitation (niveau " + se.reel + ").</p>" +
+            '<a class="btn" href="index.html">Retour à l\'intranet</a>';
+        } else {
+          sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Identité vérifiée par Discord</p>' +
+            '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>Administrateur du serveur</small></div></div>" +
+            "<p>Active le mode staff pour ouvrir la console et afficher les commandes du staff sur tout le site.</p>" +
+            '<button type="button" class="btn btn--signal" data-staff-on>' + S.icon.shield + "Activer le mode staff</button>";
+        }
+        return;
+      }
+      if (se.admin) {
+        sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Code vérifié</p>' +
+          '<button type="button" class="btn btn--signal" data-staff-on>' + S.icon.shield + "Activer le mode staff</button>";
+        return;
+      }
+      sasBody.innerHTML = '<p class="sas__etat"><i></i>Vérification requise</p>' +
+        '<form class="sas__form" id="sas-form" autocomplete="off">' +
+          '<label class="field"><span>Nom de code <small>(journal)</small></span><input class="input" id="sas-nom" maxlength="40" placeholder="Dr Varenne"></label>' +
+          '<label class="field"><span>Code d\'accès staff</span><input class="input sas__code" id="sas-code" type="password" required autocomplete="off" spellcheck="false"></label>' +
+          '<div class="sas__actions"><button type="submit" class="btn btn--signal" id="sas-ok">' + S.icon.lock + "Vérifier</button></div>" +
+          '<p class="sas__msg" id="sas-msg" role="status" aria-live="polite"></p>' +
+        "</form>" +
+        '<p class="sas__note">Site hors ligne (démonstration) : l\'accès staff est protégé par un code, qui se règle dans <code>config.codeStaff</code>. En ligne, il passe par les rôles administrateur Discord, vérifiés par le serveur.</p>';
+      var form = $("#sas-form"), msg = $("#sas-msg"), ok = $("#sas-ok"), code = $("#sas-code");
+      var bloquer = function () {
+        var reste = S.blocageStaff();
+        ok.disabled = !!reste;
+        code.disabled = !!reste;
+        if (reste) msg.textContent = "Trop d'essais. Réessaie dans " + Math.ceil(reste / 1000) + " s.";
+        else { clearInterval(minuteurBlocage); if (/Trop d'essais|bloqué/.test(msg.textContent)) msg.textContent = ""; }
+      };
+      if (S.blocageStaff()) { bloquer(); minuteurBlocage = setInterval(bloquer, 500); }
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        ok.disabled = true;
+        guard.classList.add("is-verif");
+        S.sfx("tick");
+        setTimeout(function () {
+          guard.classList.remove("is-verif");
+          var r = S.connexionStaffDemo($("#sas-nom").value, code.value);
+          if (r.ok) return;
+          ok.disabled = false;
+          code.value = "";
+          msg.textContent = r.message;
+          guard.classList.remove("is-refus");
+          void guard.offsetWidth;
+          guard.classList.add("is-refus");
+          S.sfx("deny");
+          if (r.bloque) { bloquer(); minuteurBlocage = setInterval(bloquer, 500); }
+          else code.focus();
+        }, 650);
+      });
     };
-    guard.addEventListener("click", function (e) { if (e.target.closest("[data-demo-admin]")) S.setDemoProfil("admin"); });
+
+    /* ---------- Onglets de la console -------------------------------- */
+    var TITRES = { tableau: "Tableau de bord", alerte: "Niveau d'alerte", membres: "Habilitations", communiques: "Communiqués", evenements: "Événements", journal: "Journal des actions" };
+    var onglet = S.store.get("s73.console", true) || "tableau";
+    if (!TITRES[onglet]) onglet = "tableau";
+    var nav = $("#cons-nav");
+    var placerInd = function () {
+      var b = $('[aria-selected="true"]', nav), ind = $(".cons__ind", nav);
+      if (!b || !ind) return;
+      var vertical = getComputedStyle(nav).flexDirection === "column";
+      ind.style.transform = vertical ? "translateY(" + b.offsetTop + "px)" : "translateX(" + b.offsetLeft + "px)";
+      ind.style[vertical ? "height" : "width"] = (vertical ? b.offsetHeight : b.offsetWidth) + "px";
+      ind.style[vertical ? "width" : "height"] = "";
+      if (!vertical && nav.scrollWidth > nav.clientWidth) nav.scrollLeft = b.offsetLeft - nav.clientWidth / 2 + b.offsetWidth / 2;
+    };
+    var ouvrir = function (id, focus) {
+      if (!TITRES[id]) return;
+      onglet = id;
+      S.store.set("s73.console", id, true);
+      $$("[data-onglet]", nav).forEach(function (b) {
+        var on = b.getAttribute("data-onglet") === id;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        if (on && focus) b.focus();
+      });
+      $$("[data-panneau]").forEach(function (p) { p.hidden = p.getAttribute("data-panneau") !== id; });
+      var titre = $("#cons-title");
+      titre.textContent = TITRES[id];
+      titre.classList.remove("is-anim");
+      void titre.offsetWidth;
+      titre.classList.add("is-anim");
+      placerInd();
+      var panneau = $('[data-panneau="' + id + '"]');
+      if (panneau && S.animer) S.animer(panneau);
+      S.sfx("tick");
+    };
+    nav.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-onglet]");
+      if (b) ouvrir(b.getAttribute("data-onglet"));
+    });
+    nav.addEventListener("keydown", function (e) {
+      var ids = Object.keys(TITRES), i = ids.indexOf(onglet);
+      var k = e.key;
+      if (k === "ArrowDown" || k === "ArrowRight") { e.preventDefault(); ouvrir(ids[(i + 1) % ids.length], true); }
+      else if (k === "ArrowUp" || k === "ArrowLeft") { e.preventDefault(); ouvrir(ids[(i - 1 + ids.length) % ids.length], true); }
+      else if (k === "Home") { e.preventDefault(); ouvrir(ids[0], true); }
+      else if (k === "End") { e.preventDefault(); ouvrir(ids[ids.length - 1], true); }
+    });
+    app.addEventListener("click", function (e) {
+      var r = e.target.closest("[data-aller]");
+      if (r) { ouvrir(r.getAttribute("data-aller")); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    });
+    window.addEventListener("resize", placerInd);
 
     var charger = function () {
-      if (!S.isAdmin()) {
+      if (!S.modeStaff()) {
         app.hidden = true;
         guard.hidden = false;
         renderGuard();
         return;
       }
+      var ouverture = app.hidden;
       guard.hidden = true;
       app.hidden = false;
+      var se = S.session();
+      $("#cons-who").innerHTML = '<span class="cons__badge"><i></i>Mode staff</span><div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user ? se.user.nom : "Staff") + "</b><small>Administrateur · " + (se.mode === "live" ? "Discord" : "démo") + "</small></div></div>";
+      ouvrir(onglet);
+      // Le focus était dans le sas, qui vient de disparaître.
+      if (ouverture) { var tb = $('[aria-selected="true"]', nav); if (tb) tb.focus({ preventScroll: true }); }
       $("#st-loading").hidden = false;
+      $("#st-loading").textContent = "Chargement des données du staff…";
       S.api.etat().then(function (e) {
         etat = e;
         $("#st-loading").hidden = true;
         render();
+        S.animer(app);
       }, function (err) {
         $("#st-loading").textContent = "Chargement impossible : " + err.message;
       });
@@ -81,6 +202,7 @@
     /* ---------- Rendu --------------------------------------------------- */
     var render = function () {
       if (!etat) return;
+      renderTableau();
       renderResume();
       renderAlerte();
       renderMembres();
@@ -104,10 +226,33 @@
         }).join("") + "</ul></div>";
     };
 
+    var renderTableau = function () {
+      var cur = etat.etat.alerte, A = D.alertes[cur];
+      $$("[data-cons-alerte]").forEach(function (el) { el.textContent = A.code.replace("Code ", ""); el.style.setProperty("--c", "var(--a-" + cur + ")"); });
+      var n = { membres: etat.membres.length, communiques: etat.communiques.length, evenements: etat.evenements.filter(function (e) { return new Date(e.date).getTime() + e.duree * 60000 > Date.now(); }).length };
+      $$("[data-cons-count]").forEach(function (el) { el.textContent = n[el.getAttribute("data-cons-count")]; });
+      $("#st-dash-alerte").style.setProperty("--c", "var(--a-" + cur + ")");
+      $("#st-dash-alerte").innerHTML = '<p class="label">Alerte officielle</p><p class="cons__alerte">' + esc(A.code) + "</p><p>" + esc(A.titre) + ".</p>" +
+        (etat.etat.par ? '<p class="muted">Réglée par ' + esc(etat.etat.par) + " · " + esc(quand(etat.etat.le)) + "</p>" : '<p class="muted">Valeur du fichier de contenu.</p>') +
+        '<button type="button" class="btn btn--sm" data-aller="alerte">Changer</button>';
+      var proch = etat.evenements.filter(function (e) { return new Date(e.date).getTime() + e.duree * 60000 > Date.now(); })
+        .sort(function (a, b) { return new Date(a.date) - new Date(b.date); }).slice(0, 4);
+      $("#st-dash-evt").innerHTML = proch.length ? proch.map(function (e) {
+        var T = D.typesEvenement[e.type] || D.typesEvenement.evenement;
+        return '<li><i style="--c:' + T.couleur + '"></i><span><b>' + esc(e.titre) + "</b><small>" + esc(S.fmtEvent(e.date)) + "</small></span></li>";
+      }).join("") : '<li class="muted">Aucun événement à venir.</li>';
+      $("#st-dash-journal").innerHTML = etat.journal.length ? etat.journal.slice(0, 5).map(function (j) {
+        return "<li><i></i><span><b>" + esc(j.par) + "</b> · " + esc(j.action) + "<small>" + esc(quand(j.le)) + "</small></span></li>";
+      }).join("") : '<li class="muted">Aucune action enregistrée.</li>';
+    };
+
     var renderAlerte = function () {
       var cur = etat.etat.alerte;
       $("#st-alerte-seg").innerHTML = S.alerts.map(function (a) {
         return '<button type="button" role="radio" data-alerte="' + a + '" aria-checked="' + (a === cur) + '" style="--c: var(--a-' + a + ')">' + esc(D.alertes[a].code) + "</button>";
+      }).join("");
+      $("#st-alerte-jauge").innerHTML = S.alerts.map(function (a, i) {
+        return '<i class="' + (S.alerts.indexOf(cur) >= i ? "is-on" : "") + '" style="--c: var(--a-' + a + ")\"></i>";
       }).join("");
       $("#st-alerte-info").innerHTML = "<b>" + esc(D.alertes[cur].code) + " · " + esc(D.alertes[cur].titre) + ".</b> " + esc(D.alertes[cur].texte) +
         (etat.etat.par ? '<br><span class="muted">Réglé par ' + esc(etat.etat.par) + " le " + esc(quand(etat.etat.le)) + ".</span>" : '<br><span class="muted">Valeur de départ du fichier de contenu.</span>');

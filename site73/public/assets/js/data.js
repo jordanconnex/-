@@ -19,7 +19,8 @@ window.S73.data = {
   "profondeur": "−600 m",
   "personnelActif": 412,
   "fuseau": "Europe/Paris",
-  "version": "7.3.2"
+  "version": "7.3.2",
+  "codeStaffEmpreinte": "db4c720e3b3036e8d4bdad8c1b608f4b957471a2d2f2229fec8a98f3e927baf2"
  },
  "alertes": {
   "vert": {

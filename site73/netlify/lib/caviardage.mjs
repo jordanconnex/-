@@ -2,6 +2,8 @@
 // autorisés pour le niveau demandé. Les autres sont remplacés par des « ▒ »
 // de même longueur : le texte réel ne quitte jamais le serveur.
 
+import { createHash } from "node:crypto";
+
 const JETON = /\[\[(\d)\|([\s\S]*?)\]\]/g;
 
 export const remplissage = (texte) =>
@@ -23,4 +25,17 @@ export function caviarder(valeur, niveau) {
     return copie;
   }
   return valeur;
+}
+
+// Code d'accès du mode staff (démonstration) : seule son empreinte est publiée.
+// Même normalisation que le navigateur (core.js) : sans espaces, en majuscules.
+export const empreinteCodeStaff = (code) =>
+  createHash("sha256").update("site73-staff:" + String(code).replace(/\s+/g, "").toUpperCase()).digest("hex");
+
+export function sansSecrets(donnees) {
+  const copie = { ...donnees, config: { ...donnees.config } };
+  const code = copie.config.codeStaff;
+  delete copie.config.codeStaff;
+  if (code) copie.config.codeStaffEmpreinte = empreinteCodeStaff(code);
+  return copie;
 }

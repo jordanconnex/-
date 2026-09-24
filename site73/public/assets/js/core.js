@@ -145,7 +145,10 @@
     stop: svgI('<rect x="6" y="6" width="12" height="12"/>'),
     link: svgI('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
     dice: svgI('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8.5 8.5h.01M15.5 8.5h.01M12 12h.01M8.5 15.5h.01M15.5 15.5h.01" stroke-linecap="round" stroke-width="3"/>'),
-    copy: svgI('<rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/>')
+    copy: svgI('<rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/>'),
+    lock: svgI('<rect x="5" y="11" width="14" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+    arrowL: svgI('<path d="M20 12H5M11 6l-6 6 6 6"/>'),
+    shield: svgI('<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>')
   };
   S.icon = ICON;
 
@@ -232,20 +235,31 @@
   S.stopSpeak = function () { try { speechSynthesis.cancel(); } catch (e) { /* rien */ } };
 
   /* ---------- Habilitation ------------------------------------------- */
-  var clearance = parseInt(store.get("s73.hab"), 10);
-  if (isNaN(clearance) || clearance < 0 || clearance > 5) clearance = D.config.habilitationParDefaut;
+  // L'habilitation vient de la session (serveur ou démonstration) : personne ne la choisit.
+  var clearance = 0;
+  store.del("s73.hab");
   S.getClearance = function () { return clearance; };
   var habName = function (n) { return D.habilitations[n].nom; };
   S.habName = habName;
 
   /* ---------- Session (connexion Discord) --------------------------- */
   // mode "live" : le site parle à ses fonctions Netlify (/api/…) ;
-  // mode "demo" : aperçu sans serveur, profils et niveaux au choix.
-  var sess = { mode: "demo", user: null, admin: false, reel: clearance, source: "demo" };
+  // mode "demo" : aperçu sans serveur (fichier local, hébergement statique).
+  // Le mode staff est à part : il faut être administrateur (rôle Discord en
+  // ligne, code d'accès en démonstration) PUIS l'activer. Hors mode staff,
+  // personne ne peut changer l'alerte ni les habilitations.
+  var sess = { mode: "demo", user: null, admin: false, reel: 0, source: "visiteur" };
+  // Identifiant du compte qui a activé le mode staff dans cet onglet
+  var staffId = store.get("s73.staff", true) || "";
   S.session = function () { return sess; };
   S.isLive = function () { return sess.mode === "live"; };
   S.isAdmin = function () { return !!sess.admin; };
-  S.canChooseClearance = function () { return sess.mode === "demo" || sess.admin; };
+  S.modeStaff = function () { return !!sess.admin && !!sess.user && staffId === String(sess.user.id); };
+  var activerStaff = function (on) {
+    staffId = on && sess.user ? String(sess.user.id) : "";
+    if (staffId) store.set("s73.staff", staffId, true); else store.del("s73.staff", true);
+  };
+  S.canChooseClearance = function () { return S.modeStaff(); };
   S.loginUrl = function () {
     var p = byId[currentPage];
     return "/api/auth/login?retour=" + encodeURIComponent(p && p.id !== "accueil" ? "/" + p.file + ".html" : "/");
@@ -319,16 +333,13 @@
     n = Math.max(0, Math.min(5, parseInt(n, 10)));
     if (isNaN(n)) return;
     if (!S.canChooseClearance()) {
-      S.toast("<b>Habilitation attribuée par l'administration.</b> " + (sess.user ? "Demande au staff du serveur pour évoluer." : "Connecte-toi avec Discord pour recevoir la tienne."), { warn: true });
+      S.toast("<b>Habilitation attribuée par le staff.</b> " + (sess.user ? "Demande au staff du serveur pour évoluer." : "Connecte-toi pour recevoir la tienne."), { warn: true });
+      S.sfx("deny");
       return;
     }
-    if (sess.mode === "live") {
-      n = Math.min(n, sess.reel);
-      store.set("s73.voir", n, true);
-    } else {
-      store.set("s73.hab", n);
-      sess.reel = n;
-    }
+    // Mode staff : aperçu du site « comme » un niveau inférieur, le temps de la session.
+    n = Math.min(n, sess.reel);
+    if (n === sess.reel) store.del("s73.voir", true); else store.set("s73.voir", n, true);
     var prev = clearance;
     clearance = n;
     updateClearanceUI();
@@ -336,7 +347,7 @@
     doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: n, prev: prev } }));
     if (!(opts && opts.silent)) {
       var diff = n > prev ? "Informations déclassifiées." : n < prev ? "Informations reclassifiées." : "Aucun changement.";
-      S.toast("<b>" + (sess.mode === "live" ? "Aperçu comme niveau " : "Habilitation · niveau ") + n + "</b> " + esc(habName(n)) + ". " + diff);
+      S.toast("<b>" + (n === sess.reel ? "Retour à ton niveau · " : "Aperçu comme niveau ") + n + "</b> " + esc(habName(n)) + ". " + diff);
     }
     renderClrPop();
     S.sfx("ok");
@@ -359,16 +370,19 @@
     bar.classList.add("is-denied");
     S.sfx("deny");
     var lvl = bar.getAttribute("data-lvl");
-    var fin = S.canChooseClearance() ? " Modifiez-la avec le bouton « Hab. » en haut de page."
+    var fin = S.modeStaff() ? " Mode staff : change l'aperçu avec le bouton « Hab. »."
       : sess.user ? " Seul le staff du serveur peut relever votre habilitation."
-      : ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous avec Discord</a> pour recevoir la vôtre.';
+      : sess.mode === "live" ? ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous avec Discord</a> pour recevoir la vôtre.'
+      : " Connectez-vous avec le bouton « Hab. » pour recevoir la vôtre.";
     S.toast("<b>Accès refusé.</b> Niveau " + lvl + " requis, votre habilitation est de niveau " + clearance + "." + fin, { warn: true, duration: 6000 });
   }
 
   /* ---------- Niveau d'alerte ---------------------------------------- */
   var ALERTS = ["vert", "jaune", "orange", "rouge", "noir"];
-  var alertLevel = store.get("s73.alerte", true);
-  if (ALERTS.indexOf(alertLevel) < 0) alertLevel = D.config.alerte;
+  // Le niveau officiel vient du staff. Les simulations (brèche, code Oméga)
+  // le changent un instant, sans rien enregistrer.
+  store.del("s73.alerte", true);
+  var alertLevel = D.config.alerte;
   S.alerts = ALERTS;
   S.getAlert = function () { return alertLevel; };
   S.officialAlert = function () { return D.config.alerte; };
@@ -379,15 +393,39 @@
     doc.querySelectorAll("[data-alert-title]").forEach(function (el) { el.textContent = a.titre; });
     doc.querySelectorAll("[data-alert-text]").forEach(function (el) { el.textContent = a.texte; });
   };
-  S.setAlert = function (level, opts) {
+  S.setAlert = function (level) {
     if (ALERTS.indexOf(level) < 0) return;
     alertLevel = level;
-    if (!opts || opts.persist !== false) {
-      if (level === D.config.alerte) store.del("s73.alerte", true);
-      else store.set("s73.alerte", level, true);
-    }
     applyAlert();
     doc.dispatchEvent(new CustomEvent("s73:alert", { detail: { level: level } }));
+  };
+  // Changement du niveau OFFICIEL : réservé au mode staff, vérifié par le serveur.
+  S.changerAlerte = function (level) {
+    if (ALERTS.indexOf(level) < 0) return Promise.resolve(false);
+    if (!S.modeStaff()) {
+      S.toast("<b>Réservé au staff.</b> Seul le staff, en mode staff, change le niveau d'alerte du site.", { warn: true });
+      S.sfx("deny");
+      return Promise.resolve(false);
+    }
+    return S.api.action("alerte", { niveau: level }).then(function () {
+      return S.rafraichirContenu("alerte").then(function () {
+        S.toast("<b>Niveau d'alerte appliqué à tout le site :</b> " + esc(D.alertes[level].code) + ".");
+        return true;
+      });
+    }, function (err) {
+      S.toast("<b>Action refusée.</b> " + esc(err.message), { warn: true });
+      S.sfx("deny");
+      return false;
+    });
+  };
+  // Demande confirmation avant de changer l'alerte officielle.
+  S.proposerAlerte = function (level) {
+    if (!S.modeStaff()) return S.changerAlerte(level);
+    if (level === D.config.alerte) { S.toast("<b>" + esc(D.alertes[level].code) + "</b> est déjà le niveau officiel."); return; }
+    S.toast("<b>Passer tout le site en " + esc(D.alertes[level].code) + " ?</b> Tous les visiteurs le verront.", {
+      duration: 9000,
+      actions: [["Appliquer à tout le site", function () { S.changerAlerte(level); }], ["Annuler", function () {}]]
+    });
   };
 
   /* ---------- Notifications ------------------------------------------ */
@@ -547,6 +585,7 @@
     }).join("");
 
     slot.outerHTML =
+      '<div class="staffbar" id="staffbar" hidden></div>' +
       '<div class="sysbar"><div class="wrap sysbar__in">' +
         '<div class="sysbar__group"><span>Fondation SCP · Réseau sécurisé</span></div>' +
         '<div class="sysbar__group sysbar__group--wide"><span data-meteo>' + esc(meteoTxt()) + '</span><span>Liaison chiffrée<i class="dot"></i></span></div>' +
@@ -559,6 +598,7 @@
           '<div class="more"><button type="button" class="nav__link more__btn" id="more-btn" aria-expanded="false" aria-controls="more-pop">Plus' + ICON.down + "</button>" +
           '<div class="more__pop" id="more-pop" hidden>' + more + "</div></div>" +
         "</nav>" +
+        '<div class="cons-tag"><span class="cons-tag__lbl">Console staff</span><a class="cons-tag__back" href="index.html">' + ICON.arrowL + "Retour à l'intranet</a></div>" +
         '<div class="bar__tools">' +
           '<button type="button" class="icon-btn" id="search-btn" aria-label="Rechercher sur l\'intranet (Ctrl+K)" title="Rechercher · Ctrl+K">' + ICON.search + "</button>" +
           '<a class="alert-chip" href="index.html#statut" title="Niveau d\'alerte du site"><i></i><span data-alert-code></span></a>' +
@@ -572,7 +612,7 @@
         "</div>" +
       '</div></header>' +
       '<nav class="navstrip" id="navstrip" aria-label="Navigation">' + PAGES.map(function (p) { return linkFor(p, ""); }).join("") + "</nav>" +
-      '<div class="hazard" aria-hidden="true"></div></div>' +
+      '<div class="hazard" aria-hidden="true"></div><div class="lecture" aria-hidden="true"><i></i></div></div>' +
       '<div class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-label="Menu">' +
         '<div class="drawer__head wrap"><a class="brand" href="index.html">' + S.emblem() + '<span class="brand__txt"><span class="brand__name">SITE<i>-</i>73</span></span></a>' +
         '<button type="button" class="icon-btn" id="drawer-close" aria-label="Fermer le menu">' + ICON.close + "</button></div>" +
@@ -607,8 +647,8 @@
       if (pop.hidden) S.openClearance(); else closePop();
     });
     pop.addEventListener("click", function (e) {
-      var pr = e.target.closest("[data-profil]");
-      if (pr) { S.setDemoProfil(pr.getAttribute("data-profil")); return; }
+      // Connexion et mode staff : gérés plus bas, pour tout le site.
+      if (e.target.closest("[data-demo-login], [data-demo-logout], [data-staff-on], [data-staff-off]")) { closePop(); return; }
       var o = e.target.closest(".clr__opt");
       if (!o) return;
       S.setClearance(o.getAttribute("data-lvl"));
@@ -645,30 +685,54 @@
   function renderClrPop() {
     var pop = doc.getElementById("clr-pop"), btn = doc.getElementById("clr-btn");
     if (!pop) return;
+    var demo = sess.mode === "demo";
     var who = sess.user ? '<div class="who">' + S.avatar(sess.user) + "<div><b>" + esc(sess.user.nom) + "</b><small>" +
-      (sess.admin ? "Administrateur" : "Membre du serveur") + (sess.mode === "demo" ? " · démo" : "") + "</small></div></div>" : "";
-    var out = "";
-    if (sess.mode === "demo") {
-      var profil = store.get("s73.demo.profil") || "membre";
-      out = '<p class="clr__demo">Mode démonstration</p>' +
-        "<p>En ligne, chacun se connecte avec Discord et reçoit l'habilitation donnée par le staff. Ici, choisis un profil pour tester.</p>" +
-        '<div class="seg clr__profils" role="radiogroup" aria-label="Profil de démonstration">' + [["visiteur", "Visiteur"], ["membre", "Membre"], ["admin", "Admin"]].map(function (x) {
-          return '<button type="button" role="radio" data-profil="' + x[0] + '" aria-checked="' + (profil === x[0]) + '" style="--c: var(--signal)">' + x[1] + "</button>";
-        }).join("") + "</div>" +
-        (profil === "visiteur" ? "" : '<p class="label">Niveau d\'habilitation</p>' + levelsHtml(5)) +
-        (sess.admin ? '<div class="clr__acts"><a class="btn btn--sm" href="staff.html">Espace staff</a></div>' : "");
-    } else if (!sess.user) {
-      out = "<p><b>Visiteur · niveau 0</b><br>Connecte-toi avec ton compte Discord : l'administration du serveur t'attribue ton habilitation.</p>" +
-        '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>";
+      (sess.admin ? "Administrateur" : "Membre du serveur") + (demo ? " · démo" : "") + "</small></div></div>" : "";
+    var sortir = demo ? '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>'
+      : '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
+    var out = demo ? '<p class="clr__demo">Mode démonstration</p>' : "";
+    if (S.modeStaff()) {
+      out += who + '<p class="clr__staff"><i></i>Mode staff actif</p>' +
+        "<p>Ton niveau réel est " + sess.reel + ". Prévisualise le site comme le verrait un membre :</p>" + levelsHtml(sess.reel) +
+        '<div class="clr__acts"><a class="btn btn--sm btn--signal" href="staff.html">Console staff</a>' +
+        '<button type="button" class="btn btn--sm" data-staff-off>Quitter le mode staff</button></div>';
     } else if (sess.admin) {
-      out = who + "<p>Tu as accès à tout. Prévisualise le site comme un membre d'un autre niveau :</p>" + levelsHtml(sess.reel) +
-        '<div class="clr__acts"><a class="btn btn--sm btn--signal" href="staff.html">Espace staff</a><a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
+      out += who + "<p><b>Administrateur · niveau " + sess.reel + "</b><br>Les commandes du staff (alerte, habilitations, communiqués) ne s'affichent qu'en mode staff.</p>" +
+        '<div class="clr__acts"><button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' + sortir + "</div>";
+    } else if (!sess.user) {
+      out += "<p><b>Visiteur · niveau 0</b><br>" + (demo
+        ? "En ligne, chacun se connecte avec Discord et reçoit l'habilitation que le staff lui donne. Ici, connecte-toi en membre de démonstration."
+        : "Connecte-toi avec ton compte Discord : le staff du serveur t'attribue ton habilitation.") + "</p>" +
+        (demo ? '<button type="button" class="btn btn--signal clr__login" data-demo-login>' + ICON.chat + "Se connecter (démo)</button>"
+          : '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>") +
+        '<a class="clr__staff-link" href="staff.html">' + ICON.lock + "Accès staff</a>";
     } else {
-      out = who + "<p><b>Habilitation · niveau " + sess.reel + " · " + esc(habName(sess.reel)) + "</b><br>" + esc(SOURCES[sess.source] || SOURCES.defaut) + "</p>" +
-        '<div class="clr__acts"><a class="btn btn--sm" href="carnet.html">Mon carnet</a><a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
+      out += who + "<p><b>Habilitation · niveau " + sess.reel + " · " + esc(habName(sess.reel)) + "</b><br>" + esc(SOURCES[sess.source] || SOURCES.defaut) + "</p>" +
+        '<div class="clr__acts"><a class="btn btn--sm" href="carnet.html">Mon carnet</a>' + sortir + "</div>" +
+        '<a class="clr__staff-link" href="staff.html">' + ICON.lock + "Accès staff</a>";
     }
     pop.innerHTML = out;
-    if (btn) btn.innerHTML = (sess.user ? S.avatar(sess.user, "av--sm") : "") + '<span class="clr__lbl">Hab.</span><b data-hab-num>' + clearance + "</b>";
+    if (btn) btn.innerHTML = (sess.user ? S.avatar(sess.user, "av--sm") : "") + '<span class="clr__lbl">' + (S.modeStaff() ? "Staff" : "Hab.") + "</span><b data-hab-num>" + clearance + "</b>";
+    renderStaffBar();
+  }
+  // Bandeau du mode staff, en haut de chaque page
+  function renderStaffBar() {
+    var bar = doc.getElementById("staffbar");
+    if (!bar) return;
+    if (!S.modeStaff()) { bar.hidden = true; bar.innerHTML = ""; return; }
+    var cur = D.config.alerte;
+    bar.innerHTML = '<div class="wrap staffbar__in">' +
+      '<span class="staffbar__tag"><i></i>Mode staff</span>' +
+      '<span class="staffbar__who">' + S.avatar(sess.user, "av--sm") + "<b>" + esc(sess.user ? sess.user.nom : "Staff") + "</b></span>" +
+      '<label class="staffbar__ctl"><span>Alerte</span><select class="staffbar__sel" id="sb-alerte" aria-label="Niveau d\'alerte officiel">' +
+        ALERTS.map(function (a) { return '<option value="' + a + '"' + (a === cur ? " selected" : "") + ">" + esc(D.alertes[a].code) + "</option>"; }).join("") + "</select></label>" +
+      '<label class="staffbar__ctl"><span>Voir comme</span><select class="staffbar__sel" id="sb-voir" aria-label="Voir le site comme le niveau">' +
+        D.habilitations.filter(function (h) { return h.niveau <= sess.reel; }).map(function (h) {
+          return '<option value="' + h.niveau + '"' + (h.niveau === clearance ? " selected" : "") + ">N" + h.niveau + " · " + esc(h.nom) + "</option>";
+        }).join("") + "</select></label>" +
+      '<span class="staffbar__acts"><a class="staffbar__btn" href="staff.html">Console</a><button type="button" class="staffbar__btn" data-staff-off>Quitter</button></span>' +
+    "</div>";
+    bar.hidden = false;
   }
   S.renderClrPop = renderClrPop;
 
@@ -709,6 +773,7 @@
       "</div>" +
       '<div class="wrap ftr__legal">' +
         "<span>Projet de fans, non affilié au Wiki SCP. Contenus inspirés de la Fondation SCP (<a href=\"https://scp-wiki.wikidot.com/licensing-guide\" target=\"_blank\" rel=\"noopener\">scp-wiki.wikidot.com</a>), sous licence CC BY-SA 3.0.</span>" +
+        '<a class="ftr__staff" href="staff.html">' + ICON.lock + "Accès staff</a>" +
         '<span class="ftr__motto">Sécuriser · Contenir · Protéger · v' + esc(D.config.version) + "</span>" +
       "</div></footer>";
   };
@@ -1231,7 +1296,7 @@
   S.omega = function () {
     if (doc.querySelector(".omega")) return;
     var prev = alertLevel;
-    S.setAlert("noir", { persist: false });
+    S.setAlert("noir");
     var el = doc.createElement("div");
     el.className = "omega";
     el.setAttribute("role", "alertdialog");
@@ -1241,7 +1306,7 @@
       '<p class="omega__small">Cet incident n\'a jamais eu lieu.</p><button type="button" class="btn">Reprendre le service</button></div>';
     doc.body.appendChild(el);
     [220, 180, 150].forEach(function (f, i) { S.tone(f, 0.5, { type: "sawtooth", vol: 0.05, delay: i * 0.45 }); });
-    var close = function () { el.remove(); S.setAlert(prev, { persist: false }); S.flag("omega"); };
+    var close = function () { el.remove(); S.setAlert(prev); S.flag("omega"); };
     el.querySelector("button").addEventListener("click", close);
     el.querySelector("button").focus();
   };
@@ -1312,7 +1377,8 @@
   var demoGraine = function () {
     return {
       membres: [
-        { id: "demo-admin", nom: "Admin (démo)", pseudo: "vous", admin: true, derniereVisite: ilYa(0) },
+        { id: "demo-admin", nom: "Admin (démo)", pseudo: "staff", admin: true, derniereVisite: ilYa(0) },
+        { id: "demo-membre", nom: "Membre (démo) · vous", pseudo: "vous", derniereVisite: ilYa(0) },
         { id: "100000000000000001", nom: "Exemple · Élise Varenne", pseudo: "exemple.varenne", roleHab: 2, derniereVisite: ilYa(3) },
         { id: "100000000000000002", nom: "Exemple · Hugo Ferrand", pseudo: "exemple.ferrand", roleHab: 3, derniereVisite: ilYa(20) },
         { id: "100000000000000003", nom: "Exemple · Karim Belkacem", pseudo: "exemple.belkacem", roleHab: 2, override: 4, modifiePar: "Admin (démo)", modifieLe: ilYa(48), derniereVisite: ilYa(30) },
@@ -1324,15 +1390,19 @@
     };
   };
   var demoLire = function () {
-    try { var d = JSON.parse(store.get("s73.demo.db") || "null"); if (d && d.membres) return d; } catch (e) { /* graine */ }
-    return demoGraine();
+    var d = null;
+    try { d = JSON.parse(store.get("s73.demo.db") || "null"); } catch (e) { d = null; }
+    if (!d || !d.membres) return demoGraine();
+    // Base créée par une ancienne version : il manque le membre « vous ».
+    if (!d.membres.some(function (m) { return m.id === "demo-membre"; })) d.membres.splice(1, 0, demoGraine().membres[1]);
+    return d;
   };
   var demoEcrire = function (d) { store.set("s73.demo.db", JSON.stringify(d)); };
   var habDe = function (m) {
     if (m.admin) return { niveau: 5, source: "admin" };
     if (typeof m.override === "number") return { niveau: m.override, source: "staff" };
     if (typeof m.roleHab === "number") return { niveau: m.roleHab, source: "role" };
-    return { niveau: 1, source: "defaut" };
+    return { niveau: D.config.habilitationParDefaut || 1, source: "defaut" };
   };
   var demoEtat = function (d) {
     return {
@@ -1352,6 +1422,8 @@
     var err = function (m) { throw new Error(m); };
     var log = function (a) { d.journal.unshift({ le: now, par: par, action: a }); d.journal = d.journal.slice(0, 200); };
     var niveauOk = function (n) { return typeof n === "number" && n % 1 === 0 && n >= 0 && n <= 5; };
+    // Comme le vrai serveur : rien ne passe hors du mode staff.
+    if (!S.modeStaff()) err("Réservé au staff, en mode staff.");
     if (action === "habilitation") {
       var m = d.membres.filter(function (x) { return x.id === c.id; })[0];
       if (!m) err("Membre introuvable.");
@@ -1416,7 +1488,10 @@
     });
   };
   S.api = {
-    etat: function () { return sess.mode === "live" ? appelStaff({}) : Promise.resolve(demoEtat(demoLire())); },
+    etat: function () {
+      if (sess.mode === "live") return appelStaff({});
+      return S.modeStaff() ? Promise.resolve(demoEtat(demoLire())) : Promise.reject(new Error("Réservé au staff, en mode staff."));
+    },
     action: function (action, corps) {
       if (sess.mode === "live") {
         return appelStaff({ method: "POST", headers: { "content-type": "application/json", "x-s73": "1" }, body: JSON.stringify(Object.assign({ action: action }, corps)) });
@@ -1427,7 +1502,13 @@
   // Après une action du staff : recharge le contenu et prévient les pages.
   S.rafraichirContenu = function (action) {
     var fin = function () {
-      if (action === "alerte") { store.del("s73.alerte", true); alertLevel = D.config.alerte; applyAlert(); doc.dispatchEvent(new CustomEvent("s73:alert", { detail: { level: alertLevel } })); }
+      if (action === "alerte") {
+        alertLevel = D.config.alerte;
+        applyAlert();
+        S.alarme(alertLevel);
+        renderStaffBar();
+        doc.dispatchEvent(new CustomEvent("s73:alert", { detail: { level: alertLevel } }));
+      }
       doc.dispatchEvent(new CustomEvent("s73:dynamic"));
     };
     if (sess.mode !== "live") { demoAppliquer(); fin(); return Promise.resolve(); }
@@ -1435,39 +1516,167 @@
       .then(function (p) { if (p && p.data) appliquerContenu(p); fin(); }, fin);
   };
 
+  // Démonstration : visiteur, membre (habilitation réglée dans la console
+  // staff de démonstration) ou staff (après le code d'accès, pour l'onglet).
+  var demoStaff = function () {
+    try { var x = JSON.parse(store.get("s73.demo.staff", true) || "null"); return x && x.nom ? x : null; } catch (e) { return null; }
+  };
+  var niveauVu = function () {
+    var voir = S.modeStaff() ? parseInt(store.get("s73.voir", true), 10) : NaN;
+    return !isNaN(voir) && voir >= 0 && voir <= sess.reel ? voir : sess.reel;
+  };
   var passerEnDemo = function () {
     sess.mode = "demo";
-    var profil = store.get("s73.demo.profil") || "membre";
-    sess.admin = profil === "admin";
-    sess.user = profil === "visiteur" ? null : { id: "demo", nom: profil === "admin" ? "Admin (démo)" : "Membre (démo)", avatar: null };
-    sess.source = "demo";
-    sess.reel = clearance;
+    var st = demoStaff();
+    if (st) {
+      sess.admin = true;
+      sess.user = { id: "demo-admin", nom: st.nom, avatar: null };
+      sess.reel = 5;
+      sess.source = "admin";
+    } else if (store.get("s73.demo.profil") === "membre") {
+      var moi = demoLire().membres.filter(function (m) { return m.id === "demo-membre"; })[0] || {};
+      var h = habDe(moi);
+      sess.admin = false;
+      sess.user = { id: "demo-membre", nom: "Membre (démo)", avatar: null };
+      sess.reel = h.niveau;
+      sess.source = h.source;
+    } else {
+      sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur";
+    }
+    clearance = niveauVu();
     demoAppliquer();
   };
   var applySessionUI = function () {
-    doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !sess.admin; });
+    root.setAttribute("data-staff", S.modeStaff() ? "on" : "off");
+    doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !S.modeStaff(); });
+    doc.querySelectorAll("[data-public-only]").forEach(function (el) { el.hidden = S.modeStaff(); });
     doc.querySelectorAll("[data-session-nom]").forEach(function (el) { el.textContent = sess.user ? sess.user.nom : "Visiteur"; });
     doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne · Discord" : "Démonstration"; });
     renderClrPop();
     updateClearanceUI();
     doc.dispatchEvent(new CustomEvent("s73:session"));
   };
-  S.setDemoProfil = function (p) {
-    if (sess.mode !== "demo" || ["visiteur", "membre", "admin"].indexOf(p) < 0) return;
-    store.set("s73.demo.profil", p);
-    var niveau = p === "visiteur" ? 0 : p === "admin" ? 5 : Math.min(Math.max(clearance, 1), 4);
-    var prev = clearance;
-    clearance = niveau;
-    store.set("s73.hab", niveau);
-    passerEnDemo();
+  // Après un changement de session : tout le site se remet à jour.
+  var sessionChangee = function (prev) {
+    if (sess.mode === "demo") demoAppliquer();
     rerender(prev);
     applySessionUI();
-    doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: niveau, prev: prev } }));
+    doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: clearance, prev: prev } }));
     doc.dispatchEvent(new CustomEvent("s73:dynamic"));
-    S.toast("<b>Profil de démonstration : " + { visiteur: "visiteur", membre: "membre", admin: "administrateur" }[p] + ".</b> " +
-      (p === "admin" ? "L'espace staff est dans le menu « Plus »." : p === "visiteur" ? "Sans connexion, seul le niveau 0 est lisible." : "Choisis un niveau d'habilitation pour tester."));
     checkBadges();
   };
+  S.demoConnexion = function (entrer) {
+    if (sess.mode !== "demo") return;
+    var prev = clearance;
+    if (entrer) store.set("s73.demo.profil", "membre"); else store.del("s73.demo.profil");
+    if (!entrer) { store.del("s73.demo.staff", true); staffId = ""; store.del("s73.staff", true); store.del("s73.voir", true); }
+    passerEnDemo();
+    sessionChangee(prev);
+    S.sfx(entrer ? "ok" : "tick");
+    S.toast(entrer
+      ? "<b>Connecté · Membre (démo).</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + "), réglée par le staff dans sa console."
+      : "<b>Déconnecté.</b> Tu consultes l'intranet en visiteur (niveau 0).");
+  };
+
+  // Empreinte SHA-256 (le code staff n'est jamais écrit en clair dans le site)
+  var sha256 = function (txt) {
+    var bin = unescape(encodeURIComponent(txt)), K = [], H = [], i, j, n = 0;
+    var frac = function (x) { return ((x - Math.floor(x)) * 4294967296) | 0; };
+    for (var c = 2; n < 64; c++) {
+      var premier = true;
+      for (j = 2; j * j <= c; j++) if (c % j === 0) { premier = false; break; }
+      if (!premier) continue;
+      if (n < 8) H[n] = frac(Math.pow(c, 1 / 2));
+      K[n++] = frac(Math.pow(c, 1 / 3));
+    }
+    var mots = [], len = bin.length;
+    for (i = 0; i < len; i++) mots[i >> 2] |= bin.charCodeAt(i) << (24 - (i % 4) * 8);
+    mots[len >> 2] |= 0x80 << (24 - (len % 4) * 8);
+    var total = (((len + 8) >> 6) + 1) * 16;
+    for (i = mots.length; i < total; i++) mots[i] = mots[i] || 0;
+    mots[total - 1] = len * 8;
+    var rot = function (x, k) { return (x >>> k) | (x << (32 - k)); };
+    for (i = 0; i < total; i += 16) {
+      var W = mots.slice(i, i + 16), a = H[0], b = H[1], cc = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      for (j = 0; j < 64; j++) {
+        if (j >= 16) {
+          var w15 = W[j - 15], w2 = W[j - 2];
+          W[j] = (W[j - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + W[j - 7] + (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0;
+        }
+        var t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + W[j]) | 0;
+        var t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & cc) ^ (b & cc))) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = cc; cc = b; b = a; a = (t1 + t2) | 0;
+      }
+      H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + cc) | 0; H[3] = (H[3] + d) | 0;
+      H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+    }
+    return H.map(function (x) { return ("00000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
+  };
+  S.util.sha256 = sha256;
+  // Même normalisation que scripts/build.mjs
+  var empreinteCode = function (code) { return sha256("site73-staff:" + String(code || "").replace(/\s+/g, "").toUpperCase()); };
+
+  // Code d'accès du mode staff (démonstration uniquement)
+  var ESSAIS = 5, BLOCAGE = 30000;
+  S.blocageStaff = function () {
+    var b = parseInt(store.get("s73.staff.bloque"), 10);
+    return b && b > Date.now() ? b - Date.now() : 0;
+  };
+  S.connexionStaffDemo = function (nom, code) {
+    if (sess.mode !== "demo") return { ok: false, message: "En ligne, l'accès staff passe par Discord." };
+    if (!D.config.codeStaffEmpreinte) return { ok: false, message: "Aucun code staff n'est configuré (config.codeStaff dans contenu/donnees.mjs)." };
+    var reste = S.blocageStaff();
+    if (reste) return { ok: false, bloque: reste, message: "Trop d'essais. Réessaie dans " + Math.ceil(reste / 1000) + " s." };
+    if (empreinteCode(code) !== D.config.codeStaffEmpreinte) {
+      var n = (parseInt(store.get("s73.staff.essais"), 10) || 0) + 1;
+      if (n >= ESSAIS) { store.set("s73.staff.bloque", String(Date.now() + BLOCAGE)); store.del("s73.staff.essais"); return { ok: false, bloque: BLOCAGE, message: "Code refusé. Accès bloqué pendant " + BLOCAGE / 1000 + " s." }; }
+      store.set("s73.staff.essais", String(n));
+      return { ok: false, message: "Code refusé. " + (ESSAIS - n) + " essai" + (ESSAIS - n > 1 ? "s" : "") + " avant blocage." };
+    }
+    store.del("s73.staff.essais");
+    var nomPropre = String(nom || "").replace(/[<>]/g, "").trim().slice(0, 40) || "Admin (démo)";
+    store.set("s73.demo.staff", JSON.stringify({ nom: nomPropre }), true);
+    var prev = clearance;
+    staffId = "demo-admin";
+    store.set("s73.staff", staffId, true);
+    passerEnDemo();
+    sessionChangee(prev);
+    S.animStaff("on");
+    return { ok: true };
+  };
+  S.entrerModeStaff = function () {
+    if (!sess.admin) { if (!doc.getElementById("staff-guard")) S.go("staff.html"); return false; }
+    var prev = clearance;
+    activerStaff(true);
+    clearance = niveauVu();
+    sessionChangee(prev);
+    S.animStaff("on");
+    return true;
+  };
+  S.quitterModeStaff = function () {
+    var prev = clearance;
+    activerStaff(false);
+    store.del("s73.voir", true);
+    if (sess.mode === "demo") { store.del("s73.demo.staff", true); passerEnDemo(); }
+    else clearance = sess.reel;
+    sessionChangee(prev);
+    S.animStaff("off");
+  };
+  doc.addEventListener("click", function (e) {
+    if (e.target.closest("[data-demo-login]")) S.demoConnexion(true);
+    else if (e.target.closest("[data-demo-logout]")) S.demoConnexion(false);
+    else if (e.target.closest("[data-staff-on]")) S.entrerModeStaff();
+    else if (e.target.closest("[data-staff-off]")) S.quitterModeStaff();
+  });
+  doc.addEventListener("change", function (e) {
+    if (e.target.id === "sb-alerte") {
+      var v = e.target.value;
+      e.target.value = D.config.alerte;
+      S.proposerAlerte(v);
+    } else if (e.target.id === "sb-voir") {
+      S.setClearance(e.target.value);
+    }
+  });
 
   var chargerSession = function () {
     if (BUNDLE || location.protocol === "file:") { passerEnDemo(); return Promise.resolve(); }
@@ -1488,15 +1697,17 @@
         } else {
           sess.user = null; sess.admin = false; sess.reel = 0; sess.source = "visiteur";
         }
-        var voir = sess.admin ? parseInt(store.get("s73.voir", true), 10) : NaN;
-        clearance = !isNaN(voir) && voir >= 0 && voir <= sess.reel ? voir : sess.reel;
+        clearance = niveauVu();
       })
       .catch(function () { clearTimeout(minuteur); passerEnDemo(); });
   };
   var apresSession = function () {
-    alertLevel = store.get("s73.alerte", true);
-    if (ALERTS.indexOf(alertLevel) < 0) alertLevel = D.config.alerte;
+    alertLevel = D.config.alerte;
     applyAlert();
+    // Le staff a changé l'alerte depuis la dernière visite : alarme une fois.
+    var vue = store.get("s73.alerte.vue");
+    if (vue && vue !== alertLevel) setTimeout(function () { S.alarme(alertLevel); }, BUNDLE || booting || bootPending ? 3200 : 700);
+    else store.set("s73.alerte.vue", alertLevel);
     doc.querySelectorAll("[data-last-update]").forEach(function (el) {
       el.textContent = fmtDate(D.archives.map(function (a) { return a.date; }).sort().pop());
     });
@@ -1521,7 +1732,7 @@
 
   /* ---------- Apparitions au défilement & compteurs ------------------ */
   var LISTES = ".cells, .sectors, .groups, .units, .steps, .badges, .evt-list, .tl, .articles, .codes, .clearance, .classes, .pclasses, .glossary, .zone-index, .st-list, .comms, .stats, .seen-grid, .faq, .plan-list, .status, .hero__facts, .st-journal, .ticks";
-  var BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .guard, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
+  var BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .cons__card, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
   var observateur = null;
   var compter = function (el) {
     if (reduced || el.getAttribute("data-compte")) return;
@@ -1598,14 +1809,153 @@
     zone.querySelectorAll("[data-compte]").forEach(function (el) { el.removeAttribute("data-compte"); });
   };
 
+  /* ---------- Mode staff : sas, alarme, effets ------------------------ */
+  // Écran plein « Accès autorisé » / « Mode staff désactivé »
+  S.animStaff = function (sens) {
+    var nom = sess.user ? sess.user.nom : "";
+    var msg = sens === "on"
+      ? "<b>Mode staff activé.</b> Les commandes du staff apparaissent en haut de chaque page. Tu peux prévisualiser le site niveau par niveau."
+      : "<b>Mode staff désactivé.</b> Tu vois l'intranet comme les membres.";
+    if (reduced) { S.toast(msg); S.sfx(sens === "on" ? "ok" : "tick"); return; }
+    var el = doc.createElement("div");
+    el.className = "acces acces--" + sens;
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = '<div class="acces__vol acces__vol--h"></div><div class="acces__vol acces__vol--b"></div>' +
+      '<div class="acces__c"><div class="acces__ring">' + S.emblem() + "</div>" +
+      '<p class="acces__k">' + (sens === "on" ? "Identité vérifiée · " + esc(nom) : "Fermeture de session") + "</p>" +
+      '<p class="acces__t">' + (sens === "on" ? "Accès autorisé" : "Mode staff désactivé") + "</p>" +
+      '<p class="acces__s">' + (sens === "on" ? "Console staff · Site-73" : "Retour à l'intranet") + "</p></div>";
+    doc.body.appendChild(el);
+    S.sfx(sens === "on" ? "badge" : "door");
+    setTimeout(function () { el.classList.add("is-out"); }, sens === "on" ? 1500 : 1100);
+    setTimeout(function () { el.remove(); S.toast(msg); }, sens === "on" ? 2100 : 1600);
+  };
+  // Alarme quand le niveau d'alerte officiel change
+  S.alarme = function (level) {
+    var A = D.alertes[level];
+    if (!A) return;
+    try { store.set("s73.alerte.vue", level); } catch (e) { /* ignoré */ }
+    if (reduced) return;
+    var el = doc.createElement("div");
+    el.className = "alarme";
+    el.setAttribute("aria-hidden", "true");
+    el.style.setProperty("--c", "var(--a-" + level + ")");
+    el.innerHTML = '<span class="alarme__gyro alarme__gyro--g"></span><span class="alarme__gyro alarme__gyro--d"></span>' +
+      '<div class="alarme__bande"><p class="alarme__k">Niveau d\'alerte du site</p><p class="alarme__t">' + esc(A.code) + '</p><p class="alarme__s">' + esc(A.titre) + "</p></div>";
+    doc.body.appendChild(el);
+    if (level === "rouge" || level === "noir") { S.tone(880, 0.35, { type: "sawtooth", to: 440, vol: 0.04 }); S.tone(880, 0.35, { type: "sawtooth", to: 440, vol: 0.04, delay: 0.45 }); }
+    else S.sfx("open");
+    setTimeout(function () { el.classList.add("is-out"); }, 2300);
+    setTimeout(function () { el.remove(); }, 2900);
+  };
+
+  // Barre de progression de lecture sous l'en-tête
+  var prog = null, progRaf = 0;
+  var majProgression = function () {
+    progRaf = 0;
+    if (!prog) return;
+    var max = doc.documentElement.scrollHeight - window.innerHeight;
+    prog.style.transform = "scaleX(" + (max > 0 ? Math.min(1, window.scrollY / max) : 0).toFixed(4) + ")";
+  };
+  window.addEventListener("scroll", function () { if (!progRaf) progRaf = requestAnimationFrame(majProgression); }, { passive: true });
+  window.addEventListener("resize", function () { if (!progRaf) progRaf = requestAnimationFrame(majProgression); });
+
+  // Onde au clic sur les boutons
+  doc.addEventListener("pointerdown", function (e) {
+    if (reduced) return;
+    var b = e.target.closest(".btn, .seg button, .cons__nav button, .cons__rac, .staffbar__btn");
+    if (!b || b.disabled) return;
+    var r = b.getBoundingClientRect();
+    var zone = doc.createElement("span");
+    zone.className = "onde";
+    zone.setAttribute("aria-hidden", "true");
+    var t = Math.max(r.width, r.height) * 2.2;
+    zone.innerHTML = '<i style="width:' + t + "px;height:" + t + "px;left:" + (e.clientX - r.left - t / 2) + "px;top:" + (e.clientY - r.top - t / 2) + 'px"></i>';
+    b.appendChild(zone);
+    setTimeout(function () { zone.remove(); }, 700);
+  });
+
+  // Lueur qui suit le pointeur sur les cartes
+  var LUEUR = ".stat, .st-item, .badge, .cons__card, .cons__rac, .status__cell, .unit, .group, .step, .evt, .article, .code-card";
+  var lueurRaf = 0, lueurEv = null;
+  doc.addEventListener("pointermove", function (e) {
+    if (reduced || e.pointerType === "touch") return;
+    lueurEv = e;
+    if (lueurRaf) return;
+    lueurRaf = requestAnimationFrame(function () {
+      lueurRaf = 0;
+      var el = lueurEv.target.closest && lueurEv.target.closest(LUEUR);
+      if (!el) return;
+      var r = el.getBoundingClientRect();
+      el.style.setProperty("--lx", (lueurEv.clientX - r.left) + "px");
+      el.style.setProperty("--ly", (lueurEv.clientY - r.top) + "px");
+      el.classList.add("lueur");
+    });
+  }, { passive: true });
+
+  // Neige sur l'accueil (le site est à 2 140 m d'altitude)
+  var neige = function () {
+    var hero = doc.querySelector(".hero");
+    if (!hero || hero.querySelector(".neige")) return;
+    var cv = doc.createElement("canvas");
+    cv.className = "neige";
+    cv.setAttribute("aria-hidden", "true");
+    hero.insertBefore(cv, hero.firstChild);
+    var ctx = cv.getContext && cv.getContext("2d");
+    if (!ctx) return;
+    var W = 0, H = 0, dpr = 1, flocons = [], vent = 0;
+    var taille = function () {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = hero.clientWidth; H = hero.clientHeight;
+      cv.width = W * dpr; cv.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      var n = Math.round(Math.min(90, W * H / 9000));
+      while (flocons.length < n) flocons.push({ x: Math.random() * W, y: Math.random() * H, r: .6 + Math.random() * 1.8, v: .25 + Math.random() * .7, o: .2 + Math.random() * .5, p: Math.random() * 6.28 });
+      flocons.length = n;
+    };
+    taille();
+    window.addEventListener("resize", taille);
+    hero.addEventListener("pointermove", function (e) { var r = hero.getBoundingClientRect(); vent = ((e.clientX - r.left) / r.width - .5) * 1.2; });
+    var visible = true;
+    if (window.IntersectionObserver) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }).observe(hero);
+    var boucle = function () {
+      requestAnimationFrame(boucle);
+      if (!visible || doc.hidden || root.getAttribute("data-motion") === "reduit") { if (cv.style.opacity !== "0") cv.style.opacity = "0"; return; }
+      cv.style.opacity = "";
+      ctx.clearRect(0, 0, W, H);
+      for (var i = 0; i < flocons.length; i++) {
+        var f = flocons[i];
+        f.p += .01;
+        f.y += f.v;
+        f.x += Math.sin(f.p) * .3 + vent * f.v;
+        if (f.y > H + 4) { f.y = -4; f.x = Math.random() * W; }
+        if (f.x > W + 4) f.x = -4; else if (f.x < -4) f.x = W + 4;
+        ctx.globalAlpha = f.o;
+        ctx.fillStyle = "#E8F0EE";
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, 6.2832);
+        ctx.fill();
+      }
+    };
+    requestAnimationFrame(boucle);
+  };
+
   /* ---------- Démarrage ----------------------------------------------- */
   buildHeader();
   buildFooter();
   buildDoors();
+  prog = doc.querySelector(".lecture i");
+  majProgression();
+  neige();
   var vig = doc.createElement("div");
   vig.className = "vignette";
   vig.setAttribute("aria-hidden", "true");
   doc.body.appendChild(vig);
+  var cadre = doc.createElement("div");
+  cadre.className = "cadre-staff";
+  cadre.setAttribute("aria-hidden", "true");
+  cadre.innerHTML = "<span>Mode staff</span>";
+  doc.body.appendChild(cadre);
 
   applyAlert();
   updateClearanceUI();

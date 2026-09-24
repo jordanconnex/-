@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Staff · Site-73</title>
+  <title>Console staff · Site-73</title>
   <meta name="description" content="Espace d'administration du Site-73 : habilitations des membres, niveau d'alerte, communiqués et événements.">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#0C1215">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="fr_FR">
-  <meta property="og:title" content="Plan du site · Site-73">
+  <meta property="og:title" content="Console staff · Site-73">
   <meta property="og:description" content="Espace d'administration du Site-73 : habilitations des membres, niveau d'alerte, communiqués et événements.">
   <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,65 +28,89 @@
 
   <main id="contenu" data-view="staff">
     <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
-    <header class="sign">
-      <span class="sign__code" aria-hidden="true">O5</span>
-      <div class="wrap sign__in">
-        <div class="sign__main">
-          <p class="eyebrow">Administration · Accès restreint</p>
-          <h1 class="sign__title">Staff</h1>
-          <p class="sign__lede">Habilitations des membres, niveau d'alerte, communiqués et événements. Chaque action est inscrite au journal.</p>
+    <!-- Sas d'accès : tant que le mode staff n'est pas activé -->
+    <section class="sas" id="staff-guard" aria-labelledby="sas-title">
+      <div class="sas__grille" aria-hidden="true"></div>
+      <div class="wrap sas__in">
+        <div class="sas__scan" aria-hidden="true">
+          <span class="sas__ring sas__ring--1"></span><span class="sas__ring sas__ring--2"></span><span class="sas__ring sas__ring--3"></span>
+          <span class="sas__emblem" data-emblem></span>
+          <span class="sas__beam"></span>
         </div>
-        <dl class="sign__meta">
-          <div><dt>Réf.</dt><dd>S73-ADM-001</dd></div>
-          <div><dt>Connecté</dt><dd data-session-nom>Visiteur</dd></div>
-          <div><dt>Mode</dt><dd data-session-mode>—</dd></div>
-        </dl>
-      </div>
-    </header>
-
-    <section class="sec sec--tight" id="staff-guard" aria-labelledby="guard-title">
-      <div class="wrap">
-        <div class="guard">
-          <span class="guard__lock" data-emblem aria-hidden="true"></span>
-          <div>
-            <p class="eyebrow">Niveau O5 requis</p>
-            <h2 class="h2" id="guard-title">Accès réservé à l'administration</h2>
-            <div class="guard__body" id="staff-guard-body"></div>
-          </div>
+        <div class="sas__panel">
+          <p class="eyebrow">Zone réservée · Niveau O5</p>
+          <h1 class="sas__title" id="sas-title">Accès staff</h1>
+          <p class="sas__lede">Console d'administration du Site-73, séparée de l'intranet. Les membres consultent le site ; seul le staff, identifié, le pilote.</p>
+          <div class="sas__body" id="staff-guard-body"></div>
         </div>
       </div>
     </section>
 
-    <div id="staff-app" hidden>
-      <section class="sec sec--tight" aria-label="Résumé">
-        <div class="wrap">
-          <p class="muted" id="st-loading">Chargement des données du staff…</p>
-          <div class="stats st-resume" id="st-resume"></div>
+    <!-- Console staff -->
+    <div class="cons" id="staff-app" hidden>
+      <aside class="cons__side" aria-label="Console staff">
+        <div class="cons__who" id="cons-who"></div>
+        <nav class="cons__nav" id="cons-nav" role="tablist" aria-label="Sections de la console">
+          <button type="button" role="tab" id="tab-tableau" aria-controls="p-tableau" aria-selected="true" data-onglet="tableau">Tableau de bord</button>
+          <button type="button" role="tab" id="tab-alerte" aria-controls="p-alerte" aria-selected="false" data-onglet="alerte">Alerte<span class="cons__pill" data-cons-alerte></span></button>
+          <button type="button" role="tab" id="tab-membres" aria-controls="p-membres" aria-selected="false" data-onglet="membres">Habilitations<span class="cons__pill" data-cons-count="membres"></span></button>
+          <button type="button" role="tab" id="tab-communiques" aria-controls="p-communiques" aria-selected="false" data-onglet="communiques">Communiqués<span class="cons__pill" data-cons-count="communiques"></span></button>
+          <button type="button" role="tab" id="tab-evenements" aria-controls="p-evenements" aria-selected="false" data-onglet="evenements">Événements<span class="cons__pill" data-cons-count="evenements"></span></button>
+          <button type="button" role="tab" id="tab-journal" aria-controls="p-journal" aria-selected="false" data-onglet="journal">Journal</button>
+          <i class="cons__ind" aria-hidden="true"></i>
+        </nav>
+        <div class="cons__foot">
+          <a class="btn btn--sm" href="index.html">Voir le site</a>
+          <button type="button" class="btn btn--sm btn--danger" data-staff-off>Quitter le mode staff</button>
         </div>
-      </section>
+      </aside>
 
-      <section class="sec sec--line" id="st-alerte" aria-labelledby="st-alerte-title">
-        <div class="wrap">
-          <div class="sec__head">
-            <p class="eyebrow">Tout le site</p>
-            <h2 class="h2" id="st-alerte-title">Niveau d'alerte officiel</h2>
-            <p class="sec__lede">Le niveau choisi s'affiche pour tous les visiteurs : bandeau, couleurs, halo. Pratique pour lancer un événement en Code Rouge.</p>
+      <div class="cons__main">
+        <header class="cons__head">
+          <div>
+            <p class="eyebrow">Console staff · <span data-session-mode>—</span></p>
+            <h1 class="cons__title" id="cons-title">Tableau de bord</h1>
           </div>
+          <p class="cons__clock mono"><span>Heure du site</span><b data-clock>--:--:--</b></p>
+        </header>
+        <p class="muted" id="st-loading">Chargement des données du staff…</p>
+
+        <section class="cons__panel" id="p-tableau" role="tabpanel" aria-labelledby="tab-tableau" data-panneau="tableau">
+          <div class="stats st-resume" id="st-resume"></div>
+          <div class="cons__grid">
+            <div class="cons__card cons__card--alerte" id="st-dash-alerte"></div>
+            <div class="cons__card">
+              <p class="label">Raccourcis</p>
+              <div class="cons__raccourcis">
+                <button type="button" class="cons__rac" data-aller="communiques"><b>Publier</b><span>un communiqué</span></button>
+                <button type="button" class="cons__rac" data-aller="evenements"><b>Programmer</b><span>un événement</span></button>
+                <button type="button" class="cons__rac" data-aller="membres"><b>Régler</b><span>une habilitation</span></button>
+                <button type="button" class="cons__rac" data-aller="alerte"><b>Déclencher</b><span>une alerte</span></button>
+              </div>
+            </div>
+            <div class="cons__card">
+              <p class="label">Prochains événements</p>
+              <ul class="st-mini" id="st-dash-evt"></ul>
+            </div>
+            <div class="cons__card">
+              <p class="label">Dernières actions</p>
+              <ol class="st-mini" id="st-dash-journal"></ol>
+            </div>
+          </div>
+        </section>
+
+        <section class="cons__panel" id="p-alerte" role="tabpanel" aria-labelledby="tab-alerte" data-panneau="alerte" hidden>
+          <p class="sec__lede">Le niveau choisi s'affiche pour tous les visiteurs : bandeau, couleurs, halo, alarme au chargement. Pratique pour lancer un événement en Code Rouge.</p>
           <div class="st-alerte">
+            <div class="st-alerte__jauge" id="st-alerte-jauge" aria-hidden="true"></div>
             <div class="seg" id="st-alerte-seg" role="radiogroup" aria-label="Niveau d'alerte"></div>
             <p id="st-alerte-info"></p>
             <div><button type="button" class="btn btn--signal" id="st-alerte-apply" disabled>Appliquer à tout le site</button></div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="sec sec--line" id="st-hab" aria-labelledby="st-hab-title">
-        <div class="wrap">
-          <div class="sec__head">
-            <p class="eyebrow">Membres</p>
-            <h2 class="h2" id="st-hab-title">Habilitations</h2>
-            <p class="sec__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff prend le dessus sur les rôles.</p>
-          </div>
+        <section class="cons__panel" id="p-membres" role="tabpanel" aria-labelledby="tab-membres" data-panneau="membres" hidden>
+          <p class="sec__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff prend le dessus sur les rôles.</p>
           <div class="toolbar">
             <label class="search"><span class="sr-only">Rechercher un membre</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-q" type="search" placeholder="Nom, pseudo ou identifiant Discord…" autocomplete="off"></label>
             <label class="sort"><span>Niveau</span>
@@ -100,68 +124,57 @@
               <tbody id="st-membres"></tbody>
             </table>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="sec sec--line" id="st-comm" aria-labelledby="st-comm-title">
-        <div class="wrap two">
-          <div>
-            <div class="sec__head">
-              <p class="eyebrow">Publier</p>
-              <h2 class="h2" id="st-comm-title">Communiqué</h2>
+        <section class="cons__panel" id="p-communiques" role="tabpanel" aria-labelledby="tab-communiques" data-panneau="communiques" hidden>
+          <div class="two">
+            <div>
+              <h2 class="h2">Nouveau communiqué</h2>
               <p class="sec__lede">Il s'affiche sur l'accueil et dans les archives. Tu peux masquer un passage avec [[3|texte]] : seuls les niveaux 3 et plus le liront.</p>
+              <form class="gen__form" id="st-comm-form">
+                <label class="field full"><span>Titre</span><input class="input" id="st-comm-titre" maxlength="120" required autocomplete="off"></label>
+                <label class="field full"><span>Texte</span><textarea class="textarea" id="st-comm-texte" rows="5" maxlength="2000" required></textarea></label>
+                <label class="field full"><span>Visible par</span>
+                  <select class="select" id="st-comm-niveau"><option value="0">Tout le monde, même sans connexion</option><option value="1">Habilitation 1 et plus</option><option value="2">Habilitation 2 et plus</option><option value="3">Habilitation 3 et plus</option><option value="4">Habilitation 4 et plus</option><option value="5">Habilitation 5 uniquement</option></select></label>
+                <div class="gen__actions"><button type="submit" class="btn btn--signal">Publier le communiqué</button></div>
+              </form>
             </div>
-            <form class="gen__form" id="st-comm-form">
-              <label class="field full"><span>Titre</span><input class="input" id="st-comm-titre" maxlength="120" required autocomplete="off"></label>
-              <label class="field full"><span>Texte</span><textarea class="textarea" id="st-comm-texte" rows="5" maxlength="2000" required></textarea></label>
-              <label class="field full"><span>Visible par</span>
-                <select class="select" id="st-comm-niveau"><option value="0">Tout le monde, même sans connexion</option><option value="1">Habilitation 1 et plus</option><option value="2">Habilitation 2 et plus</option><option value="3">Habilitation 3 et plus</option><option value="4">Habilitation 4 et plus</option><option value="5">Habilitation 5 uniquement</option></select></label>
-              <div class="gen__actions"><button type="submit" class="btn btn--signal">Publier le communiqué</button></div>
-            </form>
+            <div>
+              <h2 class="h2">Communiqués en ligne</h2>
+              <ul class="st-list" id="st-comm-list"></ul>
+            </div>
           </div>
-          <div>
-            <div class="sec__head"><p class="eyebrow">Publiés depuis l'espace staff</p><h2 class="h2">Communiqués en ligne</h2></div>
-            <ul class="st-list" id="st-comm-list"></ul>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="sec sec--line" id="st-evt" aria-labelledby="st-evt-title">
-        <div class="wrap two">
-          <div>
-            <div class="sec__head">
+        <section class="cons__panel" id="p-evenements" role="tabpanel" aria-labelledby="tab-evenements" data-panneau="evenements" hidden>
+          <div class="two">
+            <div>
               <p class="eyebrow" id="st-evt-mode">Nouvel événement</p>
               <h2 class="h2" id="st-evt-title">Calendrier</h2>
               <p class="sec__lede">Les horaires sont à l'heure de Paris. Le prochain événement s'affiche sur l'accueil avec son compte à rebours.</p>
+              <form class="gen__form" id="st-evt-form">
+                <input type="hidden" id="st-evt-id">
+                <label class="field full"><span>Titre</span><input class="input" id="st-evt-titre" maxlength="100" required autocomplete="off"></label>
+                <label class="field"><span>Type</span><select class="select" id="st-evt-type"></select></label>
+                <label class="field"><span>Durée (minutes)</span><input class="input" id="st-evt-duree" type="number" min="15" max="720" step="15" value="120" required></label>
+                <label class="field full"><span>Date et heure</span><input class="input" id="st-evt-date" type="datetime-local" required></label>
+                <label class="field full"><span>Lieu</span><input class="input" id="st-evt-lieu" maxlength="120" autocomplete="off" placeholder="Niveau −1 · Salle de briefing"></label>
+                <label class="field full"><span>Description</span><textarea class="textarea" id="st-evt-texte" rows="4" maxlength="1000"></textarea></label>
+                <div class="gen__actions"><button type="submit" class="btn btn--signal" id="st-evt-submit">Ajouter l'événement</button><button type="button" class="btn" id="st-evt-cancel" hidden>Annuler</button></div>
+              </form>
             </div>
-            <form class="gen__form" id="st-evt-form">
-              <input type="hidden" id="st-evt-id">
-              <label class="field full"><span>Titre</span><input class="input" id="st-evt-titre" maxlength="100" required autocomplete="off"></label>
-              <label class="field"><span>Type</span><select class="select" id="st-evt-type"></select></label>
-              <label class="field"><span>Durée (minutes)</span><input class="input" id="st-evt-duree" type="number" min="15" max="720" step="15" value="120" required></label>
-              <label class="field full"><span>Date et heure</span><input class="input" id="st-evt-date" type="datetime-local" required></label>
-              <label class="field full"><span>Lieu</span><input class="input" id="st-evt-lieu" maxlength="120" autocomplete="off" placeholder="Niveau −1 · Salle de briefing"></label>
-              <label class="field full"><span>Description</span><textarea class="textarea" id="st-evt-texte" rows="4" maxlength="1000"></textarea></label>
-              <div class="gen__actions"><button type="submit" class="btn btn--signal" id="st-evt-submit">Ajouter l'événement</button><button type="button" class="btn" id="st-evt-cancel" hidden>Annuler</button></div>
-            </form>
+            <div>
+              <h2 class="h2">Programme</h2>
+              <ul class="st-list" id="st-evt-list"></ul>
+            </div>
           </div>
-          <div>
-            <div class="sec__head"><p class="eyebrow">Programme</p><h2 class="h2">Événements</h2></div>
-            <ul class="st-list" id="st-evt-list"></ul>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="sec sec--line" id="st-journal-sec" aria-labelledby="st-journal-title">
-        <div class="wrap">
-          <div class="sec__head">
-            <p class="eyebrow">Traçabilité</p>
-            <h2 class="h2" id="st-journal-title">Journal des actions</h2>
-            <p class="sec__lede">Les 60 dernières actions du staff, avec leur auteur.</p>
-          </div>
+        <section class="cons__panel" id="p-journal" role="tabpanel" aria-labelledby="tab-journal" data-panneau="journal" hidden>
+          <p class="sec__lede">Les 60 dernières actions du staff, avec leur auteur.</p>
           <ol class="st-journal" id="st-journal"></ol>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   </main>
 

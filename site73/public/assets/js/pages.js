@@ -86,25 +86,22 @@
       track.innerHTML = items + items.replace(/<span>/g, '<span aria-hidden="true">');
     }
 
-    // Niveau d'alerte
+    // Niveau d'alerte : affiché pour tous, modifiable seulement en mode staff
     var seg = $("#home-alert-seg");
-    var reset = $("#home-alert-reset");
     if (seg) {
       seg.innerHTML = S.alerts.map(function (a) {
         return '<button type="button" role="radio" data-alert="' + a + '" style="--c: var(--a-' + a + ')">' + esc(D.alertes[a].code.replace("Code ", "")) + "</button>";
       }).join("");
       var syncSeg = function () {
-        var cur = S.getAlert();
+        var cur = S.officialAlert();
         $$("button", seg).forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-alert") === cur)); });
-        if (reset) reset.hidden = cur === S.officialAlert();
       };
       seg.addEventListener("click", function (e) {
         var b = e.target.closest("button[data-alert]");
-        if (!b) return;
-        S.setAlert(b.getAttribute("data-alert"));
+        if (b) S.proposerAlerte(b.getAttribute("data-alert"));
       });
-      if (reset) reset.addEventListener("click", function () { S.setAlert(S.officialAlert()); });
       doc.addEventListener("s73:alert", syncSeg);
+      doc.addEventListener("s73:session", syncSeg);
       syncSeg();
     }
 
@@ -586,7 +583,7 @@
       siren.stop();
       $$(".m-room", svg).forEach(function (r) { r.classList.remove("is-breach", "is-sealed"); });
       if (!completed) logLine("Simulation interrompue par l'opérateur. Retour au " + D.alertes[prevAlert].code + ".", "is-ok");
-      S.setAlert(prevAlert, { persist: false });
+      S.setAlert(prevAlert);
       btn.innerHTML = "<span>Simuler une brèche</span>";
       btn.classList.remove("is-running");
     };
@@ -608,7 +605,7 @@
       $('.m-room[data-zone="' + z.id + '"]', svg).classList.add("is-breach");
       var frame = svg.parentElement;
       if (frame.scrollWidth > frame.clientWidth) frame.scrollLeft = (z.x / 1000) * frame.scrollWidth - frame.clientWidth / 3;
-      S.setAlert("rouge", { persist: false });
+      S.setAlert("rouge");
       S.stat("breach");
       if (sound) siren.start();
       updTimer();
@@ -724,8 +721,8 @@
           (mine ? '<span class="clearance__mine">Votre niveau</span>' : "") +
           '<span class="clearance__num">' + h.niveau + '</span><span class="clearance__name">' + esc(h.nom) + "</span>" +
           "<p>" + esc(h.texte) + "</p>" +
-          (mine ? '<span class="label">Actif</span>' : S.canChooseClearance() && (!S.isLive() || h.niveau <= S.session().reel)
-            ? '<button type="button" class="btn btn--sm" data-lvl="' + h.niveau + '">' + (S.isLive() ? "Voir comme" : "Adopter") + "</button>" : "") + "</div>";
+          (mine ? '<span class="label">Actif</span>' : S.modeStaff() && h.niveau <= S.session().reel
+            ? '<button type="button" class="btn btn--sm" data-lvl="' + h.niveau + '">Voir comme</button>' : "") + "</div>";
       }).join("");
     };
     clr.addEventListener("click", function (e) {
@@ -932,25 +929,40 @@
         print("Remontage de la clé… réglage « " + D.lab914.reglages[idx] + " ».", "t-dim");
         setTimeout(function () { print("Cabine de sortie : " + S.redactPlain(S.run914(obj, idx)), "t-hl"); }, 900);
       }},
-      alerte: { desc: "Voir ou changer le niveau d'alerte", args: "[niveau]", run: function (a) {
-        if (!a[0]) { print("Niveau actuel : " + D.alertes[S.getAlert()].code + ". Niveaux : " + S.alerts.join(", ") + "."); return; }
+      alerte: { desc: "Niveau d'alerte (le changer : staff)", args: "[niveau]", run: function (a) {
+        if (!a[0]) { print("Niveau officiel : " + D.alertes[S.officialAlert()].code + ". Niveaux : " + S.alerts.join(", ") + "."); return; }
         var l = norm(a[0]);
         if (S.alerts.indexOf(l) < 0) { print("Niveau inconnu. Choix : " + S.alerts.join(", ") + ".", "t-err"); return; }
-        S.setAlert(l);
-        print("Niveau d'alerte réglé sur " + D.alertes[l].code.toUpperCase() + " (aperçu local).", "t-hl");
+        if (!S.modeStaff()) {
+          print("Refusé. Seul le staff, en mode staff, change le niveau d'alerte du site.", "t-err");
+          S.sfx("deny");
+          return;
+        }
+        print("Transmission au poste de sécurité…", "t-dim");
+        S.changerAlerte(l).then(function (ok) {
+          if (ok) print("Niveau d'alerte officiel : " + D.alertes[l].code.toUpperCase() + ". Appliqué à tout le site.", "t-hl");
+          else print("Échec : le niveau d'alerte n'a pas changé.", "t-err");
+        });
       }},
-      habilitation: { desc: "Voir ou changer ton habilitation", args: "[0-5]", run: function (a) {
+      habilitation: { desc: "Ton habilitation (aperçu : staff)", args: "[0-5]", run: function (a) {
         if (a[0] == null) { print("Habilitation actuelle : niveau " + S.getClearance() + " · " + S.habName(S.getClearance()) + "."); return; }
         var n = parseInt(a[0], 10);
         if (isNaN(n) || n < 0 || n > 5) { print("Valeur attendue : 0 à 5.", "t-err"); return; }
-        if (!S.canChooseClearance()) {
-          print("Refusé. Ton habilitation est attribuée par l'administration du serveur.", "t-err");
-          if (!S.session().user) print("Connecte-toi avec Discord depuis le bouton « Hab. » en haut de page.", "t-dim");
+        if (!S.modeStaff()) {
+          print("Refusé. Ton habilitation est attribuée par le staff du serveur.", "t-err");
+          if (!S.session().user) print("Connecte-toi depuis le bouton « Hab. » en haut de page.", "t-dim");
+          S.sfx("deny");
           return;
         }
-        if (n === 5) print("Vérification de l'accréditation O5… validée. Le Conseil vous observe.", "t-dim");
+        n = Math.min(n, S.session().reel);
         S.setClearance(n, { silent: true });
-        print("Habilitation réglée sur le niveau " + n + " · " + S.habName(n) + ".", "t-hl");
+        print("Mode staff : aperçu du site comme le niveau " + n + " · " + S.habName(n) + ".", "t-hl");
+      }},
+      staff: { desc: "Accès au mode staff", run: function () {
+        if (S.modeStaff()) { print("Mode staff actif. Console : staff.html · commandes : alerte <niveau>, habilitation <0-5>.", "t-hl"); return; }
+        print("Zone réservée. Le mode staff se déverrouille depuis la console, après vérification de l'identité.", "t-err");
+        print("Transfert vers le sas d'accès…", "t-dim");
+        setTimeout(function () { S.go("staff.html"); }, 600);
       }},
       carnet: { desc: "Ton carnet de service", run: function () {
         var c = S.carnet();
@@ -971,10 +983,11 @@
       qui: { desc: "Identité de la session", run: function () {
         var se = S.session();
         if (se.mode === "live") {
-          print(se.user ? se.user.nom + " · connecté avec Discord · " + (se.admin ? "administrateur" : "membre") + " · habilitation niveau " + S.getClearance()
+          print(se.user ? se.user.nom + " · connecté avec Discord · " + (se.admin ? "administrateur" + (S.modeStaff() ? " (mode staff)" : "") : "membre") + " · habilitation niveau " + S.getClearance()
             : "Visiteur non connecté · habilitation niveau 0");
           return;
         }
+        if (se.user) { print(se.user.nom + " · démonstration · " + (S.modeStaff() ? "mode staff" : se.admin ? "administrateur" : "membre") + " · habilitation niveau " + S.getClearance()); return; }
         var fiche = null;
         try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
         var nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";

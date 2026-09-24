@@ -31,9 +31,14 @@ const donnees = {
     // du visiteur (il peut les réactiver en un clic) ; "toujours" les active pour tous.
     // Chacun peut aussi choisir dans Mon carnet → Réglages.
     animations: "toujours",
-    // Habilitation utilisée seulement en mode démonstration (aperçu sans serveur).
+    // Habilitation des membres de démonstration (aperçu sans serveur).
     // En ligne, l'habilitation vient des rôles Discord et de l'espace staff.
     habilitationParDefaut: 2,
+    // Code d'accès au mode staff quand le site tourne SANS serveur (aperçu,
+    // hébergement statique). Change-le et ne le donne qu'au staff.
+    // Le site public n'en contient que l'empreinte, jamais le code en clair.
+    // En ligne avec Discord, ce code ne sert pas : seuls les rôles admin comptent.
+    codeStaff: "SITE73-O5",
     // Date et heure du dernier incident (compteur « depuis le dernier incident »)
     dernierIncident: { date: "2026-09-02T14:37:00+02:00", ref: "Incident 73-2026-17" },
     anneeFondation: 1987,

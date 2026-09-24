@@ -96,8 +96,11 @@
               <p class="label">Niveau d'alerte</p>
               <p class="status__big" data-alert-code>Code Vert</p>
               <p class="status__txt"><span data-alert-title></span>. <span data-alert-text></span></p>
-              <div class="seg" id="home-alert-seg" role="radiogroup" aria-label="Prévisualiser un niveau d'alerte"></div>
-              <button type="button" class="btn btn--sm" id="home-alert-reset" hidden>Revenir au niveau officiel</button>
+              <p class="status__lock" data-public-only><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Fixé par le staff du site</p>
+              <div class="status__staff" data-staff-only hidden>
+                <p class="label">Mode staff · alerte officielle</p>
+                <div class="seg" id="home-alert-seg" role="radiogroup" aria-label="Niveau d'alerte officiel"></div>
+              </div>
             </div>
             <div class="status__cell">
               <p class="label">Depuis le dernier incident</p>
