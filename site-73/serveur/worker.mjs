@@ -37,10 +37,19 @@ export default {
     const route = ROUTES[pathname];
     if (!route) {
       if (pathname.startsWith("/api/")) return json({ erreur: "Introuvable." }, 404);
+      if (!env.ASSETS) {
+        return new Response("Site-73 : le Worker a été déployé sans le dossier public (liaison ASSETS absente). Redéploie avec « npm run deploy » ou l'import GitHub, qui lisent wrangler.jsonc.",
+          { status: 500, headers: { "content-type": "text/plain; charset=utf-8" } });
+      }
       // "/" → index.html, "/plan" → plan.html (les liens du site gardent .html)
       const page = pathname === "/" ? "/index.html" : /^\/[a-z0-9-]+$/.test(pathname) ? pathname + ".html" : null;
-      const rep = await env.ASSETS.fetch(page ? new Request(new URL(page + new URL(req.url).search, req.url), req) : req);
-      return rep.status === 404 ? introuvable() : rep;
+      try {
+        const rep = await env.ASSETS.fetch(page ? new Request(new URL(page + new URL(req.url).search, req.url), req) : req);
+        return rep.status === 404 ? introuvable() : rep;
+      } catch (e) {
+        console.error("Site-73 : fichier", pathname, e && e.stack || e);
+        return introuvable();
+      }
     }
     initialiser(env);
     try {
