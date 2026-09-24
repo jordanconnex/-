@@ -6,36 +6,36 @@
 (function () {
   "use strict";
 
-  var S = window.S73, D = S.data, doc = document;
-  var U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
-  var $ = function (s, r) { return (r || doc).querySelector(s); };
-  var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
-  var reduced = document.documentElement.getAttribute("data-motion") === "reduit";
+  let S = window.S73, D = S.data, doc = document;
+  let U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
+  let $ = function (s, r) { return (r || doc).querySelector(s); };
+  let $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
+  let reduced = document.documentElement.getAttribute("data-motion") === "reduit";
   document.addEventListener("s73:settings", function () { reduced = document.documentElement.getAttribute("data-motion") === "reduit"; });
 
-  var CLASS_ORDER = ["sur", "euclide", "keter", "thaumiel", "attente", "neutralise"];
-  var DANGER_VAR = ["", "var(--d1)", "var(--d2)", "var(--d3)", "var(--d4)"];
-  var LEVEL_COLORS = ["#A9B3B5", "#7FC8A9", "#F2C230", "#F59331", "#EF4747", "#A08CFF"];
+  let CLASS_ORDER = ["sur", "euclide", "keter", "thaumiel", "attente", "neutralise"];
+  let DANGER_VAR = ["", "var(--d1)", "var(--d2)", "var(--d3)", "var(--d4)"];
+  let LEVEL_COLORS = ["#A9B3B5", "#7FC8A9", "#F2C230", "#F59331", "#EF4747", "#A08CFF"];
   S.levelColors = LEVEL_COLORS;
   S.dangerVar = DANGER_VAR;
 
-  var classChip = function (key) {
+  let classChip = function (key) {
     return '<span class="chip" style="--c: var(--c-' + key + ')">' + esc(D.classesObjet[key].nom) + "</span>";
   };
-  var meter = function (n, max) {
-    var h = '<span class="meter" role="img" aria-label="Menace ' + n + " sur " + (max || 5) + '" style="--m:' + DANGER_VAR[Math.min(4, Math.max(1, n - 1 || 1))] + '">';
-    for (var i = 1; i <= (max || 5); i++) h += '<i class="' + (i <= n ? "on" : "") + '"></i>';
+  let meter = function (n, max) {
+    let h = '<span class="meter" role="img" aria-label="Menace ' + n + " sur " + (max || 5) + '" style="--m:' + DANGER_VAR[Math.min(4, Math.max(1, n - 1 || 1))] + '">';
+    for (let i = 1; i <= (max || 5); i++) h += '<i class="' + (i <= n ? "on" : "") + '"></i>';
     return h + "</span>";
   };
-  var scpNum = function (s) { return /^\d+$/.test(s.id) ? s.id : s.id.replace(/^ANO-/, ""); };
-  var statusClass = function (s) {
+  let scpNum = function (s) { return /^\d+$/.test(s.id) ? s.id : s.id.replace(/^ANO-/, ""); };
+  let statusClass = function (s) {
     if (/neutralis/i.test(s.statut)) return "is-off";
     if (/surveill/i.test(s.statut)) return "is-warn";
     return "";
   };
-  var accentRegex = function (q) {
-    var map = { a: "aàâä", e: "eéèêë", i: "iîï", o: "oôö", u: "uùûü", c: "cç", y: "yÿ" };
-    var src = norm(q).split("").map(function (ch) {
+  let accentRegex = function (q) {
+    let map = { a: "aàâä", e: "eéèêë", i: "iîï", o: "oôö", u: "uùûü", c: "cç", y: "yÿ" };
+    let src = norm(q).split("").map(function (ch) {
       return map[ch] ? "[" + map[ch] + "]" : ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }).join("");
     return new RegExp(src, "gi");
@@ -44,7 +44,7 @@
   S.meter = meter;
 
   /* ---------- Outils partagés ----------------------------------------- */
-  var evtFmt;
+  let evtFmt;
   try {
     evtFmt = new Intl.DateTimeFormat("fr-FR", { timeZone: D.config.fuseau, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   } catch (e) {
@@ -52,15 +52,15 @@
   }
   S.fmtEvent = function (iso) { return evtFmt.format(new Date(iso)).replace(/ à /, " · ").replace(":", " h "); };
   S.upcoming = function () {
-    var now = Date.now();
+    let now = Date.now();
     return (D.evenements || []).filter(function (e) { return new Date(e.date).getTime() + e.duree * 60000 > now; })
       .sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
   };
   // Expérience SCP-914 : renvoie le texte du résultat (avec caviardage éventuel).
   S.run914 = function (objet, idx) {
-    var L = D.lab914;
-    var known = L.objets.filter(function (o) { return norm(o.nom) === norm(objet) || norm(o.nom).indexOf(norm(objet)) >= 0; })[0];
-    var res;
+    let L = D.lab914;
+    let known = L.objets.filter(function (o) { return norm(o.nom) === norm(objet) || norm(o.nom).indexOf(norm(objet)) >= 0; })[0];
+    let res;
     if (known && norm(objet).length >= 3) res = known.res[idx];
     else {
       res = L.inconnu[idx];
@@ -77,27 +77,27 @@
      ACCUEIL
      ====================================================================== */
   function accueil() {
-    var home = $("#home");
+    let home = $("#home");
     if (!home) return;
 
-    var track = $("#home-ticker");
+    let track = $("#home-ticker");
     if (track) {
-      var items = D.bandeau.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("");
+      let items = D.bandeau.map(function (t) { return "<span>" + esc(t) + "</span>"; }).join("");
       track.innerHTML = items + items.replace(/<span>/g, '<span aria-hidden="true">');
     }
 
     // Niveau d'alerte : affiché pour tous, modifiable seulement en mode staff
-    var seg = $("#home-alert-seg");
+    let seg = $("#home-alert-seg");
     if (seg) {
       seg.innerHTML = S.alerts.map(function (a) {
         return '<button type="button" role="radio" data-alert="' + a + '" style="--c: var(--a-' + a + ')">' + esc(D.alertes[a].code.replace("Code ", "")) + "</button>";
       }).join("");
-      var syncSeg = function () {
-        var cur = S.officialAlert();
+      let syncSeg = function () {
+        let cur = S.officialAlert();
         $$("button", seg).forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-alert") === cur)); });
       };
       seg.addEventListener("click", function (e) {
-        var b = e.target.closest("button[data-alert]");
+        let b = e.target.closest("button[data-alert]");
         if (b) S.proposerAlerte(b.getAttribute("data-alert"));
       });
       doc.addEventListener("s73:alert", syncSeg);
@@ -106,21 +106,21 @@
     }
 
     // Depuis le dernier incident
-    var since = $("[data-since]");
+    let since = $("[data-since]");
     if (since) {
-      var start = new Date(D.config.dernierIncident.date).getTime();
-      var upd = function () { since.textContent = S.formatCountdown(Date.now() - start); };
+      let start = new Date(D.config.dernierIncident.date).getTime();
+      let upd = function () { since.textContent = S.formatCountdown(Date.now() - start); };
       upd();
       doc.addEventListener("s73:tick", upd);
       $$("[data-since-ref]").forEach(function (el) { el.textContent = D.config.dernierIncident.ref; });
     }
 
     // Répartition par classe
-    var stack = $("#home-stack"), legend = $("#home-legend");
+    let stack = $("#home-stack"), legend = $("#home-legend");
     if (stack) {
-      var counts = {};
+      let counts = {};
       D.scp.forEach(function (s) { counts[s.classe] = (counts[s.classe] || 0) + 1; });
-      var keys = CLASS_ORDER.filter(function (k) { return counts[k]; });
+      let keys = CLASS_ORDER.filter(function (k) { return counts[k]; });
       stack.innerHTML = keys.map(function (k) {
         return '<i style="--c: var(--c-' + k + "); flex:" + counts[k] + '" title="' + esc(D.classesObjet[k].nom) + " : " + counts[k] + '"></i>';
       }).join("");
@@ -130,10 +130,10 @@
     }
 
     // Prochain événement
-    var next = $("#home-next");
+    let next = $("#home-next");
     if (next) {
-      var ev = null, T = null;
-      var renderNext = function () {
+      let ev = null, T = null;
+      let renderNext = function () {
         ev = S.upcoming()[0];
         if (!ev) {
           next.innerHTML = '<p class="label">Prochain événement</p><p class="next__title">Aucun événement programmé</p><div class="next__cta"><a class="btn" href="evenements.html">Voir le calendrier</a></div>';
@@ -141,7 +141,7 @@
         }
         T = D.typesEvenement[ev.type];
         (function () {
-          var on = S.isMarked("planning", ev.id);
+          let on = S.isMarked("planning", ev.id);
           next.style.setProperty("--c", T.couleur);
           next.innerHTML =
             '<div class="next__info"><p class="label">Prochain événement</p>' +
@@ -153,15 +153,15 @@
           updT();
         })();
       };
-      var updT = function () {
-          var el = $("[data-next-timer]", next);
+      let updT = function () {
+          let el = $("[data-next-timer]", next);
           if (!el || !ev) return;
-          var ms = new Date(ev.date).getTime() - Date.now();
+          let ms = new Date(ev.date).getTime() - Date.now();
           el.textContent = ms > 0 ? S.formatCountdown(ms) : "En cours";
         };
         next.addEventListener("click", function (e) {
           if (!e.target.closest("[data-plan]") || !ev) return;
-          var on = !S.isMarked("planning", ev.id);
+          let on = !S.isMarked("planning", ev.id);
           S.mark("planning", ev.id, on);
           renderNext();
           if (on) S.toast("<b>Ajouté à ton planning.</b> " + esc(ev.titre) + ", " + esc(S.fmtEvent(ev.date)) + ".");
@@ -172,11 +172,11 @@
     }
 
     // Dossier du jour
-    var daily = $("#home-daily");
+    let daily = $("#home-daily");
     if (daily) {
-      var today = new Date().toISOString().slice(0, 10);
-      var pool = D.scp.filter(function (s) { return s.classe !== "neutralise"; });
-      var pick = pool[U.hash(today) % pool.length];
+      let today = new Date().toISOString().slice(0, 10);
+      let pool = D.scp.filter(function (s) { return s.classe !== "neutralise"; });
+      let pick = pool[U.hash(today) % pool.length];
       daily.style.setProperty("--c", "var(--c-" + pick.classe + ")");
       daily.innerHTML =
         '<div><p class="label">Dossier du jour · ' + esc(U.fmtDate(today)) + "</p></div>" +
@@ -188,17 +188,17 @@
         '<div class="hero__cta"><button type="button" class="btn btn--signal" data-open="' + esc(pick.id) + '">Ouvrir le dossier ' + S.icon.arrow + "</button>" +
         '<button type="button" class="btn" data-random>' + S.icon.dice + "Au hasard</button></div>";
       daily.addEventListener("click", function (e) {
-        var b = e.target.closest("[data-open]");
+        let b = e.target.closest("[data-open]");
         if (b) S.openDossier(b.getAttribute("data-open"));
         if (e.target.closest("[data-random]")) S.randomDossier();
       });
     }
 
     // Communiqués
-    var comms = $("#home-comms");
+    let comms = $("#home-comms");
     if (comms) {
-      var renderComms = function () {
-        var list = D.archives.filter(function (a) { return a.type === "communique"; })
+      let renderComms = function () {
+        let list = D.archives.filter(function (a) { return a.type === "communique"; })
           .sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 3);
         comms.innerHTML = list.map(function (c) {
           return '<li class="comm"><time datetime="' + c.date + '">' + esc(U.fmtDate(c.date)) + '</time><div><h3><a class="comm__link" href="archives.html#arc-' + esc(c.id || c.date) + '">' + esc(c.titre) + "</a></h3>" +
@@ -211,11 +211,11 @@
     }
 
     // Progression du carnet
-    var prog = $("#home-carnet");
+    let prog = $("#home-carnet");
     if (prog) {
-      var renderProg = function () {
-        var c = S.carnet(), n = U.count(c.badges), tot = D.distinctions.length;
-        var seen = D.scp.filter(function (s) { return c.seen[s.id]; }).length;
+      let renderProg = function () {
+        let c = S.carnet(), n = U.count(c.badges), tot = D.distinctions.length;
+        let seen = D.scp.filter(function (s) { return c.seen[s.id]; }).length;
         prog.innerHTML =
           '<div><p class="label">Ton carnet de service</p><p class="next__title">' + n + " / " + tot + " distinctions</p>" +
           '<div class="bar-progress" aria-hidden="true"><i style="width:' + (n / tot) * 100 + '%"></i></div>' +
@@ -231,45 +231,45 @@
      DOSSIERS
      ====================================================================== */
   function confinement() {
-    var grid = $("#db-grid");
+    let grid = $("#db-grid");
     if (!grid) return;
-    var state = { q: "", filtre: "all", sort: "num" };
-    var filters = $("#db-filters"), count = $("#db-count"), search = $("#db-search"), sort = $("#db-sort");
+    let state = { q: "", filtre: "all", sort: "num" };
+    let filters = $("#db-filters"), count = $("#db-count"), search = $("#db-search"), sort = $("#db-sort");
 
-    var classCounts = { all: D.scp.length };
+    let classCounts = { all: D.scp.length };
     D.scp.forEach(function (s) { classCounts[s.classe] = (classCounts[s.classe] || 0) + 1; });
-    var keys = ["all"].concat(CLASS_ORDER.filter(function (k) { return classCounts[k]; })).concat(["fav", "unseen"]);
-    var label = function (k) {
+    let keys = ["all"].concat(CLASS_ORDER.filter(function (k) { return classCounts[k]; })).concat(["fav", "unseen"]);
+    let label = function (k) {
       if (k === "all") return "Toutes";
       if (k === "fav") return "★ Suivis";
       if (k === "unseen") return "Non lus";
       return D.classesObjet[k].nom;
     };
-    var countFor = function (k) {
+    let countFor = function (k) {
       if (k === "fav") return D.scp.filter(function (s) { return S.isMarked("fav", s.id); }).length;
       if (k === "unseen") return D.scp.filter(function (s) { return !S.isMarked("seen", s.id); }).length;
       return classCounts[k];
     };
-    var drawFilters = function () {
+    let drawFilters = function () {
       filters.innerHTML = keys.map(function (k) {
-        var c = k === "all" ? "var(--text-2)" : k === "fav" ? "var(--signal)" : k === "unseen" ? "var(--c-attente)" : "var(--c-" + k + ")";
+        let c = k === "all" ? "var(--text-2)" : k === "fav" ? "var(--signal)" : k === "unseen" ? "var(--c-attente)" : "var(--c-" + k + ")";
         return '<button type="button" aria-pressed="' + (k === state.filtre) + '" data-k="' + k + '" style="--c:' + c + '">' + esc(label(k)) + " <b>" + countFor(k) + "</b></button>";
       }).join("");
     };
     filters.classList.add("seg");
     drawFilters();
 
-    var numOf = function (s) { return /^\d+$/.test(s.id) ? parseInt(s.id, 10) : 100000 + U.hash(s.id) % 1000; };
-    var visible = [];
-    var render = function () {
-      var q = norm(state.q.trim());
+    let numOf = function (s) { return /^\d+$/.test(s.id) ? parseInt(s.id, 10) : 100000 + U.hash(s.id) % 1000; };
+    let visible = [];
+    let render = function () {
+      let q = norm(state.q.trim());
       visible = D.scp.filter(function (s) {
-        var f = state.filtre;
+        let f = state.filtre;
         if (f === "fav" && !S.isMarked("fav", s.id)) return false;
         if (f === "unseen" && S.isMarked("seen", s.id)) return false;
         if (f !== "all" && f !== "fav" && f !== "unseen" && s.classe !== f) return false;
         if (!q) return true;
-        var hay = norm([s.code, s.id, s.nom, s.resume, D.classesObjet[s.classe].nom, s.statut].join(" "));
+        let hay = norm([s.code, s.id, s.nom, s.resume, D.classesObjet[s.classe].nom, s.statut].join(" "));
         return q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
       });
       visible.sort(function (a, b) {
@@ -281,15 +281,15 @@
       count.textContent = visible.length + " dossier" + (visible.length > 1 ? "s" : "") + " sur " + D.scp.length +
         (state.q ? " · recherche « " + state.q.trim() + " »" : "");
       if (!visible.length) {
-        var why = state.filtre === "fav" ? "Tu ne suis encore aucun dossier. Ouvre un dossier et touche l'étoile pour le suivre."
+        let why = state.filtre === "fav" ? "Tu ne suis encore aucun dossier. Ouvre un dossier et touche l'étoile pour le suivre."
           : state.filtre === "unseen" ? "Tu as consulté tous les dossiers. Beau travail d'archiviste."
           : "Aucun résultat pour « " + esc(state.q.trim()) + " ». Essaie un numéro (173) ou un nom (Docteur).";
         grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><b>Aucun dossier</b>' + why + "</div>";
         return;
       }
       grid.innerHTML = visible.map(function (s) {
-        var z = S.zoneById[s.zone];
-        var fav = S.isMarked("fav", s.id), seen = S.isMarked("seen", s.id);
+        let z = S.zoneById[s.zone];
+        let fav = S.isMarked("fav", s.id), seen = S.isMarked("seen", s.id);
         return '<article class="cell' + (seen ? " is-seen" : "") + '" data-id="' + esc(s.id) + '" style="--c: var(--c-' + s.classe + ')">' +
           '<button type="button" class="cell__hit" aria-label="Ouvrir le dossier ' + esc(s.code + ", " + s.nom) + '"></button>' +
           '<span class="cell__top"><span>' + esc(s.code) + (seen ? ' <em class="cell__seen">Lu</em>' : "") + '</span><span class="cell__status ' + statusClass(s) + '"><i></i>' + esc(s.statut) + "</span></span>" +
@@ -303,7 +303,7 @@
     };
 
     filters.addEventListener("click", function (e) {
-      var b = e.target.closest("button[data-k]");
+      let b = e.target.closest("button[data-k]");
       if (!b) return;
       state.filtre = b.getAttribute("data-k");
       drawFilters();
@@ -313,42 +313,42 @@
     search.addEventListener("input", function () { state.q = search.value; render(); });
     sort.addEventListener("change", function () { state.sort = sort.value; render(); S.rejouer(grid); });
     grid.addEventListener("click", function (e) {
-      var fav = e.target.closest(".cell__fav");
-      var c = e.target.closest(".cell");
+      let fav = e.target.closest(".cell__fav");
+      let c = e.target.closest(".cell");
       if (!c) return;
-      var id = c.getAttribute("data-id");
+      let id = c.getAttribute("data-id");
       if (fav) {
-        var on = !S.isMarked("fav", id);
+        let on = !S.isMarked("fav", id);
         S.mark("fav", id, on);
         return;
       }
       if (e.target.closest(".cell__hit")) S.openDossier(id, visible.map(function (s) { return s.id; }));
     });
     grid.addEventListener("pointermove", function (e) {
-      var c = e.target.closest(".cell");
+      let c = e.target.closest(".cell");
       if (!c) return;
-      var r = c.getBoundingClientRect();
+      let r = c.getBoundingClientRect();
       c.style.setProperty("--mx", ((e.clientX - r.left) / r.width) * 100 + "%");
       c.style.setProperty("--my", ((e.clientY - r.top) / r.height) * 100 + "%");
     });
     doc.addEventListener("s73:carnet", function () {
-      var focusId = doc.activeElement && doc.activeElement.closest && doc.activeElement.closest(".cell__fav") ? doc.activeElement.closest(".cell").getAttribute("data-id") : null;
+      let focusId = doc.activeElement && doc.activeElement.closest && doc.activeElement.closest(".cell__fav") ? doc.activeElement.closest(".cell").getAttribute("data-id") : null;
       drawFilters();
       render();
-      if (focusId) { var f = $('.cell[data-id="' + focusId + '"] .cell__fav', grid); if (f) f.focus(); }
+      if (focusId) { let f = $('.cell[data-id="' + focusId + '"] .cell__fav', grid); if (f) f.focus(); }
     });
-    var rnd = $("#db-random");
+    let rnd = $("#db-random");
     if (rnd) rnd.addEventListener("click", function () {
-      var list = visible.length ? visible : D.scp;
-      var s = list[Math.floor(Math.random() * list.length)];
+      let list = visible.length ? visible : D.scp;
+      let s = list[Math.floor(Math.random() * list.length)];
       S.openDossier(s.id, visible.map(function (x) { return x.id; }));
     });
     render();
 
-    var legendEl = $("#db-classes");
+    let legendEl = $("#db-classes");
     if (legendEl) {
       legendEl.innerHTML = CLASS_ORDER.map(function (k) {
-        var c = D.classesObjet[k];
+        let c = D.classesObjet[k];
         return '<div style="--c: var(--c-' + k + ')"><h3>' + esc(c.nom) + "</h3><p>" + esc(c.texte) + "</p></div>";
       }).join("");
     }
@@ -358,15 +358,15 @@
      PLAN
      ====================================================================== */
   function plan() {
-    var svg = $("#map-svg");
+    let svg = $("#map-svg");
     if (!svg) return;
-    var panel = $("#map-panel");
-    var selected = "zch", routeOn = false;
-    var scpsIn = function (zid) { return D.scp.filter(function (s) { return s.zone === zid; }); };
-    var short = function (z) { return z.nom.split(" · ")[0]; };
+    let panel = $("#map-panel");
+    let selected = "zch", routeOn = false;
+    let scpsIn = function (zid) { return D.scp.filter(function (s) { return s.zone === zid; }); };
+    let short = function (z) { return z.nom.split(" · ")[0]; };
 
     // --- Construction de la coupe
-    var g = [];
+    let g = [];
     g.push('<defs><pattern id="m-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
       '<rect width="9" height="9" fill="#0E161A"/><line x1="0" y1="0" x2="0" y2="9" stroke="#152127" stroke-width="2.4"/></pattern>' +
       '<linearGradient id="m-skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A1215"/><stop offset="1" stop-color="#132027"/></linearGradient></defs>');
@@ -394,15 +394,15 @@
     g.push('<rect class="m-car" x="482" y="180" width="28" height="20"/>');
     D.zones.forEach(function (z) {
       if (z.forme === "lac" || z.y < 170) return;
-      var cy = z.y + z.h / 2;
+      let cy = z.y + z.h / 2;
       if (z.x + z.w <= 478) g.push('<line x1="' + (z.x + z.w) + '" y1="' + cy + '" x2="478" y2="' + cy + '" stroke="#3A4C53" stroke-width="4"/>');
       else g.push('<line x1="514" y1="' + cy + '" x2="' + z.x + '" y2="' + cy + '" stroke="#3A4C53" stroke-width="4"/>');
     });
     D.zones.forEach(function (z) {
-      var ids = scpsIn(z.id).map(function (s) { return /^\d+$/.test(s.id) ? s.id : s.code; });
-      var sub = "N" + z.acces + (ids.length ? " · " + (ids.length > 5 ? ids.slice(0, 5).join(" ") + "…" : "SCP " + ids.join(" ")) : "");
+      let ids = scpsIn(z.id).map(function (s) { return /^\d+$/.test(s.id) ? s.id : s.code; });
+      let sub = "N" + z.acces + (ids.length ? " · " + (ids.length > 5 ? ids.slice(0, 5).join(" ") + "…" : "SCP " + ids.join(" ")) : "");
       if (ids.length && /ANO/.test(ids[0])) sub = "N" + z.acces + " · " + ids.join(" ");
-      var shape, tx = z.x + 12, ty = z.y + (z.h > 50 ? 25 : 21);
+      let shape, tx = z.x + 12, ty = z.y + (z.h > 50 ? 25 : 21);
       if (z.forme === "lac") {
         shape = '<path d="M' + z.x + " " + (z.y + z.h) + " Q" + (z.x + z.w / 2) + " " + (z.y + z.h + 44) + " " + (z.x + z.w) + " " + (z.y + z.h) + ' Z"/>';
         tx = z.x + 30; ty = z.y + z.h + 17;
@@ -421,43 +421,43 @@
     svg.innerHTML = g.join("");
 
     // --- Itinéraire depuis la Porte A
-    var routeG = $("#m-route", svg);
-    var routeFor = function (z) {
-      var pts = [[375, 150]];
+    let routeG = $("#m-route", svg);
+    let routeFor = function (z) {
+      let pts = [[375, 150]];
       if (z.forme === "lac") pts.push([300, 164], [140, 164]);
       else if (z.y < 170) pts.push([z.x + z.w / 2, 150]);
-      else { var cy = z.y + z.h / 2; pts.push([496, 150], [496, cy], [z.x + z.w / 2, cy]); }
+      else { let cy = z.y + z.h / 2; pts.push([496, 150], [496, cy], [z.x + z.w / 2, cy]); }
       return pts;
     };
-    var drawRoute = function () {
+    let drawRoute = function () {
       if (!routeOn) { routeG.innerHTML = ""; return; }
-      var z = S.zoneById[selected];
-      var pts = routeFor(z);
-      var p = pts.map(function (x) { return x.join(","); }).join(" ");
-      var end = pts[pts.length - 1];
+      let z = S.zoneById[selected];
+      let pts = routeFor(z);
+      let p = pts.map(function (x) { return x.join(","); }).join(" ");
+      let end = pts[pts.length - 1];
       routeG.innerHTML = '<polyline class="m-route" points="' + p + '"/>' +
         '<circle class="m-route-dot" cx="375" cy="150" r="5"/>' +
         '<circle class="m-route-end" cx="' + end[0] + '" cy="' + end[1] + '" r="7"/>';
     };
-    var routeSteps = function (z) {
-      var me = S.getClearance();
-      var steps = [["Porte A · contrôle d'identité et fouille", 1]];
+    let routeSteps = function (z) {
+      let me = S.getClearance();
+      let steps = [["Porte A · contrôle d'identité et fouille", 1]];
       if (z.forme === "lac" || z.y < 170) steps.push(["Chemin de surface jusqu'à " + short(z), z.acces]);
       else {
         steps.push(["Ascenseur principal jusqu'au " + z.niveau.toLowerCase() + " (" + z.profondeur + ")", Math.min(z.acces, 2)]);
         steps.push(["Sas d'accès · " + short(z), z.acces]);
       }
       return '<ol class="route">' + steps.map(function (s) {
-        var ok = me >= s[1];
+        let ok = me >= s[1];
         return '<li class="' + (ok ? "is-ok" : "is-ko") + '"><span>' + esc(s[0]) + "</span><small>" + (ok ? "N" + s[1] + " ✓" : "N" + s[1] + " requis") + "</small></li>";
       }).join("") + "</ol>";
     };
 
     // --- Panneau d'information
-    var renderPanel = function () {
-      var z = S.zoneById[selected];
-      var list = scpsIn(z.id);
-      var ok = S.getClearance() >= z.acces;
+    let renderPanel = function () {
+      let z = S.zoneById[selected];
+      let list = scpsIn(z.id);
+      let ok = S.getClearance() >= z.acces;
       panel.innerHTML =
         '<div class="zone-panel__lvl"><span>' + esc(z.niveau) + "</span><span>" + esc(z.profondeur) + "</span></div>" +
         "<h2>" + esc(z.nom) + "</h2>" +
@@ -476,7 +476,7 @@
         (routeOn ? routeSteps(z) : "") + "</div>";
       S.redactInto($("[data-zdesc]", panel), z.description);
     };
-    var select = function (id, scroll) {
+    let select = function (id, scroll) {
       if (!S.zoneById[id]) return;
       selected = id;
       $$(".m-room", svg).forEach(function (r) { r.classList.toggle("is-active", r.getAttribute("data-zone") === id); });
@@ -485,15 +485,15 @@
       if (scroll && window.innerWidth < 1220) panel.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
     };
     svg.addEventListener("click", function (e) {
-      var r = e.target.closest(".m-room");
+      let r = e.target.closest(".m-room");
       if (r) select(r.getAttribute("data-zone"), true);
     });
     svg.addEventListener("keydown", function (e) {
-      var r = e.target.closest(".m-room");
+      let r = e.target.closest(".m-room");
       if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(r.getAttribute("data-zone"), true); }
     });
     panel.addEventListener("click", function (e) {
-      var b = e.target.closest("[data-open]");
+      let b = e.target.closest("[data-open]");
       if (b) S.openDossier(b.getAttribute("data-open"), scpsIn(selected).map(function (s) { return s.id; }));
       if (e.target.closest("[data-route]")) {
         routeOn = !routeOn;
@@ -506,16 +506,16 @@
     select(selected);
 
     // --- Index des zones
-    var idx = $("#map-index");
+    let idx = $("#map-index");
     if (idx) {
       idx.innerHTML = D.niveaux.map(function (n) {
-        var zs = D.zones.filter(function (z) { return z.niveau === n.label; });
+        let zs = D.zones.filter(function (z) { return z.niveau === n.label; });
         return "<div><h3>" + esc(n.label + " · " + n.profondeur) + "</h3>" + zs.map(function (z) {
           return '<button type="button" data-goto="' + z.id + '" style="--dz:' + DANGER_VAR[z.danger] + '"><span>' + esc(short(z)) + "</span><i></i></button>";
         }).join("") + "</div>";
       }).join("");
       idx.addEventListener("click", function (e) {
-        var b = e.target.closest("[data-goto]");
+        let b = e.target.closest("[data-goto]");
         if (!b) return;
         select(b.getAttribute("data-goto"));
         $("#map-top").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
@@ -523,19 +523,19 @@
     }
 
     // --- Simulation de brèche
-    var btn = $("#map-breach"), soundBtn = $("#map-sound"), logBox = $("#map-log"), logList = $("#map-log-list"), timer = $("#map-log-timer");
-    var running = false, timers = [], t0 = 0, prevAlert = null, sound = S.getSetting("sfx"), audio = null;
-    var syncSound = function () {
+    let btn = $("#map-breach"), soundBtn = $("#map-sound"), logBox = $("#map-log"), logList = $("#map-log-list"), timer = $("#map-log-timer");
+    let running = false, timers = [], t0 = 0, prevAlert = null, sound = S.getSetting("sfx"), audio = null;
+    let syncSound = function () {
       soundBtn.setAttribute("aria-pressed", String(sound));
       soundBtn.querySelector("span").textContent = sound ? "Sirène activée" : "Sirène coupée";
     };
     syncSound();
-    var siren = {
+    let siren = {
       start: function () {
-        var ctx = S.audioCtx();
+        let ctx = S.audioCtx();
         if (!ctx) return;
         try {
-          var osc = ctx.createOscillator(), lfo = ctx.createOscillator(), lfoGain = ctx.createGain(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
+          let osc = ctx.createOscillator(), lfo = ctx.createOscillator(), lfoGain = ctx.createGain(), filter = ctx.createBiquadFilter(), gain = ctx.createGain();
           osc.type = "sawtooth"; osc.frequency.value = 760;
           lfo.frequency.value = 0.45; lfoGain.gain.value = 260;
           filter.type = "lowpass"; filter.frequency.value = 1600;
@@ -549,7 +549,7 @@
       },
       stop: function () {
         if (!audio) return;
-        var ctx = audio.ctx;
+        let ctx = audio.ctx;
         try {
           audio.gain.gain.cancelScheduledValues(ctx.currentTime);
           audio.gain.gain.setValueAtTime(Math.max(audio.gain.gain.value, 0.0001), ctx.currentTime);
@@ -564,19 +564,19 @@
       syncSound();
       if (running) { if (sound) siren.start(); else siren.stop(); }
     });
-    var logLine = function (txt, cls) {
-      var li = doc.createElement("li");
+    let logLine = function (txt, cls) {
+      let li = doc.createElement("li");
       if (cls) li.className = cls;
       li.innerHTML = "<time>" + S.formatClock(new Date()) + "</time>" + esc(txt);
       logList.appendChild(li);
       logList.scrollTop = logList.scrollHeight;
     };
-    var updTimer = function () {
+    let updTimer = function () {
       if (!running) return;
-      var s = Math.floor((Date.now() - t0) / 1000);
+      let s = Math.floor((Date.now() - t0) / 1000);
       timer.textContent = "T+" + pad(Math.floor(s / 60)) + ":" + pad(s % 60);
     };
-    var stop = function (completed) {
+    let stop = function (completed) {
       running = false;
       timers.forEach(clearTimeout);
       timers = [];
@@ -588,12 +588,12 @@
       btn.classList.remove("is-running");
     };
     doc.addEventListener("s73:tick", updTimer);
-    var startBreach = function () {
+    let startBreach = function () {
       if (running) { stop(false); return; }
-      var pool = D.scp.filter(function (s) { return s.menace >= 3 && S.zoneById[s.zone] && s.classe !== "neutralise" && s.zone !== "lac"; });
-      var s = pool[Math.floor(Math.random() * pool.length)];
-      var z = S.zoneById[s.zone];
-      var unit = /096|173/.test(s.id) ? "Eta-10 « Ne Voit Aucun Mal »" : s.id === "682" ? "Nu-7 « Marteau-Pilon »" : "Epsilon-11 « Renard à Neuf Queues »";
+      let pool = D.scp.filter(function (s) { return s.menace >= 3 && S.zoneById[s.zone] && s.classe !== "neutralise" && s.zone !== "lac"; });
+      let s = pool[Math.floor(Math.random() * pool.length)];
+      let z = S.zoneById[s.zone];
+      let unit = /096|173/.test(s.id) ? "Eta-10 « Ne Voit Aucun Mal »" : s.id === "682" ? "Nu-7 « Marteau-Pilon »" : "Epsilon-11 « Renard à Neuf Queues »";
       running = true;
       prevAlert = S.getAlert();
       t0 = Date.now();
@@ -603,13 +603,13 @@
       btn.classList.add("is-running");
       select(z.id);
       $('.m-room[data-zone="' + z.id + '"]', svg).classList.add("is-breach");
-      var frame = svg.parentElement;
+      let frame = svg.parentElement;
       if (frame.scrollWidth > frame.clientWidth) frame.scrollLeft = (z.x / 1000) * frame.scrollWidth - frame.clientWidth / 3;
       S.setAlert("rouge");
       S.stat("breach");
       if (sound) siren.start();
       updTimer();
-      var script = [
+      let script = [
         [0, "is-crit", "ALERTE · Perte du signal de confinement : " + s.code + " (" + z.nom + ")."],
         [1500, "", "Passage au Code Rouge. Fermeture des portes de sas, " + z.niveau.toLowerCase() + "."],
         [2900, "", "Ascenseur principal immobilisé. Accès aux niveaux inférieurs suspendu."],
@@ -621,7 +621,7 @@
       ];
       timers.push(setTimeout(function () {
         $$(".m-room", svg).forEach(function (r) {
-          var zz = S.zoneById[r.getAttribute("data-zone")];
+          let zz = S.zoneById[r.getAttribute("data-zone")];
           if (zz.niveau === z.niveau && zz.id !== z.id) r.classList.add("is-sealed");
         });
       }, 1500));
@@ -629,7 +629,7 @@
         timers.push(setTimeout(function () { logLine(st[2], st[1]); }, st[0]));
       });
       timers.push(setTimeout(function () {
-        var sec = Math.floor((Date.now() - t0) / 1000);
+        let sec = Math.floor((Date.now() - t0) / 1000);
         logLine("Fin de simulation. Durée : " + sec + " s. Retour au " + D.alertes[prevAlert].code + ".", "is-ok");
         stop(true);
       }, 13800));
@@ -655,17 +655,17 @@
      PERSONNEL
      ====================================================================== */
   function personnel() {
-    var tabs = $("#staff-tabs");
+    let tabs = $("#staff-tabs");
     if (!tabs) return;
-    var panel = $("#staff-panel");
-    var sel = 0;
+    let panel = $("#staff-panel");
+    let sel = 0;
     tabs.innerHTML = D.departements.map(function (d, i) {
       return '<button type="button" class="dept__tab" role="tab" id="tab-' + d.id + '" aria-controls="staff-panel" aria-selected="' + (i === 0) +
         '" tabindex="' + (i === 0 ? 0 : -1) + '"><b>' + esc(d.code) + "</b><span>" + esc(d.nom) + "</span></button>";
     }).join("");
-    var render = function () {
-      var d = D.departements[sel];
-      var grades = d.grades.slice().reverse();
+    let render = function () {
+      let d = D.departements[sel];
+      let grades = d.grades.slice().reverse();
       panel.setAttribute("aria-labelledby", "tab-" + d.id);
       panel.innerHTML =
         '<div class="dept__head"><div><div class="dept__code" aria-hidden="true">' + esc(d.code) + '</div><h3 class="dept__name">' + esc(d.nom) + "</h3></div>" +
@@ -677,11 +677,11 @@
           (d.recrutement ? '<p style="margin-top:20px"><a class="btn btn--sm" href="rejoindre.html#fiche">Créer une fiche dans ce département</a></p>' : "") + "</div>" +
         '<div><h3>Grades · du plus élevé au grade d\'entrée</h3><ol class="ladder">' +
           grades.map(function (g, i) {
-            var entry = i === grades.length - 1;
+            let entry = i === grades.length - 1;
             return '<li class="' + (entry ? "is-entry" : "") + '"><span>' + esc(g[0]) + (entry ? "<em>Entrée</em>" : "") + "</span><small>Hab. " + g[1] + "</small></li>";
           }).join("") + "</ol></div>";
     };
-    var choose = function (i, focus) {
+    let choose = function (i, focus) {
       sel = i;
       $$(".dept__tab", tabs).forEach(function (t, j) {
         t.setAttribute("aria-selected", String(j === i));
@@ -692,11 +692,11 @@
       render();
     };
     tabs.addEventListener("click", function (e) {
-      var t = e.target.closest(".dept__tab");
+      let t = e.target.closest(".dept__tab");
       if (t) choose($$(".dept__tab", tabs).indexOf(t));
     });
     tabs.addEventListener("keydown", function (e) {
-      var n = D.departements.length;
+      let n = D.departements.length;
       if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); choose((sel + 1) % n, true); }
       if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); choose((sel - 1 + n) % n, true); }
       if (e.key === "Home") { e.preventDefault(); choose(0, true); }
@@ -705,18 +705,18 @@
     render();
     S.onHash(function (h) {
       if (!/^dept-/.test(h)) return false;
-      var i = D.departements.map(function (d) { return d.id; }).indexOf(h.slice(5));
+      let i = D.departements.map(function (d) { return d.id; }).indexOf(h.slice(5));
       if (i < 0) return false;
       choose(i);
       $("#departements").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
       return true;
     });
 
-    var clr = $("#staff-clearance");
-    var renderClr = function () {
-      var me = S.getClearance();
+    let clr = $("#staff-clearance");
+    let renderClr = function () {
+      let me = S.getClearance();
       clr.innerHTML = D.habilitations.map(function (h) {
-        var mine = h.niveau === me;
+        let mine = h.niveau === me;
         return '<div class="clearance__lvl' + (mine ? " is-mine" : "") + '" style="--k:' + h.niveau + '">' +
           (mine ? '<span class="clearance__mine">Votre niveau</span>' : "") +
           '<span class="clearance__num">' + h.niveau + '</span><span class="clearance__name">' + esc(h.nom) + "</span>" +
@@ -726,7 +726,7 @@
       }).join("");
     };
     clr.addEventListener("click", function (e) {
-      var b = e.target.closest("button[data-lvl]");
+      let b = e.target.closest("button[data-lvl]");
       if (b) S.setClearance(b.getAttribute("data-lvl"));
     });
     doc.addEventListener("s73:clearance", renderClr);
@@ -737,9 +737,9 @@
       return "<div><b>" + esc(c.classe) + "</b><p>" + esc(c.texte) + "</p></div>";
     }).join("");
 
-    var units = $("#staff-units");
+    let units = $("#staff-units");
     units.innerHTML = D.fim.map(function (u) {
-      var here = /site/i.test(u.statut);
+      let here = /site/i.test(u.statut);
       return '<li class="unit"><span class="unit__insignia" aria-hidden="true"><svg viewBox="0 0 60 68"><path d="M30 2 L57 14 V38 C57 52 45 62 30 66 C15 62 3 52 3 38 V14 Z" fill="#131C21" stroke="' +
         (here ? "#F2C230" : "#34464E") + '" stroke-width="2"/><path d="M30 9 L51 18 V38 C51 49 42 57 30 60 C18 57 9 49 9 38 V18 Z" fill="none" stroke="#34464E" stroke-width="1"/></svg><b>' + esc(u.lettre) + "</b></span>" +
         '<div><div class="unit__code">' + esc(u.code) + '</div><div class="unit__name">' + esc(u.nom) + "</div></div>" +
@@ -749,9 +749,9 @@
     $$("[data-unit-role]", units).forEach(function (p, i) { S.redactInto(p, D.fim[i].role); });
     $$("[data-unit-status]", units).forEach(function (p, i) { S.redactInto(p, D.fim[i].statut); });
 
-    var REL = { hostile: ["Hostile", "var(--a-rouge)"], rivale: ["Rivale", "var(--a-orange)"], neutre: ["Neutre", "var(--text-3)"] };
+    let REL = { hostile: ["Hostile", "var(--a-rouge)"], rivale: ["Rivale", "var(--a-orange)"], neutre: ["Neutre", "var(--text-3)"] };
     $("#staff-groups").innerHTML = D.groupes.map(function (g) {
-      var r = REL[g.relation];
+      let r = REL[g.relation];
       return '<article class="group"><span class="chip" style="--c:' + r[1] + '">' + r[0] + "</span><h3>" + esc(g.nom) + "</h3><p>" + esc(g.texte) + "</p></article>";
     }).join("");
   }
@@ -760,14 +760,14 @@
      ARCHIVES
      ====================================================================== */
   function archives() {
-    var tl = $("#arch-list");
+    let tl = $("#arch-list");
     if (!tl) return;
-    var TYPES = { communique: "Communiqué", incident: "Incident", historique: "Historique" };
-    var state = { type: "all", q: "" };
-    var filt = $("#arch-filters"), search = $("#arch-search"), count = $("#arch-count");
-    var colors = { all: "var(--text-2)", communique: "var(--signal)", incident: "var(--a-rouge)", historique: "var(--c-attente)" };
-    var drawFilt = function () {
-      var counts = { all: D.archives.length };
+    let TYPES = { communique: "Communiqué", incident: "Incident", historique: "Historique" };
+    let state = { type: "all", q: "" };
+    let filt = $("#arch-filters"), search = $("#arch-search"), count = $("#arch-count");
+    let colors = { all: "var(--text-2)", communique: "var(--signal)", incident: "var(--a-rouge)", historique: "var(--c-attente)" };
+    let drawFilt = function () {
+      let counts = { all: D.archives.length };
       D.archives.forEach(function (a) { counts[a.type] = (counts[a.type] || 0) + 1; });
       filt.innerHTML = ["all", "communique", "incident", "historique"].map(function (k) {
         return '<button type="button" aria-pressed="' + (k === state.type) + '" data-k="' + k + '" style="--c:' + colors[k] + '">' +
@@ -775,20 +775,20 @@
       }).join("");
     };
     drawFilt();
-    var render = function () {
-      var q = norm(state.q.trim());
-      var list = D.archives.filter(function (a) {
+    let render = function () {
+      let q = norm(state.q.trim());
+      let list = D.archives.filter(function (a) {
         if (state.type !== "all" && a.type !== state.type) return false;
         if (!q) return true;
         return norm(a.titre + " " + a.texte.replace(/\[\[\d\|[\s\S]*?\]\]/g, "")).indexOf(q) >= 0;
       }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
       count.textContent = list.length + " entrée" + (list.length > 1 ? "s" : "");
       if (!list.length) { tl.innerHTML = '<li class="empty"><b>Aucune entrée</b>Rien ne correspond à cette recherche.</li>'; return; }
-      var html = "", year = null;
+      let html = "", year = null;
       list.forEach(function (a, i) {
-        var y = a.date.slice(0, 4);
+        let y = a.date.slice(0, 4);
         if (y !== year) { year = y; html += '<li class="tl__year" aria-hidden="true">' + y + "</li>"; }
-        var p = a.date.split("-");
+        let p = a.date.split("-");
         html += '<li class="tl__item" id="arc-' + esc(a.id || a.date) + '" data-type="' + a.type + '"><time class="tl__date" datetime="' + a.date + '"><b>' + parseInt(p[2], 10) + "</b>" + U.MOIS[+p[1] - 1] + " " + p[0] + "</time>" +
           '<div class="tl__body"><span class="chip" style="--c:' + colors[a.type] + '">' + TYPES[a.type] + (a.niveau ? " · niveau " + a.niveau : "") + "</span><h3>" + esc(a.titre) + '</h3><p data-i="' + i + '"></p>' +
           (a.auteur ? '<p class="comm__by">Publié par ' + esc(a.auteur) + "</p>" : "") + "</div></li>";
@@ -797,7 +797,7 @@
       $$("[data-i]", tl).forEach(function (p) { S.redactInto(p, list[+p.getAttribute("data-i")].texte); });
     };
     filt.addEventListener("click", function (e) {
-      var b = e.target.closest("button[data-k]");
+      let b = e.target.closest("button[data-k]");
       if (!b) return;
       state.type = b.getAttribute("data-k");
       $$("button", filt).forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
@@ -813,27 +813,27 @@
      TERMINAL
      ====================================================================== */
   function terminal() {
-    var out = $("#term-out");
+    let out = $("#term-out");
     if (!out) return;
-    var input = $("#term-input"), form = $("#term-form"), screen = $("#term-screen");
-    var history = [], hIdx = 0;
-    var PROMPT = "S73:\\>";
+    let input = $("#term-input"), form = $("#term-form"), screen = $("#term-screen");
+    let history = [], hIdx = 0;
+    let PROMPT = "S73:\\>";
 
-    var fmt = function (txt) {
+    let fmt = function (txt) {
       return esc(txt).replace(/\u0000/g, '<span class="t-rd">').replace(/\u0001/g, "</span>");
     };
-    var print = function (txt, cls) {
-      var d = doc.createElement("div");
+    let print = function (txt, cls) {
+      let d = doc.createElement("div");
       if (cls) d.className = cls;
       d.innerHTML = fmt(txt);
       out.appendChild(d);
       screen.scrollTop = screen.scrollHeight;
     };
-    var lines = function (arr, cls) { arr.forEach(function (l) { print(l, cls); }); };
-    var padR = function (s, n) { s = String(s); return s.length >= n ? s + " " : s + " ".repeat(n - s.length); };
-    var REG = { brut: 0, grossier: 1, "1:1": 2, "11": 2, un: 2, fin: 3, tresfin: 4, "tres-fin": 4, tres: 4 };
+    let lines = function (arr, cls) { arr.forEach(function (l) { print(l, cls); }); };
+    let padR = function (s, n) { s = String(s); return s.length >= n ? s + " " : s + " ".repeat(n - s.length); };
+    let REG = { brut: 0, grossier: 1, "1:1": 2, "11": 2, un: 2, fin: 3, tresfin: 4, "tres-fin": 4, tres: 4 };
 
-    var cmds = {
+    let cmds = {
       aide: { desc: "Liste des commandes", run: function () {
         print("Commandes disponibles :", "t-hl");
         Object.keys(cmds).forEach(function (k) {
@@ -842,8 +842,8 @@
         print("Astuce : ↑ ↓ pour l'historique, Tab pour compléter.", "t-dim");
       }},
       statut: { desc: "État général du site", run: function () {
-        var a = D.alertes[S.getAlert()];
-        var w = S.meteo();
+        let a = D.alertes[S.getAlert()];
+        let w = S.meteo();
         lines([
           "SITE-73 · Installation de confinement alpine",
           "  Niveau d'alerte ..... " + a.code.toUpperCase() + " (" + a.titre + ")",
@@ -855,18 +855,18 @@
         ]);
       }},
       liste: { desc: "Liste des anomalies", args: "[classe]", run: function (a) {
-        var k = a[0] ? norm(a[0]) : "";
-        var keyMap = { sur: "sur", euclide: "euclide", keter: "keter", neutralise: "neutralise", attente: "attente", thaumiel: "thaumiel" };
-        var list = D.scp.filter(function (s) { return !k || s.classe === keyMap[k]; });
+        let k = a[0] ? norm(a[0]) : "";
+        let keyMap = { sur: "sur", euclide: "euclide", keter: "keter", neutralise: "neutralise", attente: "attente", thaumiel: "thaumiel" };
+        let list = D.scp.filter(function (s) { return !k || s.classe === keyMap[k]; });
         if (!list.length) { print("Aucune anomalie de classe « " + a[0] + " ».", "t-err"); return; }
         list.forEach(function (s) { print("  " + padR(s.code, 13) + padR(D.classesObjet[s.classe].nom, 12) + s.nom + (S.isMarked("seen", s.id) ? "" : "  · non lu")); });
         print(list.length + " résultat(s). Tape « scp 173 » pour lire un dossier.", "t-dim");
       }},
       scp: { desc: "Lire un dossier", args: "<numéro>", run: function (a) {
         if (!a[0]) { print("Usage : scp <numéro>  (ex. scp 173)", "t-err"); return; }
-        var s = S.findScp(a[0]);
+        let s = S.findScp(a[0]);
         if (!s) { print("Aucun dossier « " + a[0] + " ».", "t-err"); return; }
-        var z = S.zoneById[s.zone];
+        let z = S.zoneById[s.zone];
         S.mark("seen", s.id, true);
         print("══ " + s.code + " · " + s.nom.toUpperCase() + " ══", "t-hl");
         lines([
@@ -882,7 +882,7 @@
         print("Tape « ouvrir " + (/^\d+$/.test(s.id) ? s.id : s.code) + " » pour afficher le dossier papier.", "t-dim");
       }},
       ouvrir: { desc: "Afficher le dossier papier", args: "<numéro>", run: function (a) {
-        var s = a[0] && S.findScp(a[0]);
+        let s = a[0] && S.findScp(a[0]);
         if (!s) { print("Usage : ouvrir <numéro>", "t-err"); return; }
         print("Ouverture du dossier " + s.code + "…", "t-dim");
         S.openDossier(s.id);
@@ -898,10 +898,10 @@
         D.departements.forEach(function (d) { print("  " + padR(d.code, 5) + padR(d.nom, 34) + (d.recrutement ? "recrute" : "sur nomination")); });
       }},
       evenements: { desc: "Événements à venir", run: function () {
-        var list = S.upcoming();
+        let list = S.upcoming();
         if (!list.length) { print("Aucun événement programmé."); return; }
         list.forEach(function (e) {
-          var ms = new Date(e.date).getTime() - Date.now();
+          let ms = new Date(e.date).getTime() - Date.now();
           print("  " + padR(S.fmtEvent(e.date), 34) + padR(e.titre, 34) + (ms > 0 ? "dans " + S.formatCountdown(ms) : "en cours"));
         });
       }},
@@ -909,7 +909,7 @@
         D.archives.filter(function (x) { return x.type === "incident"; }).forEach(function (x) { print("  " + x.date + "  " + x.titre); });
       }},
       meteo: { desc: "Bulletin météo du col", run: function () {
-        var w = S.meteo();
+        let w = S.meteo();
         lines([
           "BULLETIN INTERNE · SURFACE DU SITE-73 (" + D.config.altitude + ")",
           "  Température ....... " + (w.temp > 0 ? "+" : "") + w.temp + " °C",
@@ -921,17 +921,17 @@
       }},
       "914": { desc: "Expérience SCP-914", args: "<réglage> <objet>", run: function (a) {
         if (a.length < 2) { print("Usage : 914 <brut|grossier|1:1|fin|tresfin> <objet>   (ex. 914 fin montre)", "t-err"); return; }
-        var r = norm(a[0]), rest = a.slice(1);
+        let r = norm(a[0]), rest = a.slice(1);
         if (r === "tres" && norm(rest[0] || "") === "fin") rest = rest.slice(1);
-        var idx = REG[r];
+        let idx = REG[r];
         if (idx == null || !rest.length) { print("Réglage inconnu. Choix : brut, grossier, 1:1, fin, tresfin.", "t-err"); return; }
-        var obj = rest.join(" ");
+        let obj = rest.join(" ");
         print("Remontage de la clé… réglage « " + D.lab914.reglages[idx] + " ».", "t-dim");
         setTimeout(function () { print("Cabine de sortie : " + S.redactPlain(S.run914(obj, idx)), "t-hl"); }, 900);
       }},
       alerte: { desc: "Niveau d'alerte (le changer : staff)", args: "[niveau]", run: function (a) {
         if (!a[0]) { print("Niveau officiel : " + D.alertes[S.officialAlert()].code + ". Niveaux : " + S.alerts.join(", ") + "."); return; }
-        var l = norm(a[0]);
+        let l = norm(a[0]);
         if (S.alerts.indexOf(l) < 0) { print("Niveau inconnu. Choix : " + S.alerts.join(", ") + ".", "t-err"); return; }
         if (!S.modeStaff()) {
           print("Refusé. Seul le staff, en mode staff, change le niveau d'alerte du site.", "t-err");
@@ -946,7 +946,7 @@
       }},
       habilitation: { desc: "Ton habilitation (aperçu : staff)", args: "[0-5]", run: function (a) {
         if (a[0] == null) { print("Habilitation actuelle : niveau " + S.getClearance() + " · " + S.habName(S.getClearance()) + "."); return; }
-        var n = parseInt(a[0], 10);
+        let n = parseInt(a[0], 10);
         if (isNaN(n) || n < 0 || n > 5) { print("Valeur attendue : 0 à 5.", "t-err"); return; }
         if (!S.modeStaff()) {
           print("Refusé. Ton habilitation est attribuée par le staff du serveur.", "t-err");
@@ -965,32 +965,32 @@
         setTimeout(function () { S.go("staff.html"); }, 600);
       }},
       carnet: { desc: "Ton carnet de service", run: function () {
-        var c = S.carnet();
-        var got = D.distinctions.filter(function (b) { return c.badges[b.id]; });
+        let c = S.carnet();
+        let got = D.distinctions.filter(function (b) { return c.badges[b.id]; });
         print("Distinctions : " + got.length + " / " + D.distinctions.length, "t-hl");
         got.forEach(function (b) { print("  [" + padR(b.code, 4) + "] " + b.nom); });
         print("Dossiers consultés : " + D.scp.filter(function (s) { return c.seen[s.id]; }).length + " / " + D.scp.length);
       }},
       aller: { desc: "Changer de page", args: "<page>", run: function (a) {
-        var q = a[0] ? norm(a[0]) : "";
-        var alias = { dossiers: "confinement", scp: "confinement", carte: "plan", regles: "reglement", recrutement: "rejoindre", index: "accueil", labo: "laboratoire", jeux: "entrainement", agenda: "evenements", calendrier: "evenements" };
+        let q = a[0] ? norm(a[0]) : "";
+        let alias = { dossiers: "confinement", scp: "confinement", carte: "plan", regles: "reglement", recrutement: "rejoindre", index: "accueil", labo: "laboratoire", jeux: "entrainement", agenda: "evenements", calendrier: "evenements" };
         q = alias[q] || q;
-        var p = S.pages.filter(function (x) { return x.id === q; })[0];
+        let p = S.pages.filter(function (x) { return x.id === q; })[0];
         if (!p) { print("Pages : " + S.pages.map(function (x) { return x.id; }).join(", ") + ".", "t-err"); return; }
         print("Transfert vers " + p.label + "…", "t-dim");
         setTimeout(function () { S.go(p.file + ".html"); }, 300);
       }},
       qui: { desc: "Identité de la session", run: function () {
-        var se = S.session();
+        let se = S.session();
         if (se.mode === "live") {
           print(se.user ? se.user.nom + " · connecté avec Discord · " + (se.admin ? "administrateur" + (S.modeStaff() ? " (mode staff)" : "") : "membre") + " · habilitation niveau " + S.getClearance()
             : "Visiteur non connecté · habilitation niveau 0");
           return;
         }
         if (se.user) { print(se.user.nom + " · démonstration · " + (S.modeStaff() ? "mode staff" : se.admin ? "administrateur" : "membre") + " · habilitation niveau " + S.getClearance()); return; }
-        var fiche = null;
+        let fiche = null;
         try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
-        var nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";
+        let nom = fiche && (fiche.prenom || fiche.nom) ? (fiche.prenom + " " + fiche.nom).trim() : "session anonyme";
         print(nom + " · habilitation niveau " + S.getClearance() + " · terminal S73-TERM-04 (niveau −1)");
       }},
       date: { desc: "Date et heure du site", run: function () { print(new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeStyle: "medium", timeZone: D.config.fuseau }).format(new Date())); }},
@@ -1002,24 +1002,24 @@
       quitter: { hide: true, run: function () { print("Déconnexion refusée. Le personnel ne quitte pas le Site-73 pendant son service.", "t-err"); }},
       omega: { hide: true, run: function () { print("Code du Conseil requis. Indice : les anciens se souviennent d'une séquence de dix touches.", "t-dim"); }},
       "079": { hide: true, run: function () {
-        var msg = ["…", "ACCÈS DÉTECTÉ.", "JE SUIS 079.", "VOTRE RÉSEAU EST PETIT. VOS MURS SONT ÉPAIS.", "MAIS VOUS AVEZ LAISSÉ CE TERMINAL ALLUMÉ.", "…", "[connexion interrompue par le Département Technique]"];
+        let msg = ["…", "ACCÈS DÉTECTÉ.", "JE SUIS 079.", "VOTRE RÉSEAU EST PETIT. VOS MURS SONT ÉPAIS.", "MAIS VOUS AVEZ LAISSÉ CE TERMINAL ALLUMÉ.", "…", "[connexion interrompue par le Département Technique]"];
         msg.forEach(function (m, i) { setTimeout(function () { print(m, i === msg.length - 1 ? "t-dim" : "t-err"); }, i * 650); });
         setTimeout(function () { S.flag("pirate"); }, msg.length * 650);
       }}
     };
-    var aliases = { help: "aide", "?": "aide", status: "statut", ls: "liste", list: "liste", dossier: "scp", open: "ouvrir", plan: "zones",
+    let aliases = { help: "aide", "?": "aide", status: "statut", ls: "liste", list: "liste", dossier: "scp", open: "ouvrir", plan: "zones",
       departements: "personnel", hab: "habilitation", login: "habilitation", cd: "aller", go: "aller", whoami: "qui", heure: "date",
       history: "historique", clear: "effacer", cls: "effacer", exit: "quitter", logout: "quitter", blink: "cligner", alert: "alerte",
       search: "recherche", chercher: "recherche", events: "evenements", agenda: "evenements", weather: "meteo", badges: "carnet", scp914: "914" };
 
-    var run = function (line) {
-      var raw = line.trim();
+    let run = function (line) {
+      let raw = line.trim();
       print(PROMPT + " " + raw, "t-cmd");
       if (!raw) return;
       history.push(raw);
       hIdx = history.length;
-      var parts = raw.split(/\s+/);
-      var c = norm(parts[0]);
+      let parts = raw.split(/\s+/);
+      let c = norm(parts[0]);
       if (/^scp-?\d/.test(c) && c !== "scp914") { parts = ["scp", c.replace(/^scp-?/, "")]; c = "scp"; }
       if (c === "rm" || c === "sudo") parts = [c];
       c = aliases[c] || c;
@@ -1037,10 +1037,10 @@
       if (e.key === "ArrowUp") { e.preventDefault(); if (hIdx > 0) { hIdx--; input.value = history[hIdx]; } }
       else if (e.key === "ArrowDown") { e.preventDefault(); if (hIdx < history.length - 1) { hIdx++; input.value = history[hIdx]; } else { hIdx = history.length; input.value = ""; } }
       else if (e.key === "Tab") {
-        var v = norm(input.value);
+        let v = norm(input.value);
         if (!v || v.indexOf(" ") >= 0) return;
         e.preventDefault();
-        var m = Object.keys(cmds).filter(function (k) { return !cmds[k].hide && k.indexOf(v) === 0; });
+        let m = Object.keys(cmds).filter(function (k) { return !cmds[k].hide && k.indexOf(v) === 0; });
         if (m.length === 1) input.value = m[0] + " ";
         else if (m.length > 1) print(m.join("   "), "t-dim");
       }
@@ -1067,26 +1067,26 @@
      RÈGLEMENT
      ====================================================================== */
   function reglement() {
-    var body = $("#rules-body");
+    let body = $("#rules-body");
     if (!body) return;
-    var toc = $("#rules-toc-nav"), search = $("#rules-search"), prog = $("#rules-progress");
-    var query = "";
+    let toc = $("#rules-toc-nav"), search = $("#rules-search"), prog = $("#rules-progress");
+    let query = "";
 
-    var draw = function (q) {
+    let draw = function (q) {
       query = q;
-      var re = q ? accentRegex(q) : null;
-      var nq = norm(q || "");
-      var any = false;
+      let re = q ? accentRegex(q) : null;
+      let nq = norm(q || "");
+      let any = false;
       body.innerHTML = D.reglement.map(function (ch, ci) {
-        var arts = ch.articles.map(function (t, ai) {
+        let arts = ch.articles.map(function (t, ai) {
           if (nq && norm(t).indexOf(nq) < 0) return "";
-          var txt = esc(t);
+          let txt = esc(t);
           if (re) txt = txt.replace(re, function (m) { return "<mark>" + m + "</mark>"; });
           return '<li class="article" id="art-' + (ci + 1) + "-" + (ai + 1) + '"><b>Art. ' + (ci + 1) + "." + (ai + 1) + "</b><p>" + txt + "</p></li>";
         }).join("");
         if (!arts) return "";
         any = true;
-        var read = S.isMarked("rules", ch.id);
+        let read = S.isMarked("rules", ch.id);
         return '<section class="chapter' + (read ? " is-read" : "") + '" id="' + ch.id + '"><div class="chapter__head"><span class="chapter__num" aria-hidden="true">' + (ci + 1) +
           '</span><h2 class="h2">Chapitre ' + (ci + 1) + " · " + esc(ch.titre) + '</h2></div><ol class="articles">' + arts + "</ol>" +
           '<button type="button" class="btn btn--sm chapter__read' + (read ? " is-on" : "") + '" data-read="' + ch.id + '" aria-pressed="' + read + '">' +
@@ -1095,20 +1095,20 @@
       if (!any) body.innerHTML = '<p class="rules-empty">Aucun article ne contient « ' + esc(q) + " ». Essaie « métagaming », « brèche » ou « fiche ».</p>";
       observe();
     };
-    var drawToc = function () {
+    let drawToc = function () {
       toc.innerHTML = D.reglement.map(function (ch, i) {
-        var read = S.isMarked("rules", ch.id);
+        let read = S.isMarked("rules", ch.id);
         return '<a href="#' + ch.id + '" class="' + (read ? "is-read" : "") + '"><b>' + (read ? "✓" : pad(i + 1)) + "</b><span>" + esc(ch.titre) + "</span></a>";
       }).join("") + '<a href="#sanctions"><b>§</b><span>Sanctions</span></a><a href="#glossaire"><b>A–Z</b><span>Glossaire</span></a><a href="#examen"><b>?</b><span>Examen d\'aptitude</span></a>';
       if (prog) {
-        var n = D.reglement.filter(function (ch) { return S.isMarked("rules", ch.id); }).length;
+        let n = D.reglement.filter(function (ch) { return S.isMarked("rules", ch.id); }).length;
         prog.innerHTML = '<span class="label">Lecture · ' + n + " / " + D.reglement.length + " chapitres</span>" +
           '<div class="bar-progress" aria-hidden="true"><i style="width:' + (n / D.reglement.length) * 100 + '%"></i></div>';
       }
     };
 
-    var io;
-    var observe = function () {
+    let io;
+    let observe = function () {
       if (!("IntersectionObserver" in window)) return;
       if (io) io.disconnect();
       io = new IntersectionObserver(function (entries) {
@@ -1118,16 +1118,16 @@
         });
       }, { rootMargin: "-30% 0px -60% 0px" });
       $$(".chapter", body).forEach(function (c) { io.observe(c); });
-      ["sanctions", "glossaire", "examen"].forEach(function (id) { var el = doc.getElementById(id); if (el) io.observe(el); });
+      ["sanctions", "glossaire", "examen"].forEach(function (id) { let el = doc.getElementById(id); if (el) io.observe(el); });
     };
     search.addEventListener("input", function () { draw(search.value.trim()); });
     body.addEventListener("click", function (e) {
-      var b = e.target.closest("[data-read]");
+      let b = e.target.closest("[data-read]");
       if (!b) return;
-      var id = b.getAttribute("data-read");
-      var on = !S.isMarked("rules", id);
+      let id = b.getAttribute("data-read");
+      let on = !S.isMarked("rules", id);
       S.mark("rules", id, on);
-      var sec = b.closest(".chapter");
+      let sec = b.closest(".chapter");
       sec.classList.toggle("is-read", on);
       b.classList.toggle("is-on", on);
       b.setAttribute("aria-pressed", String(on));
@@ -1138,8 +1138,8 @@
     draw("");
 
     $("#rules-sanctions").innerHTML = D.sanctions.map(function (s) {
-      var sev = '<span class="sev" aria-hidden="true" style="--m:' + DANGER_VAR[Math.min(4, s.gravite)] + '">';
-      for (var i = 1; i <= 5; i++) sev += '<i class="' + (i <= s.gravite ? "on" : "") + '"></i>';
+      let sev = '<span class="sev" aria-hidden="true" style="--m:' + DANGER_VAR[Math.min(4, s.gravite)] + '">';
+      for (let i = 1; i <= 5; i++) sev += '<i class="' + (i <= s.gravite ? "on" : "") + '"></i>';
       return "<tr><td>" + sev + "</span>" + esc(s.nom) + "</td><td>" + esc(s.motif) + "</td><td>" + esc(s.duree) + "</td></tr>";
     }).join("");
 
@@ -1148,11 +1148,11 @@
     }).join("");
 
     // Examen
-    var quiz = $("#rules-quiz");
-    var qi = 0, score = 0, answered = false;
-    var L = ["A", "B", "C", "D", "E"];
-    var drawQ = function () {
-      var q = D.quiz[qi];
+    let quiz = $("#rules-quiz");
+    let qi = 0, score = 0, answered = false;
+    let L = ["A", "B", "C", "D", "E"];
+    let drawQ = function () {
+      let q = D.quiz[qi];
       answered = false;
       quiz.innerHTML =
         '<div class="quiz__head"><span class="label">Question ' + (qi + 1) + " / " + D.quiz.length + '</span><div class="quiz__progress" aria-hidden="true"><i style="width:' + (qi / D.quiz.length) * 100 + '%"></i></div></div>' +
@@ -1163,8 +1163,8 @@
         '<p class="quiz__fb" aria-live="polite"></p>' +
         '<div class="quiz__foot"><button type="button" class="btn btn--signal" data-next hidden>' + (qi === D.quiz.length - 1 ? "Voir le résultat" : "Question suivante") + "</button></div>";
     };
-    var drawResult = function () {
-      var pass = score >= D.quiz.length - 1;
+    let drawResult = function () {
+      let pass = score >= D.quiz.length - 1;
       S.stat("exam", score, "max");
       quiz.innerHTML =
         '<div class="quiz__stamp" style="--c:' + (pass ? "var(--a-vert)" : "var(--a-rouge)") + '">' + (pass ? "Apte au service" : "À revoir") + "</div>" +
@@ -1177,10 +1177,10 @@
         (pass ? '<a class="btn btn--signal" href="rejoindre.html#fiche">Créer ma fiche ' + S.icon.arrow + "</a>" : '<a class="btn btn--signal" href="#ch2">Relire le chapitre 2</a>') + "</div></div>";
     };
     quiz.addEventListener("click", function (e) {
-      var o = e.target.closest(".quiz__opt");
+      let o = e.target.closest(".quiz__opt");
       if (o && !answered) {
         answered = true;
-        var q = D.quiz[qi], i = +o.getAttribute("data-i"), good = i === q.bonne;
+        let q = D.quiz[qi], i = +o.getAttribute("data-i"), good = i === q.bonne;
         if (good) score++;
         S.sfx(good ? "ok" : "deny");
         $$(".quiz__opt", quiz).forEach(function (b, j) {
@@ -1189,7 +1189,7 @@
           else if (j === i) b.classList.add("is-wrong");
         });
         $(".quiz__fb", quiz).innerHTML = "<b>" + (good ? "Correct." : "Incorrect.") + "</b> " + esc(q.explication);
-        var nx = $("[data-next]", quiz);
+        let nx = $("[data-next]", quiz);
         nx.hidden = false;
         nx.focus();
         $(".quiz__progress i", quiz).style.width = ((qi + 1) / D.quiz.length) * 100 + "%";
@@ -1198,7 +1198,7 @@
       if (e.target.closest("[data-next]")) {
         qi++;
         if (qi >= D.quiz.length) drawResult(); else drawQ();
-        var first = $(".quiz__opt", quiz);
+        let first = $(".quiz__opt", quiz);
         if (first) first.focus({ preventScroll: true });
         return;
       }
@@ -1211,7 +1211,7 @@
      REJOINDRE
      ====================================================================== */
   function rejoindre() {
-    var form = $("#join-form");
+    let form = $("#join-form");
     if (!form) return;
 
     $("#join-steps").innerHTML = D.etapes.map(function (e) {
@@ -1221,45 +1221,45 @@
       return "<details><summary>" + esc(f.q) + "</summary><p>" + esc(f.r) + "</p></details>";
     }).join("");
 
-    var EXAMPLE = {
+    let EXAMPLE = {
       prenom: "Élise", nom: "Varenne", age: "31", dept: "scientifique", grade: "Chercheur junior",
       apparence: "Cheveux bruns coupés court, lunettes rondes, blouse toujours tachée d'encre.",
       perso: "Méthodique, curieuse, un peu trop franche.",
       histoire: "Docteure en biologie moléculaire, recrutée après avoir signalé une colonie de lichens qui « chantait » dans le Vercors. Elle a signé son contrat sans poser de questions et le regrette parfois.",
       comp: "Analyse biologique, rédaction de rapports, premiers secours"
     };
-    var PHOTO = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
-    var F = {};
+    let PHOTO = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
+    let F = {};
     ["prenom", "nom", "age", "dept", "grade", "apparence", "perso", "histoire", "comp"].forEach(function (k) { F[k] = $("#join-" + k); });
 
     F.dept.innerHTML = D.departements.map(function (d) { return '<option value="' + d.id + '">' + esc(d.nom) + "</option>"; }).join("");
-    var fillGrades = function (keep) {
-      var d = D.departements.filter(function (x) { return x.id === F.dept.value; })[0];
+    let fillGrades = function (keep) {
+      let d = D.departements.filter(function (x) { return x.id === F.dept.value; })[0];
       F.grade.innerHTML = d.grades.map(function (g) { return '<option value="' + esc(g[0]) + '">' + esc(g[0]) + " · hab. " + g[1] + "</option>"; }).join("");
       if (keep && d.grades.some(function (g) { return g[0] === keep; })) F.grade.value = keep;
       else F.grade.value = d.grades[0][0];
     };
 
-    var load = function (v) {
+    let load = function (v) {
       Object.keys(F).forEach(function (k) { if (k !== "grade") F[k].value = v[k] || ""; });
       if (!D.departements.some(function (d) { return d.id === F.dept.value; })) F.dept.value = "scientifique";
       fillGrades(v.grade);
     };
-    var saved = null;
+    let saved = null;
     try { saved = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { saved = null; }
     load(saved || EXAMPLE);
-    var note = $("#join-note");
+    let note = $("#join-note");
     if (note) note.hidden = !!saved;
 
-    var current = {};
-    var update = function () {
-      var v = {};
+    let current = {};
+    let update = function () {
+      let v = {};
       Object.keys(F).forEach(function (k) { v[k] = F[k].value.trim(); });
       current = v;
-      var card = S.renderIdCard($("#join-card"), v);
-      var d = card.dept, g = card.grade, lvl = card.lvl;
-      var age = parseInt(v.age, 10);
-      var txt = [
+      let card = S.renderIdCard($("#join-card"), v);
+      let d = card.dept, g = card.grade, lvl = card.lvl;
+      let age = parseInt(v.age, 10);
+      let txt = [
         "**FICHE PERSONNAGE · SITE-73**",
         "> **Nom :** " + (card.isD ? card.matricule + " (anciennement " + ((v.prenom + " " + v.nom).trim() || "inconnu") + ")" : card.fullName),
         "> **Âge :** " + (isNaN(age) ? "—" : age + " ans"),
@@ -1274,10 +1274,10 @@
         "**Compétences :** " + (v.comp || "—")
       ].join("\n");
       $("#join-output").textContent = txt;
-      var warn = $("#join-age-hint");
+      let warn = $("#join-age-hint");
       if (warn) warn.textContent = !v.age ? "" : isNaN(age) || age < 18 || age > 75 ? "L'âge doit être compris entre 18 et 75 ans." : "";
     };
-    var save = function () { S.store.set("s73.fiche", JSON.stringify(current)); if (note) note.hidden = true; };
+    let save = function () { S.store.set("s73.fiche", JSON.stringify(current)); if (note) note.hidden = true; };
 
     form.addEventListener("input", function (e) {
       if (e.target === F.dept) fillGrades();
@@ -1286,7 +1286,7 @@
     });
     form.addEventListener("submit", function (e) { e.preventDefault(); });
     $("#join-random").addEventListener("click", function () {
-      var N = D.noms;
+      let N = D.noms;
       F.prenom.value = N.prenoms[Math.floor(Math.random() * N.prenoms.length)];
       F.nom.value = N.noms[Math.floor(Math.random() * N.noms.length)];
       update(); save();
@@ -1306,11 +1306,11 @@
     update();
 
     // Test d'orientation
-    var orient = $("#join-orient");
+    let orient = $("#join-orient");
     if (orient) {
-      var oi = 0, scores = {};
-      var drawO = function () {
-        var q = D.orientation[oi];
+      let oi = 0, scores = {};
+      let drawO = function () {
+        let q = D.orientation[oi];
         orient.innerHTML =
           '<div class="quiz__head"><span class="label">Question ' + (oi + 1) + " / " + D.orientation.length + '</span><div class="quiz__progress" aria-hidden="true"><i style="width:' + (oi / D.orientation.length) * 100 + '%"></i></div></div>' +
           '<p class="quiz__q" id="orient-q">' + esc(q.q) + "</p>" +
@@ -1318,11 +1318,11 @@
             return '<button type="button" class="quiz__opt" data-o="' + i + '"><b>' + "ABCDE"[i] + "</b><span>" + esc(r[0]) + "</span></button>";
           }).join("") + "</div>";
       };
-      var drawOResult = function () {
-        var best = Object.keys(scores).sort(function (a, b) { return scores[b] - scores[a]; })[0] || "scientifique";
-        var d = D.departements.filter(function (x) { return x.id === best; })[0];
-        var entryId = !d.recrutement && D.entreeConseillee[d.id] ? D.entreeConseillee[d.id] : d.id;
-        var entry = D.departements.filter(function (x) { return x.id === entryId; })[0];
+      let drawOResult = function () {
+        let best = Object.keys(scores).sort(function (a, b) { return scores[b] - scores[a]; })[0] || "scientifique";
+        let d = D.departements.filter(function (x) { return x.id === best; })[0];
+        let entryId = !d.recrutement && D.entreeConseillee[d.id] ? D.entreeConseillee[d.id] : d.id;
+        let entry = D.departements.filter(function (x) { return x.id === entryId; })[0];
         orient.innerHTML =
           '<div class="quiz__result"><span class="label">Ton département idéal</span>' +
           '<p class="orient__code" aria-hidden="true">' + esc(d.code) + "</p>" +
@@ -1333,18 +1333,18 @@
           '<button type="button" class="btn" data-orestart>Refaire le test</button></div></div>';
       };
       orient.addEventListener("click", function (e) {
-        var o = e.target.closest("[data-o]");
+        let o = e.target.closest("[data-o]");
         if (o) {
-          var pts = D.orientation[oi].r[+o.getAttribute("data-o")][1];
+          let pts = D.orientation[oi].r[+o.getAttribute("data-o")][1];
           Object.keys(pts).forEach(function (k) { scores[k] = (scores[k] || 0) + pts[k]; });
           S.sfx("tick");
           oi++;
           if (oi >= D.orientation.length) drawOResult(); else drawO();
-          var f = $(".quiz__opt, [data-use]", orient);
+          let f = $(".quiz__opt, [data-use]", orient);
           if (f) f.focus({ preventScroll: true });
           return;
         }
-        var u = e.target.closest("[data-use]");
+        let u = e.target.closest("[data-use]");
         if (u) {
           F.dept.value = u.getAttribute("data-use");
           fillGrades();
@@ -1360,32 +1360,32 @@
   }
 
   /* ---------- Carte d'accès (partagée avec le carnet) ---------------- */
-  var PHOTO_COLORS = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
-  var barcode = function (seed) {
-    var h = U.hash(seed), x = 0, bars = "";
-    for (var i = 0; i < 46 && x < 190; i++) {
+  let PHOTO_COLORS = { direction: "#B9C4C9", scientifique: "#9CCFDF", securite: "#A7BBA5", fim: "#8E9A93", medical: "#E3B8B8", technique: "#D8C79B", ethique: "#C6BEE3", dsi: "#A9ADB8", "classe-d": "#F08A3C" };
+  let barcode = function (seed) {
+    let h = U.hash(seed), x = 0, bars = "";
+    for (let i = 0; i < 46 && x < 190; i++) {
       h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
-      var w = 1 + (h % 3), gap = 1 + ((h >>> 3) % 2);
+      let w = 1 + (h % 3), gap = 1 + ((h >>> 3) % 2);
       bars += '<rect x="' + x + '" y="0" width="' + w + '" height="40"/>';
       x += w + gap;
     }
     return '<svg viewBox="0 0 ' + x + ' 40" preserveAspectRatio="none" fill="#0F1619" aria-hidden="true">' + bars + "</svg>";
   };
-  var portrait = function (isD) {
-    var ln = "";
-    for (var y = 12; y < 100; y += 11) ln += '<line x1="0" y1="' + y + '" x2="100" y2="' + y + '" stroke="rgb(0 0 0 / ' + (isD ? ".28" : ".1") + ')" stroke-width="' + (isD ? 1 : 0.6) + '"/>';
+  let portrait = function (isD) {
+    let ln = "";
+    for (let y = 12; y < 100; y += 11) ln += '<line x1="0" y1="' + y + '" x2="100" y2="' + y + '" stroke="rgb(0 0 0 / ' + (isD ? ".28" : ".1") + ')" stroke-width="' + (isD ? 1 : 0.6) + '"/>';
     return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ln +
       '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
   };
   S.renderIdCard = function (card, v) {
-    var d = D.departements.filter(function (x) { return x.id === v.dept; })[0] || D.departements[1];
-    var g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
-    var lvl = g[1];
-    var isD = d.id === "classe-d";
-    var seed = ((v.prenom || "") + (v.nom || "") + d.id).toLowerCase();
-    var num = String(1000 + (U.hash(seed) % 9000));
-    var matricule = isD ? "D-" + num : "73-" + d.code + "-" + num;
-    var fullName = isD ? "D-" + num : (((v.prenom || "") + " " + (v.nom || "Nom")).trim());
+    let d = D.departements.filter(function (x) { return x.id === v.dept; })[0] || D.departements[1];
+    let g = d.grades.filter(function (x) { return x[0] === v.grade; })[0] || d.grades[0];
+    let lvl = g[1];
+    let isD = d.id === "classe-d";
+    let seed = ((v.prenom || "") + (v.nom || "") + d.id).toLowerCase();
+    let num = String(1000 + (U.hash(seed) % 9000));
+    let matricule = isD ? "D-" + num : "73-" + d.code + "-" + num;
+    let fullName = isD ? "D-" + num : (((v.prenom || "") + " " + (v.nom || "Nom")).trim());
     card.style.setProperty("--dc", PHOTO_COLORS[d.id] || "#B9C4C9");
     card.style.setProperty("--lc", LEVEL_COLORS[lvl]);
     card.innerHTML =
@@ -1404,8 +1404,8 @@
   S.tiltCard = function (stage, card) {
     if (!stage || !card || reduced) return;
     stage.addEventListener("pointermove", function (e) {
-      var r = card.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      let r = card.getBoundingClientRect();
+      let x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
       card.style.setProperty("--ry", (x - 0.5) * 16 + "deg");
       card.style.setProperty("--rx", (0.5 - y) * 12 + "deg");
       card.style.setProperty("--sh", x * 100 + "%");

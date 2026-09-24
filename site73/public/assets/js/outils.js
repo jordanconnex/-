@@ -6,46 +6,46 @@
 (function () {
   "use strict";
 
-  var S = window.S73, D = S.data, doc = document;
-  var U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
-  var $ = function (s, r) { return (r || doc).querySelector(s); };
-  var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
-  var reduced = document.documentElement.getAttribute("data-motion") === "reduit";
+  let S = window.S73, D = S.data, doc = document;
+  let U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
+  let $ = function (s, r) { return (r || doc).querySelector(s); };
+  let $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
+  let reduced = document.documentElement.getAttribute("data-motion") === "reduit";
   document.addEventListener("s73:settings", function () { reduced = document.documentElement.getAttribute("data-motion") === "reduit"; });
 
-  var dayKey;
+  let dayKey;
   try {
-    var dk = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
+    let dk = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
     dayKey = function (d) { return dk.format(d); };
   } catch (e) {
     dayKey = function (d) { return d.toISOString().slice(0, 10); };
   }
-  var MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  let MOIS_LONG = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
   /* ======================================================================
      ÉVÉNEMENTS
      ====================================================================== */
   function evenements() {
-    var list = $("#evt-list");
+    let list = $("#evt-list");
     if (!list) return;
-    var T = D.typesEvenement;
-    var trier = function () { return (D.evenements || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); }); };
-    var all = trier();
-    var state = { type: "all" };
-    var status = function (e) {
-      var t0 = new Date(e.date).getTime(), t1 = t0 + e.duree * 60000, now = Date.now();
+    let T = D.typesEvenement;
+    let trier = function () { return (D.evenements || []).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); }); };
+    let all = trier();
+    let state = { type: "all" };
+    let status = function (e) {
+      let t0 = new Date(e.date).getTime(), t1 = t0 + e.duree * 60000, now = Date.now();
       return now < t0 ? "avenir" : now < t1 ? "encours" : "termine";
     };
-    var discordText = function (e) {
+    let discordText = function (e) {
       return "📢 **" + e.titre.toUpperCase() + "**\n🗓️ " + S.fmtEvent(e.date) + " · " + Math.round(e.duree / 60 * 10) / 10 + " h\n📍 " + e.lieu + "\n\n" + e.texte + "\n\n_Site-73 · " + T[e.type].nom + "_";
     };
 
     // --- Prochain événement
-    var hero = $("#evt-next");
-    var renderHero = function () {
-      var ev = S.upcoming()[0];
+    let hero = $("#evt-next");
+    let renderHero = function () {
+      let ev = S.upcoming()[0];
       if (!ev) { hero.innerHTML = '<p class="next__title">Aucun événement programmé.</p>'; return; }
-      var ms = new Date(ev.date).getTime() - Date.now();
+      let ms = new Date(ev.date).getTime() - Date.now();
       hero.style.setProperty("--c", T[ev.type].couleur);
       hero.innerHTML =
         '<div class="evt-hero__info"><p class="label">Prochain événement</p><h2 class="evt-hero__title">' + esc(ev.titre) + "</h2>" +
@@ -53,45 +53,45 @@
         '<p class="prose">' + esc(ev.texte) + "</p></div>" +
         '<div class="evt-hero__count" aria-live="off"><p class="label">' + (ms > 0 ? "Début dans" : "En cours") + "</p>" + countdownBlocks(ms) + "</div>";
     };
-    var countdownBlocks = function (ms) {
-      var s = Math.max(0, Math.floor(ms / 1000));
-      var j = Math.floor(s / 86400); s -= j * 86400;
-      var h = Math.floor(s / 3600); s -= h * 3600;
-      var m = Math.floor(s / 60); s -= m * 60;
+    let countdownBlocks = function (ms) {
+      let s = Math.max(0, Math.floor(ms / 1000));
+      let j = Math.floor(s / 86400); s -= j * 86400;
+      let h = Math.floor(s / 3600); s -= h * 3600;
+      let m = Math.floor(s / 60); s -= m * 60;
       return '<div class="cd">' + [[j, "jours"], [h, "heures"], [m, "min"], [s, "s"]].map(function (x) {
         return '<div><b class="mono">' + pad(x[0]) + "</b><span>" + x[1] + "</span></div>";
       }).join("") + "</div>";
     };
     doc.addEventListener("s73:tick", function () {
-      var ev = S.upcoming()[0];
-      var cd = $(".cd", hero);
+      let ev = S.upcoming()[0];
+      let cd = $(".cd", hero);
       if (ev && cd) cd.outerHTML = countdownBlocks(new Date(ev.date).getTime() - Date.now());
       $$("[data-evt-count]", list).forEach(function (el) {
-        var e = all.filter(function (x) { return x.id === el.getAttribute("data-evt-count"); })[0];
+        let e = all.filter(function (x) { return x.id === el.getAttribute("data-evt-count"); })[0];
         if (!e) return;
-        var st = status(e);
+        let st = status(e);
         el.textContent = st === "avenir" ? "dans " + S.formatCountdown(new Date(e.date).getTime() - Date.now()) : st === "encours" ? "En cours" : "Terminé";
       });
     });
     renderHero();
 
     // --- Calendrier
-    var cal = $("#evt-cal");
-    var first = S.upcoming()[0] || all[all.length - 1] || { date: new Date().toISOString() };
-    var viewY = +first.date.slice(0, 4), viewM = +first.date.slice(5, 7) - 1;
-    var today = dayKey(new Date());
-    var renderCal = function () {
-      var byDay = {};
-      all.forEach(function (e) { var k = e.date.slice(0, 10); (byDay[k] = byDay[k] || []).push(e); });
-      var firstDay = new Date(Date.UTC(viewY, viewM, 1));
-      var offset = (firstDay.getUTCDay() + 6) % 7;
-      var nDays = new Date(Date.UTC(viewY, viewM + 1, 0)).getUTCDate();
-      var cells = "";
-      for (var i = 0; i < offset; i++) cells += '<div class="cal__cell is-empty" aria-hidden="true"></div>';
-      for (var d = 1; d <= nDays; d++) {
-        var key = viewY + "-" + pad(viewM + 1) + "-" + pad(d);
-        var evs = byDay[key] || [];
-        var cls = "cal__cell" + (key === today ? " is-today" : "") + (evs.length ? " has-evt" : "");
+    let cal = $("#evt-cal");
+    let first = S.upcoming()[0] || all[all.length - 1] || { date: new Date().toISOString() };
+    let viewY = +first.date.slice(0, 4), viewM = +first.date.slice(5, 7) - 1;
+    let today = dayKey(new Date());
+    let renderCal = function () {
+      let byDay = {};
+      all.forEach(function (e) { let k = e.date.slice(0, 10); (byDay[k] = byDay[k] || []).push(e); });
+      let firstDay = new Date(Date.UTC(viewY, viewM, 1));
+      let offset = (firstDay.getUTCDay() + 6) % 7;
+      let nDays = new Date(Date.UTC(viewY, viewM + 1, 0)).getUTCDate();
+      let cells = "";
+      for (let i = 0; i < offset; i++) cells += '<div class="cal__cell is-empty" aria-hidden="true"></div>';
+      for (let d = 1; d <= nDays; d++) {
+        let key = viewY + "-" + pad(viewM + 1) + "-" + pad(d);
+        let evs = byDay[key] || [];
+        let cls = "cal__cell" + (key === today ? " is-today" : "") + (evs.length ? " has-evt" : "");
         if (evs.length) {
           cells += '<button type="button" class="' + cls + '" data-day="' + key + '" aria-label="' + d + " " + MOIS_LONG[viewM] + " : " + esc(evs.map(function (e) { return e.titre; }).join(", ")) + '">' +
             "<b>" + d + '</b><span class="cal__dots">' + evs.map(function (e) { return '<i style="--c:' + T[e.type].couleur + '"></i>'; }).join("") + "</span>" +
@@ -100,8 +100,8 @@
           cells += '<div class="' + cls + '"><b>' + d + "</b></div>";
         }
       }
-      var rest = (offset + nDays) % 7;
-      if (rest) for (var r = rest; r < 7; r++) cells += '<div class="cal__cell is-empty" aria-hidden="true"></div>';
+      let rest = (offset + nDays) % 7;
+      if (rest) for (let r = rest; r < 7; r++) cells += '<div class="cal__cell is-empty" aria-hidden="true"></div>';
       cal.innerHTML =
         '<div class="cal__head"><button type="button" class="icon-btn" data-m="-1" aria-label="Mois précédent">' + S.icon.prev + "</button>" +
         '<h3 class="cal__title">' + MOIS_LONG[viewM] + " " + viewY + "</h3>" +
@@ -109,7 +109,7 @@
         '<div class="cal__grid"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>' + cells + "</div>";
     };
     cal.addEventListener("click", function (e) {
-      var m = e.target.closest("[data-m]");
+      let m = e.target.closest("[data-m]");
       if (m) {
         viewM += +m.getAttribute("data-m");
         if (viewM < 0) { viewM = 11; viewY--; }
@@ -117,36 +117,36 @@
         renderCal();
         return;
       }
-      var d = e.target.closest("[data-day]");
+      let d = e.target.closest("[data-day]");
       if (d) {
-        var ev = all.filter(function (x) { return x.date.slice(0, 10) === d.getAttribute("data-day"); })[0];
+        let ev = all.filter(function (x) { return x.date.slice(0, 10) === d.getAttribute("data-day"); })[0];
         if (ev) S.scrollToHash("evt-" + ev.id);
       }
     });
     renderCal();
 
     // --- Liste
-    var filt = $("#evt-filters");
-    var keys = ["all"].concat(Object.keys(T)).concat(["planning"]);
-    var drawFilters = function () {
+    let filt = $("#evt-filters");
+    let keys = ["all"].concat(Object.keys(T)).concat(["planning"]);
+    let drawFilters = function () {
       filt.innerHTML = keys.map(function (k) {
-        var n = k === "all" ? all.length : k === "planning" ? all.filter(function (e) { return S.isMarked("planning", e.id); }).length : all.filter(function (e) { return e.type === k; }).length;
+        let n = k === "all" ? all.length : k === "planning" ? all.filter(function (e) { return S.isMarked("planning", e.id); }).length : all.filter(function (e) { return e.type === k; }).length;
         if (!n && k !== "planning" && k !== "all") return "";
-        var c = k === "all" ? "var(--text-2)" : k === "planning" ? "var(--signal)" : T[k].couleur;
+        let c = k === "all" ? "var(--text-2)" : k === "planning" ? "var(--signal)" : T[k].couleur;
         return '<button type="button" aria-pressed="' + (state.type === k) + '" data-k="' + k + '" style="--c:' + c + '">' + (k === "all" ? "Tout" : k === "planning" ? "Mon planning" : T[k].nom) + " <b>" + n + "</b></button>";
       }).join("");
     };
-    var renderList = function () {
-      var items = all.filter(function (e) {
+    let renderList = function () {
+      let items = all.filter(function (e) {
         if (state.type === "planning") return S.isMarked("planning", e.id);
         return state.type === "all" || e.type === state.type;
       });
-      var up = items.filter(function (e) { return status(e) !== "termine"; });
-      var past = items.filter(function (e) { return status(e) === "termine"; }).reverse();
-      var card = function (e) {
-        var st = status(e), on = S.isMarked("planning", e.id);
-        var d = new Date(e.date);
-        var parts = S.fmtEvent(e.date).split(" ");
+      let up = items.filter(function (e) { return status(e) !== "termine"; });
+      let past = items.filter(function (e) { return status(e) === "termine"; }).reverse();
+      let card = function (e) {
+        let st = status(e), on = S.isMarked("planning", e.id);
+        let d = new Date(e.date);
+        let parts = S.fmtEvent(e.date).split(" ");
         return '<article class="evt' + (st === "termine" ? " is-past" : "") + '" id="evt-' + e.id + '" style="--c:' + T[e.type].couleur + '">' +
           '<div class="evt__date"><b>' + esc(parts[1]) + "</b><span>" + esc(parts[2]) + "</span><small>" + esc(parts[0]) + "</small></div>" +
           '<div class="evt__body"><div class="evt__meta"><span class="chip" style="--c:' + T[e.type].couleur + '">' + esc(T[e.type].nom) + "</span>" +
@@ -163,7 +163,7 @@
       doc.dispatchEvent(new CustomEvent("s73:tick"));
     };
     filt.addEventListener("click", function (e) {
-      var b = e.target.closest("[data-k]");
+      let b = e.target.closest("[data-k]");
       if (!b) return;
       state.type = b.getAttribute("data-k");
       drawFilters();
@@ -171,17 +171,17 @@
       S.rejouer(list);
     });
     list.addEventListener("click", function (e) {
-      var p = e.target.closest("[data-plan]");
+      let p = e.target.closest("[data-plan]");
       if (p) {
-        var id = p.getAttribute("data-plan");
-        var on = !S.isMarked("planning", id);
+        let id = p.getAttribute("data-plan");
+        let on = !S.isMarked("planning", id);
         S.mark("planning", id, on);
         if (on) S.toast("<b>Ajouté à ton planning.</b> Retrouve-le dans ton carnet de service.");
         return;
       }
-      var c = e.target.closest("[data-copy]");
+      let c = e.target.closest("[data-copy]");
       if (c) {
-        var ev = all.filter(function (x) { return x.id === c.getAttribute("data-copy"); })[0];
+        let ev = all.filter(function (x) { return x.id === c.getAttribute("data-copy"); })[0];
         S.stat("copies");
         U.copy(discordText(ev), "<b>Annonce copiée.</b> Colle-la dans #annonces sur Discord.");
       }
@@ -193,7 +193,7 @@
 
     S.onHash(function (h) {
       if (!/^evt-/.test(h)) return false;
-      var el = doc.getElementById(h);
+      let el = doc.getElementById(h);
       if (!el) {
         state.type = "all"; drawFilters(); renderList();
         el = doc.getElementById(h);
@@ -209,34 +209,34 @@
      PROTOCOLES
      ====================================================================== */
   function protocoles() {
-    var panel = $("#proto-panel");
+    let panel = $("#proto-panel");
     if (!panel) return;
-    var P = D.protocoles;
-    var state = { role: P.roles[0].id, niveau: S.getAlert() };
-    var roles = $("#proto-roles"), levels = $("#proto-levels");
+    let P = D.protocoles;
+    let state = { role: P.roles[0].id, niveau: S.getAlert() };
+    let roles = $("#proto-roles"), levels = $("#proto-levels");
     roles.innerHTML = P.roles.map(function (r) {
       return '<button type="button" role="radio" data-role="' + r.id + '" style="--c: var(--signal)">' + esc(r.nom) + "</button>";
     }).join("");
     levels.innerHTML = S.alerts.map(function (a) {
       return '<button type="button" role="radio" data-lvl="' + a + '" style="--c: var(--a-' + a + ')">' + esc(D.alertes[a].code.replace("Code ", "")) + "</button>";
     }).join("");
-    var render = function () {
+    let render = function () {
       $$("button", roles).forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-role") === state.role)); });
       $$("button", levels).forEach(function (b) { b.setAttribute("aria-checked", String(b.getAttribute("data-lvl") === state.niveau)); });
-      var lv = P.niveaux[state.niveau], a = D.alertes[state.niveau];
-      var role = P.roles.filter(function (r) { return r.id === state.role; })[0];
+      let lv = P.niveaux[state.niveau], a = D.alertes[state.niveau];
+      let role = P.roles.filter(function (r) { return r.id === state.role; })[0];
       panel.style.setProperty("--c", "var(--a-" + state.niveau + ")");
       panel.innerHTML =
         '<div class="proc__head"><span class="proc__code">' + esc(a.code) + '</span><span class="proc__title">' + esc(a.titre) + "</span></div>" +
         '<p class="proc__txt">' + esc(a.texte) + "</p>" +
         '<div class="proc__cols"><div><h3 class="label">Consignes générales</h3><ol class="proc__list" data-gen></ol></div>' +
         '<div><h3 class="label">Consignes · ' + esc(role.nom) + '</h3><ol class="proc__list proc__list--role" data-role-list></ol></div></div>';
-      var gen = $("[data-gen]", panel), rl = $("[data-role-list]", panel);
-      lv.general.forEach(function (t) { var li = doc.createElement("li"); S.redactInto(li, t); gen.appendChild(li); });
-      (lv.roles[state.role] || []).forEach(function (t) { var li = doc.createElement("li"); S.redactInto(li, t); rl.appendChild(li); });
+      let gen = $("[data-gen]", panel), rl = $("[data-role-list]", panel);
+      lv.general.forEach(function (t) { let li = doc.createElement("li"); S.redactInto(li, t); gen.appendChild(li); });
+      (lv.roles[state.role] || []).forEach(function (t) { let li = doc.createElement("li"); S.redactInto(li, t); rl.appendChild(li); });
     };
-    roles.addEventListener("click", function (e) { var b = e.target.closest("[data-role]"); if (b) { state.role = b.getAttribute("data-role"); render(); } });
-    levels.addEventListener("click", function (e) { var b = e.target.closest("[data-lvl]"); if (b) { state.niveau = b.getAttribute("data-lvl"); render(); } });
+    roles.addEventListener("click", function (e) { let b = e.target.closest("[data-role]"); if (b) { state.role = b.getAttribute("data-role"); render(); } });
+    levels.addEventListener("click", function (e) { let b = e.target.closest("[data-lvl]"); if (b) { state.niveau = b.getAttribute("data-lvl"); render(); } });
     render();
 
     // Codes radio
@@ -245,8 +245,8 @@
     }).join("");
 
     // Alphabet radio
-    var pin = $("#proto-phon-input"), pout = $("#proto-phon-out"), pspeak = $("#proto-phon-speak");
-    var spell = function (txt) {
+    let pin = $("#proto-phon-input"), pout = $("#proto-phon-out"), pspeak = $("#proto-phon-speak");
+    let spell = function (txt) {
       return norm(txt).toUpperCase().split("").map(function (ch) {
         if (/[A-Z]/.test(ch)) return D.alphabet[ch.charCodeAt(0) - 65];
         if (/[0-9]/.test(ch)) return D.chiffres[+ch];
@@ -255,8 +255,8 @@
         return null;
       }).filter(Boolean);
     };
-    var renderPhon = function () {
-      var words = spell(pin.value);
+    let renderPhon = function () {
+      let words = spell(pin.value);
       pout.innerHTML = words.length ? words.map(function (w) {
         return w === "·" ? '<span class="phon__sep" aria-hidden="true"></span>' : '<span class="phon__w"><b>' + esc(w.charAt(0)) + "</b>" + esc(w.slice(1)) + "</span>";
       }).join("") : '<span class="muted">Tape un mot, un matricule ou un code.</span>';
@@ -265,37 +265,37 @@
     if (pspeak) {
       if (!S.canSpeak) pspeak.hidden = true;
       pspeak.addEventListener("click", function () {
-        var w = spell(pin.value).filter(function (x) { return x !== "·"; });
+        let w = spell(pin.value).filter(function (x) { return x !== "·"; });
         if (w.length) S.speak(w.join(", "), { rate: 0.9 });
       });
     }
     renderPhon();
 
     // Annonce générale
-    var tpl = $("#pa-tpl"), scp = $("#pa-scp"), zone = $("#pa-zone"), pers = $("#pa-personne"), text = $("#pa-text"), play = $("#pa-play"), copy = $("#pa-copy"), box = $("#pa-console");
+    let tpl = $("#pa-tpl"), scp = $("#pa-scp"), zone = $("#pa-zone"), pers = $("#pa-personne"), text = $("#pa-text"), play = $("#pa-play"), copy = $("#pa-copy"), box = $("#pa-console");
     $("form", box).addEventListener("submit", function (e) { e.preventDefault(); });
     tpl.innerHTML = D.annonces.map(function (a) { return '<option value="' + a.id + '">' + esc(a.nom) + "</option>"; }).join("");
     scp.innerHTML = D.scp.map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.code + " · " + s.nom) + "</option>"; }).join("");
     zone.innerHTML = D.zones.map(function (z) { return '<option value="' + z.id + '">' + esc(z.niveau + " · " + z.nom) + "</option>"; }).join("");
     scp.value = "173";
-    var syncZone = function () { var s = S.scpById[scp.value]; if (s && S.zoneById[s.zone]) zone.value = s.zone; };
+    let syncZone = function () { let s = S.scpById[scp.value]; if (s && S.zoneById[s.zone]) zone.value = s.zone; };
     syncZone();
-    var build = function () {
-      var a = D.annonces.filter(function (x) { return x.id === tpl.value; })[0];
-      var s = S.scpById[scp.value], z = S.zoneById[zone.value];
+    let build = function () {
+      let a = D.annonces.filter(function (x) { return x.id === tpl.value; })[0];
+      let s = S.scpById[scp.value], z = S.zoneById[zone.value];
       return a.texte.replace(/\{scp\}/g, s.code).replace(/\{zone\}/g, z.niveau.toLowerCase() + ", " + z.nom.split(" · ")[0].toLowerCase())
         .replace(/\{niveau\}/g, z.niveau.toLowerCase()).replace(/\{personne\}/g, pers.value.trim() || "le Docteur Varenne");
     };
-    var sync = function () {
-      var a = tpl.value;
+    let sync = function () {
+      let a = tpl.value;
       $$("[data-pa-need]", box).forEach(function (f) { f.hidden = f.getAttribute("data-pa-need").split(" ").indexOf(a) < 0; });
       text.textContent = build();
     };
     [tpl, zone, pers].forEach(function (el) { el.addEventListener("input", sync); el.addEventListener("change", sync); });
     scp.addEventListener("change", function () { syncZone(); sync(); });
     sync();
-    var playing = false;
-    var stopPA = function () { playing = false; box.classList.remove("is-live"); play.innerHTML = S.icon.speak + "<span>Diffuser l'annonce</span>"; };
+    let playing = false;
+    let stopPA = function () { playing = false; box.classList.remove("is-live"); play.innerHTML = S.icon.speak + "<span>Diffuser l'annonce</span>"; };
     play.addEventListener("click", function () {
       if (playing) { S.stopSpeak(); stopPA(); return; }
       playing = true;
@@ -305,7 +305,7 @@
       S.stat("pa");
       setTimeout(function () {
         if (!playing) return;
-        var ok = S.speak(build(), { rate: 0.92, pitch: 0.85, onend: stopPA });
+        let ok = S.speak(build(), { rate: 0.92, pitch: 0.85, onend: stopPA });
         if (!ok) {
           S.toast("<b>Synthèse vocale indisponible</b> sur ce navigateur. Copie l'annonce pour la lire toi-même en RP.");
           setTimeout(stopPA, 2500);
@@ -322,29 +322,29 @@
      LABORATOIRE
      ====================================================================== */
   function laboratoire() {
-    var machine = $("#m914");
+    let machine = $("#m914");
     if (!machine) return;
-    var L = D.lab914;
+    let L = D.lab914;
 
     // --- SCP-914
-    var obj = $("#m914-obj"), custom = $("#m914-custom"), customWrap = $("#m914-custom-wrap"), regs = $("#m914-reg"), run = $("#m914-run"), out = $("#m914-out"), logEl = $("#m914-log"), copyLog = $("#m914-copy");
-    var reg = 2, busy = false, registre = [];
+    let obj = $("#m914-obj"), custom = $("#m914-custom"), customWrap = $("#m914-custom-wrap"), regs = $("#m914-reg"), run = $("#m914-run"), out = $("#m914-out"), logEl = $("#m914-log"), copyLog = $("#m914-copy");
+    let reg = 2, busy = false, registre = [];
     obj.innerHTML = L.objets.map(function (o, i) { return '<option value="' + i + '">' + esc(o.nom) + "</option>"; }).join("") + '<option value="autre">Autre objet…</option>';
     regs.innerHTML = L.reglages.map(function (r, i) {
       return '<button type="button" role="radio" data-reg="' + i + '" style="--c:' + ["var(--c-neutralise)", "var(--c-attente)", "var(--c-sur)", "var(--signal)", "var(--a-rouge)"][i] + '">' + esc(r) + "</button>";
     }).join("");
-    var knob = $(".m914__needle", machine);
-    var syncReg = function () {
+    let knob = $(".m914__needle", machine);
+    let syncReg = function () {
       $$("button", regs).forEach(function (b) { b.setAttribute("aria-checked", String(+b.getAttribute("data-reg") === reg)); });
       if (knob) knob.style.transform = "rotate(" + (-60 + reg * 30) + "deg)";
       $$("[data-dial]", machine).forEach(function (t) { t.classList.toggle("is-on", +t.getAttribute("data-dial") === reg); });
     };
-    regs.addEventListener("click", function (e) { var b = e.target.closest("[data-reg]"); if (b && !busy) { reg = +b.getAttribute("data-reg"); syncReg(); S.sfx("tick"); } });
-    machine.addEventListener("click", function (e) { var t = e.target.closest("[data-dial]"); if (t && !busy) { reg = +t.getAttribute("data-dial"); syncReg(); S.sfx("tick"); } });
+    regs.addEventListener("click", function (e) { let b = e.target.closest("[data-reg]"); if (b && !busy) { reg = +b.getAttribute("data-reg"); syncReg(); S.sfx("tick"); } });
+    machine.addEventListener("click", function (e) { let t = e.target.closest("[data-dial]"); if (t && !busy) { reg = +t.getAttribute("data-dial"); syncReg(); S.sfx("tick"); } });
     obj.addEventListener("change", function () { customWrap.hidden = obj.value !== "autre"; if (obj.value === "autre") custom.focus(); });
     syncReg();
-    var objName = function () { return obj.value === "autre" ? (custom.value.trim() || "objet non identifié") : L.objets[+obj.value].nom; };
-    var drawLog = function () {
+    let objName = function () { return obj.value === "autre" ? (custom.value.trim() || "objet non identifié") : L.objets[+obj.value].nom; };
+    let drawLog = function () {
       logEl.innerHTML = registre.length ? registre.map(function (r) {
         return "<li><time>" + esc(r.h) + "</time><span><b>" + esc(r.o) + "</b> · " + esc(r.r) + "</span><em data-lr></em></li>";
       }).join("") : '<li class="muted">Aucune expérience consignée pendant cette session.</li>';
@@ -358,12 +358,12 @@
       machine.classList.add("is-running");
       out.classList.remove("is-ready");
       out.innerHTML = '<p class="label">Cabine de sortie</p><p class="m914__wait">Le mécanisme tourne…</p>';
-      var n = 0;
-      var tickT = setInterval(function () { S.tone(n++ % 2 ? 1200 : 900, 0.03, { vol: 0.02, force: S.getSetting("sfx") }); }, 160);
-      var name = objName();
+      let n = 0;
+      let tickT = setInterval(function () { S.tone(n++ % 2 ? 1200 : 900, 0.03, { vol: 0.02, force: S.getSetting("sfx") }); }, 160);
+      let name = objName();
       setTimeout(function () {
         clearInterval(tickT);
-        var res = S.run914(name, reg);
+        let res = S.run914(name, reg);
         busy = false;
         run.disabled = false;
         machine.classList.remove("is-running");
@@ -377,7 +377,7 @@
       }, reduced ? 300 : 2400);
     });
     copyLog.addEventListener("click", function () {
-      var txt = "**REGISTRE SCP-914 · SALLE 3-14**\n" + registre.slice().reverse().map(function (r) {
+      let txt = "**REGISTRE SCP-914 · SALLE 3-14**\n" + registre.slice().reverse().map(function (r) {
         return "> " + r.h + " · " + r.o + " · « " + r.r + " » → " + r.res.replace(/\[\[(\d)\|([\s\S]*?)\]\]/g, "||$2||");
       }).join("\n");
       S.stat("copies");
@@ -386,40 +386,40 @@
     drawLog();
 
     // --- Générateur de rapport
-    var rf = $("#rap-form");
-    var TYPES = {
+    let rf = $("#rap-form");
+    let TYPES = {
       incident: { titre: "Rapport d'incident", pre: "RI", l1: "Déroulement de l'incident", l2: "Pertes et dégâts" },
       experience: { titre: "Journal d'expérience", pre: "JE", l1: "Protocole et observations", l2: "Conclusion" },
       mission: { titre: "Rapport de mission", pre: "RM", l1: "Déroulement de la mission", l2: "Bilan" }
     };
-    var R = {};
+    let R = {};
     ["type", "date", "auteur", "zone", "scp", "perso", "deroul", "bilan", "niveau"].forEach(function (k) { R[k] = $("#rap-" + k); });
     R.zone.innerHTML = D.zones.map(function (z) { return '<option value="' + z.id + '">' + esc(z.niveau + " · " + z.nom) + "</option>"; }).join("");
     R.scp.innerHTML = '<option value="">Aucune anomalie</option>' + D.scp.map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.code + " · " + s.nom) + "</option>"; }).join("");
     R.niveau.innerHTML = D.habilitations.map(function (h) { return '<option value="' + h.niveau + '">' + h.niveau + " · " + esc(h.nom) + "</option>"; }).join("");
-    var RAP_EX = {
+    let RAP_EX = {
       type: "incident", date: "2026-09-02T14:37", auteur: "Sgt. Hugo Ferrand, Sécurité", zone: "zch", scp: "173", niveau: "3",
       perso: "Équipe de maintenance T-4, D-4418, D-4502, unité Epsilon-11",
       deroul: "À 14 h 37, une coupure de courant de 0,8 s touche le niveau −5 pendant la maintenance de la cellule C-173. Le contact visuel est rompu. SCP-173 franchit la porte de la cellule restée ouverte pour les travaux. Epsilon-11 intervient à 14 h 41 et rétablit le confinement à 14 h 49.",
       bilan: "Deux membres du personnel de Classe-D décédés. Porte de la cellule C-173 à remplacer."
     };
-    var rapSaved = null;
+    let rapSaved = null;
     try { rapSaved = JSON.parse(S.store.get("s73.rapport") || "null"); } catch (e) { rapSaved = null; }
-    var rapLoad = function (v) { Object.keys(R).forEach(function (k) { if (v[k] != null) R[k].value = v[k]; }); };
+    let rapLoad = function (v) { Object.keys(R).forEach(function (k) { if (v[k] != null) R[k].value = v[k]; }); };
     rapLoad(rapSaved || RAP_EX);
-    var rapPrev = $("#rap-preview");
-    var rapData = function () { var v = {}; Object.keys(R).forEach(function (k) { v[k] = R[k].value.trim(); }); return v; };
-    var refOf = function (v) { var t = TYPES[v.type]; return t.pre + "-73-" + (v.date || "2026").slice(0, 4) + "-" + pad(U.hash(v.deroul + v.date) % 100); };
-    var fmtD = function (v) {
+    let rapPrev = $("#rap-preview");
+    let rapData = function () { let v = {}; Object.keys(R).forEach(function (k) { v[k] = R[k].value.trim(); }); return v; };
+    let refOf = function (v) { let t = TYPES[v.type]; return t.pre + "-73-" + (v.date || "2026").slice(0, 4) + "-" + pad(U.hash(v.deroul + v.date) % 100); };
+    let fmtD = function (v) {
       if (!v.date) return "—";
-      var p = v.date.split("T");
+      let p = v.date.split("T");
       return U.fmtDate(p[0]) + (p[1] ? " · " + p[1].replace(":", " h ") : "");
     };
-    var rapRender = function () {
-      var v = rapData(), t = TYPES[v.type] || TYPES.incident;
+    let rapRender = function () {
+      let v = rapData(), t = TYPES[v.type] || TYPES.incident;
       $("#rap-l1").textContent = t.l1;
       $("#rap-l2").textContent = t.l2;
-      var z = S.zoneById[v.zone], s = v.scp ? S.scpById[v.scp] : null, lvl = +v.niveau;
+      let z = S.zoneById[v.zone], s = v.scp ? S.scpById[v.scp] : null, lvl = +v.niveau;
       rapPrev.innerHTML =
         '<header class="doc__head"><div class="doc__org">' + S.emblem() + "<span>Fondation SCP · Site-73<small>" + esc(t.titre) + " · document interne</small></span></div>" +
         '<div class="doc__stamp">' + esc(S.stamps[lvl]) + "<br>Niveau " + lvl + "</div></header>" +
@@ -440,8 +440,8 @@
     rf.addEventListener("submit", function (e) { e.preventDefault(); });
     $("#rap-reset").addEventListener("click", function () { rapLoad(RAP_EX); rapRender(); S.toast("<b>Exemple restauré.</b>"); });
     $("#rap-copy").addEventListener("click", function () {
-      var v = rapData(), t = TYPES[v.type], z = S.zoneById[v.zone], s = v.scp ? S.scpById[v.scp] : null;
-      var txt = [
+      let v = rapData(), t = TYPES[v.type], z = S.zoneById[v.zone], s = v.scp ? S.scpById[v.scp] : null;
+      let txt = [
         "**" + t.titre.toUpperCase() + " · " + refOf(v) + "**",
         "> **Classification :** niveau " + v.niveau + " (" + S.habName(+v.niveau) + ")",
         "> **Date :** " + fmtD(v),
@@ -459,29 +459,29 @@
     rapRender();
 
     // --- Créateur de dossier SCP
-    var cf = $("#cre-form");
-    var C = {};
+    let cf = $("#cre-form");
+    let C = {};
     ["num", "nom", "classe", "niveau", "menace", "proc", "desc"].forEach(function (k) { C[k] = $("#cre-" + k); });
     C.classe.innerHTML = Object.keys(D.classesObjet).map(function (k) { return '<option value="' + k + '">' + esc(D.classesObjet[k].nom) + "</option>"; }).join("");
     C.niveau.innerHTML = [1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '">Niveau ' + n + " · " + esc(D.habilitations[n].nom) + "</option>"; }).join("");
     C.menace.innerHTML = [1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '">' + n + " · " + esc(S.menaceLabel(n)) + "</option>"; }).join("");
-    var view = $("#cre-view"), viewOut = $("#cre-view-out"), crePrev = $("#cre-preview");
-    var CRE_EX = {
+    let view = $("#cre-view"), viewOut = $("#cre-view-out"), crePrev = $("#cre-preview");
+    let CRE_EX = {
       num: "ANO-73-022", nom: "Le Refuge Vide", classe: "euclide", niveau: "3", menace: "2",
       proc: "Le refuge est fermé au public sous couvert de travaux. Toute nuitée sur place est interdite. [[3|Deux agents contrôlent le registre des visiteurs chaque matin.]]",
       desc: "Refuge de montagne situé à 2 600 m. Le registre des visiteurs se remplit chaque nuit de noms inconnus. [[3|Les noms correspondent à des alpinistes disparus entre 1954 et 1987.]] [[5|La dernière entrée est datée de demain et porte le nom du Directeur du Site.]] Origine : [DONNÉES SUPPRIMÉES]."
     };
-    var creSaved = null;
+    let creSaved = null;
     try { creSaved = JSON.parse(S.store.get("s73.createur") || "null"); } catch (e) { creSaved = null; }
-    var creLoad = function (v) { Object.keys(C).forEach(function (k) { if (v[k] != null) C[k].value = v[k]; }); };
+    let creLoad = function (v) { Object.keys(C).forEach(function (k) { if (v[k] != null) C[k].value = v[k]; }); };
     creLoad(creSaved || CRE_EX);
     view.value = String(S.getClearance());
-    var creData = function () { var v = {}; Object.keys(C).forEach(function (k) { v[k] = C[k].value.trim(); }); return v; };
-    var creRender = function () {
-      var v = creData(), lvl = +view.value;
+    let creData = function () { let v = {}; Object.keys(C).forEach(function (k) { v[k] = C[k].value.trim(); }); return v; };
+    let creRender = function () {
+      let v = creData(), lvl = +view.value;
       viewOut.textContent = "Niveau " + lvl + " · " + S.habName(lvl);
-      var meterTxt = "";
-      for (var i = 1; i <= 5; i++) meterTxt += i <= +v.menace ? "■" : "□";
+      let meterTxt = "";
+      for (let i = 1; i <= 5; i++) meterTxt += i <= +v.menace ? "■" : "□";
       crePrev.style.setProperty("--c", "var(--c-" + v.classe + ")");
       crePrev.innerHTML =
         '<header class="doc__head"><div class="doc__org">' + S.emblem() + "<span>Fondation SCP · Site-73<small>Proposition de dossier · brouillon</small></span></div>" +
@@ -502,20 +502,20 @@
     $("#cre-reset").addEventListener("click", function () { creLoad(CRE_EX); creRender(); S.toast("<b>Exemple restauré.</b>"); });
     $$("[data-insert]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var ta = C[b.getAttribute("data-target")] || C.desc;
-        var ins = b.getAttribute("data-insert");
-        var st = ta.selectionStart || ta.value.length, en = ta.selectionEnd || st;
-        var sel = ta.value.slice(st, en);
-        var txt = ins === "sup" ? "[DONNÉES SUPPRIMÉES]" : "[[" + ins + "|" + (sel || "texte masqué") + "]]";
+        let ta = C[b.getAttribute("data-target")] || C.desc;
+        let ins = b.getAttribute("data-insert");
+        let st = ta.selectionStart || ta.value.length, en = ta.selectionEnd || st;
+        let sel = ta.value.slice(st, en);
+        let txt = ins === "sup" ? "[DONNÉES SUPPRIMÉES]" : "[[" + ins + "|" + (sel || "texte masqué") + "]]";
         ta.value = ta.value.slice(0, st) + txt + ta.value.slice(en);
         ta.focus();
         creRender();
       });
     });
     $("#cre-copy").addEventListener("click", function () {
-      var v = creData();
-      var sp = function (t) { return t.replace(/\[\[(\d)\|([\s\S]*?)\]\]/g, "||$2||"); };
-      var txt = [
+      let v = creData();
+      let sp = function (t) { return t.replace(/\[\[(\d)\|([\s\S]*?)\]\]/g, "||$2||"); };
+      let txt = [
         "**" + (v.num || "SCP-XXXX") + " · « " + (v.nom || "Sans nom") + " »**",
         "> **Classe :** " + D.classesObjet[v.classe].nom + " · **Habilitation :** niveau " + v.niveau + " · **Menace :** " + S.menaceLabel(+v.menace),
         "",
@@ -533,25 +533,25 @@
      ENTRAÎNEMENT
      ====================================================================== */
   function entrainement() {
-    var stage = $("#g173");
+    let stage = $("#g173");
     if (!stage) return;
 
     // --- Contact visuel
-    var statue = $("#g173-statue"), startBtn = $("#g173-start"), lightBtn = $("#g173-light"), msg = $("#g173-msg"), batEl = $("#g173-bat"), timeEl = $("#g173-time"), distEl = $("#g173-dist");
-    var G = { running: false, dist: 5, bat: 8, left: 40, dark: false, lit: false, timers: [], iv: null };
-    var DIST_M = ["0", "2", "4", "7", "10", "14"];
-    var sound = function (f, d, t, v) { S.tone(f, d, { type: t || "square", vol: v || 0.05, force: true }); };
-    var hud = function () {
+    let statue = $("#g173-statue"), startBtn = $("#g173-start"), lightBtn = $("#g173-light"), msg = $("#g173-msg"), batEl = $("#g173-bat"), timeEl = $("#g173-time"), distEl = $("#g173-dist");
+    let G = { running: false, dist: 5, bat: 8, left: 40, dark: false, lit: false, timers: [], iv: null };
+    let DIST_M = ["0", "2", "4", "7", "10", "14"];
+    let sound = function (f, d, t, v) { S.tone(f, d, { type: t || "square", vol: v || 0.05, force: true }); };
+    let hud = function () {
       batEl.innerHTML = "";
-      for (var i = 0; i < 8; i++) batEl.innerHTML += '<i class="' + (i < G.bat ? "on" : "") + '"></i>';
+      for (let i = 0; i < 8; i++) batEl.innerHTML += '<i class="' + (i < G.bat ? "on" : "") + '"></i>';
       timeEl.textContent = "00:" + pad(Math.max(0, G.left));
       distEl.textContent = DIST_M[G.dist] + " m";
       stage.style.setProperty("--step", G.dist);
       lightBtn.disabled = !G.running;
     };
-    var say = function (t, cls) { msg.className = "g173__msg" + (cls ? " " + cls : ""); msg.textContent = t; };
-    var clear = function () { G.timers.forEach(clearTimeout); G.timers = []; clearInterval(G.iv); };
-    var end = function (win) {
+    let say = function (t, cls) { msg.className = "g173__msg" + (cls ? " " + cls : ""); msg.textContent = t; };
+    let clear = function () { G.timers.forEach(clearTimeout); G.timers = []; clearInterval(G.iv); };
+    let end = function (win) {
       G.running = false;
       clear();
       stage.classList.remove("is-dark", "is-lit");
@@ -569,12 +569,12 @@
       startBtn.textContent = "Recommencer l'exercice";
       hud();
     };
-    var blackout = function () {
+    let blackout = function () {
       if (!G.running) return;
       G.dark = true; G.lit = false;
       stage.classList.add("is-dark");
       sound(55, 0.12, "sawtooth", 0.04);
-      var win = Math.max(520, 900 - (40 - G.left) * 8);
+      let win = Math.max(520, 900 - (40 - G.left) * 8);
       G.timers.push(setTimeout(function () {
         if (!G.running) return;
         G.dark = false;
@@ -591,11 +591,11 @@
         schedule();
       }, win));
     };
-    var schedule = function () {
-      var base = Math.max(700, 2600 - (40 - G.left) * 40);
+    let schedule = function () {
+      let base = Math.max(700, 2600 - (40 - G.left) * 40);
       G.timers.push(setTimeout(blackout, base + Math.random() * 1400));
     };
-    var light = function () {
+    let light = function () {
       if (!G.running) return;
       if (G.bat <= 0) { say("Batterie vide.", "is-ko"); return; }
       G.bat--;
@@ -629,8 +629,8 @@
     lightBtn.addEventListener("click", function (e) { e.preventDefault(); });
     doc.addEventListener("keydown", function (e) {
       if (!G.running || e.repeat) return;
-      var space = e.code === "Space" || e.key === " ";
-      var enter = e.key === "Enter" && e.target === lightBtn;
+      let space = e.code === "Space" || e.key === " ";
+      let enter = e.key === "Enter" && e.target === lightBtn;
       if (!space && !enter) return;
       if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
       e.preventDefault();
@@ -639,34 +639,34 @@
     hud();
 
     // --- Protocole de verrouillage
-    var pads = $$("#simon .simon__pad"), sStart = $("#simon-start"), sLvl = $("#simon-lvl"), sBest = $("#simon-best"), sMsg = $("#simon-msg");
-    var FREQ = [329.6, 392, 523.3, 659.3];
-    var seq = [], pos = 0, accept = false, playingSeq = false;
-    var best = function () { return S.carnet().stats.simon || 0; };
-    var flash = function (i, dur) {
-      var p = pads[i];
+    let pads = $$("#simon .simon__pad"), sStart = $("#simon-start"), sLvl = $("#simon-lvl"), sBest = $("#simon-best"), sMsg = $("#simon-msg");
+    let FREQ = [329.6, 392, 523.3, 659.3];
+    let seq = [], pos = 0, accept = false, playingSeq = false;
+    let best = function () { return S.carnet().stats.simon || 0; };
+    let flash = function (i, dur) {
+      let p = pads[i];
       p.classList.add("is-on");
       S.tone(FREQ[i], dur / 1000, { type: "triangle", vol: 0.07, force: true });
       setTimeout(function () { p.classList.remove("is-on"); }, dur);
     };
-    var showSeq = function () {
+    let showSeq = function () {
       accept = false; playingSeq = true;
       sMsg.textContent = "Mémorise la séquence de verrouillage…";
-      var speed = Math.max(260, 620 - seq.length * 28);
+      let speed = Math.max(260, 620 - seq.length * 28);
       seq.forEach(function (v, i) { setTimeout(function () { flash(v, speed * 0.7); }, 600 + i * speed); });
       setTimeout(function () {
         playingSeq = false; accept = true; pos = 0;
         sMsg.textContent = "À toi : reproduis la séquence.";
       }, 600 + seq.length * speed);
     };
-    var nextRound = function () {
+    let nextRound = function () {
       seq.push(Math.floor(Math.random() * 4));
       sLvl.textContent = seq.length;
       showSeq();
     };
-    var fail = function () {
+    let fail = function () {
       accept = false;
-      var reached = seq.length - 1;
+      let reached = seq.length - 1;
       S.stat("simon", reached, "max");
       sBest.textContent = best();
       sMsg.textContent = "Échec du verrouillage à la séquence " + seq.length + ". Brèche confirmée au sas " + "ABCD"[seq[pos]] + ".";
@@ -703,21 +703,21 @@
      CARNET DE SERVICE
      ====================================================================== */
   function carnetPage() {
-    var root = $("#carnet-badges");
+    let root = $("#carnet-badges");
     if (!root) return;
-    var fiche = null;
+    let fiche = null;
     try { fiche = JSON.parse(S.store.get("s73.fiche") || "null"); } catch (e) { fiche = null; }
-    var card = $("#carnet-card");
-    var info = S.renderIdCard(card, fiche || { prenom: "Visiteur", nom: "anonyme", dept: "classe-d", grade: "Sujet D-XXXX" });
+    let card = $("#carnet-card");
+    let info = S.renderIdCard(card, fiche || { prenom: "Visiteur", nom: "anonyme", dept: "classe-d", grade: "Sujet D-XXXX" });
     S.tiltCard($("#carnet-stage"), card);
     $("#carnet-who").innerHTML = fiche
       ? "<b>" + esc(info.fullName) + "</b> · " + esc(info.dept.nom) + " · " + esc(info.grade[0])
       : "Tu n'as pas encore de fiche. Le site t'a attribué un matricule de Classe-D en attendant.";
-    var compte = $("#carnet-compte");
-    var SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur", demo: "le mode démonstration" };
-    var renderCompte = function () {
+    let compte = $("#carnet-compte");
+    let SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur", demo: "le mode démonstration" };
+    let renderCompte = function () {
       if (!compte) return;
-      var se = S.session();
+      let se = S.session();
       if (!se.user) {
         compte.innerHTML = '<p class="label">Compte</p><p>Tu consultes l\'intranet en visiteur (niveau 0).</p>' +
           (se.mode === "live" ? '<a class="btn btn--signal btn--sm" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>"
@@ -734,15 +734,15 @@
     doc.addEventListener("s73:session", renderCompte);
     renderCompte();
 
-    var render = function () {
-      var c = S.carnet();
-      var n = U.count(c.badges), tot = D.distinctions.length;
-      var seenN = D.scp.filter(function (s) { return c.seen[s.id]; }).length;
-      var pagesN = S.pages.filter(function (p) { return c.pages[p.id]; }).length;
-      var rulesN = D.reglement.filter(function (ch) { return c.rules[ch.id]; }).length;
-      var planN = (D.evenements || []).filter(function (e) { return c.planning[e.id]; }).length;
-      var st = c.stats;
-      var stat = function (v, t, lbl) { return '<div class="stat"><b class="mono"><span data-compter>' + v + "</span>" + (t != null ? "<small>/" + t + "</small>" : "") + "</b><span>" + lbl + "</span></div>"; };
+    let render = function () {
+      let c = S.carnet();
+      let n = U.count(c.badges), tot = D.distinctions.length;
+      let seenN = D.scp.filter(function (s) { return c.seen[s.id]; }).length;
+      let pagesN = S.pages.filter(function (p) { return c.pages[p.id]; }).length;
+      let rulesN = D.reglement.filter(function (ch) { return c.rules[ch.id]; }).length;
+      let planN = (D.evenements || []).filter(function (e) { return c.planning[e.id]; }).length;
+      let st = c.stats;
+      let stat = function (v, t, lbl) { return '<div class="stat"><b class="mono"><span data-compter>' + v + "</span>" + (t != null ? "<small>/" + t + "</small>" : "") + "</b><span>" + lbl + "</span></div>"; };
       $("#carnet-stats").innerHTML =
         stat(n, tot, "Distinctions") + stat(seenN, D.scp.length, "Dossiers consultés") + stat(pagesN, S.pages.length, "Pages visitées") +
         stat(rulesN, D.reglement.length, "Chapitres lus") + stat(st.exam || 0, D.quiz.length, "Meilleur examen") + stat(st.breach || 0, null, "Brèches simulées") +
@@ -751,8 +751,8 @@
       $("#carnet-progress").style.width = (n / tot) * 100 + "%";
 
       root.innerHTML = D.distinctions.map(function (b) {
-        var got = c.badges[b.id];
-        var hidden = b.secret && !got;
+        let got = c.badges[b.id];
+        let hidden = b.secret && !got;
         return '<div class="badge' + (got ? " is-got" : "") + '"><span class="badge__medal" aria-hidden="true">' + (hidden ? "?" : esc(b.code)) + "</span>" +
           '<span class="badge__name">' + (hidden ? "Distinction secrète" : esc(b.nom)) + "</span>" +
           '<span class="badge__txt">' + (hidden ? "Continue d'explorer l'intranet…" : esc(b.texte)) + "</span>" +
@@ -760,33 +760,33 @@
       }).join("");
 
       $("#carnet-seen").innerHTML = D.scp.map(function (s) {
-        var on = c.seen[s.id], fav = c.fav[s.id];
+        let on = c.seen[s.id], fav = c.fav[s.id];
         return '<button type="button" class="seen' + (on ? " is-on" : "") + '" data-open="' + esc(s.id) + '" style="--c: var(--c-' + s.classe + ')" title="' + esc(s.code + " · " + s.nom) + '">' +
           (fav ? '<i aria-hidden="true">★</i>' : "") + "<b>" + esc(/^\d+$/.test(s.id) ? s.id : s.id.replace("ANO-73-", "A")) + '</b><span class="sr-only">' + esc(s.code) + (on ? ", consulté" : ", non consulté") + "</span></button>";
       }).join("");
 
-      var plan = (D.evenements || []).filter(function (e) { return c.planning[e.id]; });
+      let plan = (D.evenements || []).filter(function (e) { return c.planning[e.id]; });
       $("#carnet-planning").innerHTML = plan.length ? plan.map(function (e) {
-        var ms = new Date(e.date).getTime() - Date.now();
+        let ms = new Date(e.date).getTime() - Date.now();
         return '<li><a href="evenements.html#evt-' + e.id + '"><b>' + esc(e.titre) + "</b><span>" + esc(S.fmtEvent(e.date)) + "</span></a><span class=\"mono\">" + (ms > 0 ? "dans " + S.formatCountdown(ms) : "passé") + "</span></li>";
       }).join("") : '<li class="muted">Aucun événement dans ton planning. <a class="link" href="evenements.html">Voir le calendrier</a></li>';
     };
     $("#carnet-seen").addEventListener("click", function (e) {
-      var b = e.target.closest("[data-open]");
+      let b = e.target.closest("[data-open]");
       if (b) S.openDossier(b.getAttribute("data-open"));
     });
     doc.addEventListener("s73:carnet", render);
     render();
 
     // Réglages
-    var setBox = $("#carnet-settings");
-    var SETTINGS = [
+    let setBox = $("#carnet-settings");
+    let SETTINGS = [
       ["fx", "Effets visuels", "Grain, grille et halo d'alerte en arrière-plan."],
       ["sfx", "Sons d'interface", "Bips discrets, portes blindées et fanfare des distinctions."],
       ["boot", "Séquence de démarrage", "Écran de connexion au premier chargement de chaque session."]
     ];
     setBox.innerHTML = SETTINGS.map(function (s) {
-      var on = S.getSetting(s[0]);
+      let on = S.getSetting(s[0]);
       return '<div class="setting"><div><b id="set-' + s[0] + '">' + s[1] + "</b><span>" + s[2] + "</span></div>" +
         '<button type="button" class="switch" role="switch" aria-checked="' + on + '" aria-labelledby="set-' + s[0] + '" data-set="' + s[0] + '"><i></i></button></div>';
     }).join("") +
@@ -796,29 +796,29 @@
       }).join("") + "</div></div>" +
       '<div class="setting"><div><b>Réinitialiser mon carnet</b><span>Efface distinctions, dossiers lus, suivis et planning sur cet appareil.</span></div>' +
       '<div class="setting__act"><button type="button" class="btn btn--sm btn--danger" data-reset>Réinitialiser</button></div></div>';
-    var motionTxt = function () {
-      var el = $("[data-motion-txt]", setBox);
+    let motionTxt = function () {
+      let el = $("[data-motion-txt]", setBox);
       if (el) el.textContent = "Défilement, rotations, transitions et portes blindées." +
         (S.systemeReduit() ? " Ton appareil demande moins d'animations : « Système » les coupe." : " « Système » suit le réglage de ton appareil.");
     };
     motionTxt();
     setBox.addEventListener("click", function (e) {
-      var mo = e.target.closest("[data-motion]");
+      let mo = e.target.closest("[data-motion]");
       if (mo) {
         S.setMotion(mo.getAttribute("data-motion"));
         $$("[data-motion]", setBox).forEach(function (b) { b.setAttribute("aria-checked", String(b === mo)); });
         S.toast("<b>Animations : " + mo.textContent.toLowerCase() + ".</b>");
         return;
       }
-      var sw = e.target.closest("[data-set]");
+      let sw = e.target.closest("[data-set]");
       if (sw) {
-        var k = sw.getAttribute("data-set"), on = sw.getAttribute("aria-checked") !== "true";
+        let k = sw.getAttribute("data-set"), on = sw.getAttribute("aria-checked") !== "true";
         S.setSetting(k, on);
         sw.setAttribute("aria-checked", String(on));
         if (k === "sfx" && on) S.sfx("ok");
         return;
       }
-      var act = e.target.closest(".setting__act");
+      let act = e.target.closest(".setting__act");
       if (e.target.closest("[data-reset]")) {
         act.innerHTML = '<span class="muted">Confirmer ?</span><button type="button" class="btn btn--sm btn--danger" data-reset-yes>Oui, tout effacer</button><button type="button" class="btn btn--sm" data-reset-no>Annuler</button>';
         $("[data-reset-no]", act).focus();
@@ -837,7 +837,7 @@
   }
 
   /* ---------- Lancement de tous les modules ------------------------ */
-  var lancer = function () {
+  let lancer = function () {
     (S.pageModules || []).concat([evenements, protocoles, laboratoire, entrainement, carnetPage, S.staffModule]).forEach(function (fn) {
       if (typeof fn !== "function") return;
       try { fn(); } catch (e) { if (window.console) console.error("[Site-73] " + (fn.name || "module"), e); }

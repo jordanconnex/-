@@ -12,7 +12,9 @@
     "directory": "./public",
     "binding": "ASSETS",
     "html_handling": "none",
-    "not_found_handling": "none"
+    "not_found_handling": "none",
+    // Les routes /api/… passent par le Worker avant les fichiers
+    "run_worker_first": ["/api/*"]
   },
 
   // Stockage des membres, de l'alerte, des communiqués, des événements et du journal.

@@ -7,16 +7,16 @@
 (function () {
   "use strict";
 
-  var S = (window.S73 = window.S73 || {});
-  var D = S.data;
-  var doc = document;
-  var root = doc.documentElement;
-  var BUNDLE = !!window.S73_BUNDLE;
-  var systemeReduit = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  var reduced = systemeReduit; // recalculé dès que le stockage est disponible (voir « Animations »)
+  let S = (window.S73 = window.S73 || {});
+  let D = S.data;
+  let doc = document;
+  let root = doc.documentElement;
+  let BUNDLE = !!window.S73_BUNDLE;
+  let systemeReduit = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  let reduced = systemeReduit; // recalculé dès que le stockage est disponible (voir « Animations »)
 
   /* ---------- Stockage (toujours protégé) ---------------------------- */
-  var store = {
+  let store = {
     get: function (k, session) {
       try { return (session ? sessionStorage : localStorage).getItem(k); } catch (e) { return null; }
     },
@@ -28,7 +28,7 @@
     },
     ok: function (session) {
       try {
-        var s = session ? sessionStorage : localStorage;
+        let s = session ? sessionStorage : localStorage;
         s.setItem("s73.t", "1"); s.removeItem("s73.t");
         return true;
       } catch (e) { return false; }
@@ -38,8 +38,8 @@
 
   /* ---------- Animations -------------------------------------------- */
   // Choix du visiteur (on | off), sinon réglage du site, sinon préférence de l'appareil.
-  var choixMouvement = store.get("s73.motion");
-  var calculerMouvement = function () {
+  let choixMouvement = store.get("s73.motion");
+  let calculerMouvement = function () {
     reduced = choixMouvement === "off" || (choixMouvement !== "on" && D.config.animations !== "toujours" && systemeReduit);
     root.setAttribute("data-motion", reduced ? "reduit" : "normal");
   };
@@ -54,32 +54,32 @@
   };
 
   /* ---------- Utilitaires -------------------------------------------- */
-  var esc = function (s) {
+  let esc = function (s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   };
-  var norm = function (s) {
+  let norm = function (s) {
     return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   };
-  var hash = function (str) {
-    var h = 2166136261;
-    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  let hash = function (str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
     return h >>> 0;
   };
-  var MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-  var fmtDate = function (iso) {
-    var p = iso.slice(0, 10).split("-");
+  let MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  let fmtDate = function (iso) {
+    let p = iso.slice(0, 10).split("-");
     return parseInt(p[2], 10) + " " + MOIS[parseInt(p[1], 10) - 1] + " " + p[0];
   };
-  var pad = function (n) { return String(n).padStart(2, "0"); };
-  var count = function (o) { return Object.keys(o || {}).length; };
-  var copyText = function (text, okMsg, fallbackEl) {
-    var fallback = function () {
+  let pad = function (n) { return String(n).padStart(2, "0"); };
+  let count = function (o) { return Object.keys(o || {}).length; };
+  let copyText = function (text, okMsg, fallbackEl) {
+    let fallback = function () {
       if (fallbackEl) {
-        var r = doc.createRange();
+        let r = doc.createRange();
         r.selectNodeContents(fallbackEl);
-        var sel = window.getSelection();
+        let sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(r);
         S.toast("<b>Texte sélectionné.</b> Copie-le avec Ctrl+C (ou appui long sur mobile).");
@@ -94,7 +94,7 @@
   S.util = { esc: esc, norm: norm, hash: hash, fmtDate: fmtDate, pad: pad, MOIS: MOIS, count: count, copy: copyText };
 
   /* ---------- Pages ---------------------------------------------------- */
-  var PAGES = [
+  let PAGES = [
     { id: "accueil",      file: "index",        label: "Accueil",      lieu: "Niveau −1",  groupe: "site",       top: true },
     { id: "confinement",  file: "confinement",  label: "Dossiers",     lieu: "Niveau −5",  groupe: "site",       top: true },
     { id: "plan",         file: "plan",         label: "Plan",         lieu: "0 → −600 m", groupe: "site",       top: true },
@@ -110,15 +110,15 @@
     { id: "carnet",       file: "carnet",       label: "Mon carnet",   lieu: "Personnel",  groupe: "outils" },
     { id: "staff",        file: "staff",        label: "Staff",        lieu: "Direction",  groupe: "outils", staff: true }
   ];
-  var GROUPES = { site: "Le site", communaute: "Communauté", outils: "Outils" };
+  let GROUPES = { site: "Le site", communaute: "Communauté", outils: "Outils" };
   S.pages = PAGES;
-  var byFile = {}, byId = {};
+  let byFile = {}, byId = {};
   PAGES.forEach(function (p) { byFile[p.file] = p; byId[p.id] = p; });
-  var currentPage = (doc.body && doc.body.getAttribute("data-page")) || "accueil";
+  let currentPage = (doc.body && doc.body.getAttribute("data-page")) || "accueil";
 
   /* ---------- Emblème & icônes --------------------------------------- */
   S.emblem = function (cls) {
-    var arrows = [0, 120, 240].map(function (a) {
+    let arrows = [0, 120, 240].map(function (a) {
       return '<path transform="rotate(' + a + ' 50 50)" d="M45 1.5H55V16.5H62.5L50 31L37.5 16.5H45Z"/>';
     }).join("");
     return '<svg class="' + (cls || "") + '" viewBox="0 0 100 100" aria-hidden="true" focusable="false">' +
@@ -126,10 +126,10 @@
       '<circle cx="50" cy="50" r="18.5" fill="none" stroke="currentColor" stroke-width="6"/>' +
       '<g fill="currentColor" style="stroke: var(--emb-bg, #0C1215)" stroke-width="3.5" paint-order="stroke">' + arrows + "</g></svg>";
   };
-  var svgI = function (d, extra) {
+  let svgI = function (d, extra) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"' + (extra || "") + ">" + d + "</svg>";
   };
-  var ICON = {
+  let ICON = {
     term: svgI('<path d="M4 6l6 6-6 6M12 18h8"/>', ' stroke-linecap="square"'),
     menu: svgI('<path d="M3 7h18M3 12h18M3 17h18"/>'),
     close: svgI('<path d="M5 5l14 14M19 5L5 19"/>'),
@@ -153,12 +153,12 @@
   S.icon = ICON;
 
   /* ---------- Réglages ------------------------------------------------- */
-  var settings = {
+  let settings = {
     fx: store.get("s73.fx") !== "off",
     sfx: store.get("s73.sfx") === "on",
     boot: store.get("s73.bootoff") !== "1"
   };
-  var applyFx = function () { root.setAttribute("data-fx", settings.fx ? "on" : "off"); };
+  let applyFx = function () { root.setAttribute("data-fx", settings.fx ? "on" : "off"); };
   S.getSetting = function (k) { return settings[k]; };
   S.setSetting = function (k, v) {
     settings[k] = !!v;
@@ -171,10 +171,10 @@
   applyFx();
 
   /* ---------- Sons ----------------------------------------------------- */
-  var actx = null;
+  let actx = null;
   S.audioCtx = function () {
     try {
-      var AC = window.AudioContext || window.webkitAudioContext;
+      let AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       actx = actx || new AC();
       if (actx.state === "suspended") actx.resume();
@@ -184,15 +184,15 @@
   S.tone = function (freq, dur, opts) {
     opts = opts || {};
     if (!opts.force && !settings.sfx) return;
-    var ctx = S.audioCtx();
+    let ctx = S.audioCtx();
     if (!ctx) return;
     try {
-      var t = ctx.currentTime + (opts.delay || 0);
-      var o = ctx.createOscillator(), g = ctx.createGain();
+      let t = ctx.currentTime + (opts.delay || 0);
+      let o = ctx.createOscillator(), g = ctx.createGain();
       o.type = opts.type || "square";
       o.frequency.setValueAtTime(freq, t);
       if (opts.to) o.frequency.exponentialRampToValueAtTime(opts.to, t + dur);
-      var vol = opts.vol || 0.05;
+      let vol = opts.vol || 0.05;
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -219,13 +219,13 @@
     if (!S.canSpeak) return false;
     try {
       speechSynthesis.cancel();
-      var say = text.replace(/−/g, "moins ").replace(/SCP-/g, "S C P ").replace(/ANO-/g, "A N O ")
+      let say = text.replace(/−/g, "moins ").replace(/SCP-/g, "S C P ").replace(/ANO-/g, "A N O ")
         .replace(/\[DONNÉES SUPPRIMÉES\]|\[SUPPRIMÉ\]/g, "données supprimées");
-      var u = new SpeechSynthesisUtterance(say);
+      let u = new SpeechSynthesisUtterance(say);
       u.lang = "fr-FR";
       u.rate = opts.rate || 0.95;
       u.pitch = opts.pitch || 0.9;
-      var v = speechSynthesis.getVoices().filter(function (x) { return /^fr/i.test(x.lang); })[0];
+      let v = speechSynthesis.getVoices().filter(function (x) { return /^fr/i.test(x.lang); })[0];
       if (v) u.voice = v;
       if (opts.onend) { u.onend = opts.onend; u.onerror = opts.onend; }
       speechSynthesis.speak(u);
@@ -236,10 +236,10 @@
 
   /* ---------- Habilitation ------------------------------------------- */
   // L'habilitation vient de la session (serveur ou démonstration) : personne ne la choisit.
-  var clearance = 0;
+  let clearance = 0;
   store.del("s73.hab");
   S.getClearance = function () { return clearance; };
-  var habName = function (n) { return D.habilitations[n].nom; };
+  let habName = function (n) { return D.habilitations[n].nom; };
   S.habName = habName;
 
   /* ---------- Session (connexion Discord) --------------------------- */
@@ -248,48 +248,48 @@
   // Le mode staff est à part : il faut être administrateur (rôle Discord en
   // ligne, code d'accès en démonstration) PUIS l'activer. Hors mode staff,
   // personne ne peut changer l'alerte ni les habilitations.
-  var sess = { mode: "demo", user: null, admin: false, reel: 0, source: "visiteur" };
+  let sess = { mode: "demo", user: null, admin: false, reel: 0, source: "visiteur" };
   // Identifiant du compte qui a activé le mode staff dans cet onglet
-  var staffId = store.get("s73.staff", true) || "";
+  let staffId = store.get("s73.staff", true) || "";
   S.session = function () { return sess; };
   S.isLive = function () { return sess.mode === "live"; };
   S.isAdmin = function () { return !!sess.admin; };
   S.modeStaff = function () { return !!sess.admin && !!sess.user && staffId === String(sess.user.id); };
-  var activerStaff = function (on) {
+  let activerStaff = function (on) {
     staffId = on && sess.user ? String(sess.user.id) : "";
     if (staffId) store.set("s73.staff", staffId, true); else store.del("s73.staff", true);
   };
   S.canChooseClearance = function () { return S.modeStaff(); };
   S.loginUrl = function () {
-    var p = byId[currentPage];
+    let p = byId[currentPage];
     return "/api/auth/login?retour=" + encodeURIComponent(p && p.id !== "accueil" ? "/" + p.file + ".html" : "/");
   };
   S.avatar = function (u, cls) {
-    var ini = String(u && u.nom || "?").replace(/[^A-Za-zÀ-ÿ0-9 ]/g, "").split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase() || "?";
-    var bg = u && u.avatar && sess.mode === "live" ? ' style="background-image:url(\'' + String(u.avatar).replace(/['"()\\]/g, "") + '\')"' : "";
+    let ini = String(u && u.nom || "?").replace(/[^A-Za-zÀ-ÿ0-9 ]/g, "").split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase() || "?";
+    let bg = u && u.avatar && sess.mode === "live" ? ' style="background-image:url(\'' + String(u.avatar).replace(/['"()\\]/g, "") + '\')"' : "";
     return '<span class="av ' + (cls || "") + '"' + bg + ' aria-hidden="true">' + esc(ini) + "</span>";
   };
 
   /* ---------- Caviardage ---------------------------------------------- */
-  var TOKEN_SRC = /\[\[(\d)\|([\s\S]*?)\]\]|\[(DONNÉES SUPPRIMÉES|SUPPRIMÉ)\]/.source;
-  var FILLER = /^[▒\s]+$/;
-  var supOnly = function (t) {
+  let TOKEN_SRC = /\[\[(\d)\|([\s\S]*?)\]\]|\[(DONNÉES SUPPRIMÉES|SUPPRIMÉ)\]/.source;
+  let FILLER = /^[▒\s]+$/;
+  let supOnly = function (t) {
     return esc(t).replace(/\[(DONNÉES SUPPRIMÉES|SUPPRIMÉ)\]/g, '<span class="sup">[$1]</span>');
   };
   // lvl permet d'afficher un texte « comme le verrait » un autre niveau (aperçu).
   S.redact = function (text, prev, lvl) {
     if (lvl == null) lvl = clearance;
-    var out = "", last = 0, m;
-    var re = new RegExp(TOKEN_SRC, "g");
+    let out = "", last = 0, m;
+    let re = new RegExp(TOKEN_SRC, "g");
     while ((m = re.exec(text))) {
       out += esc(text.slice(last, m.index));
       if (m[1]) {
-        var n = +m[1], inner = m[2];
+        let n = +m[1], inner = m[2];
         if (lvl >= n && !FILLER.test(inner)) {
-          var fresh = prev != null && n > prev ? " is-new" : "";
+          let fresh = prev != null && n > prev ? " is-new" : "";
           out += '<span class="rv' + fresh + '" data-lvl="' + n + '" title="Déclassifié · niveau ' + n + '">' + supOnly(inner) + "</span>";
         } else {
-          var filler = inner.replace(/\[[^\]]*\]/g, "xxxxxxxx").replace(/\S/g, "x");
+          let filler = inner.replace(/\[[^\]]*\]/g, "xxxxxxxx").replace(/\S/g, "x");
           out += '<span class="rd" data-lvl="' + n + '" tabindex="0" role="img" aria-label="Information masquée, niveau ' + n +
             ' requis" title="Niveau ' + n + ' requis">' + filler + "</span>";
         }
@@ -315,13 +315,13 @@
     el.setAttribute("data-r", "");
     el.innerHTML = S.redact(text);
   };
-  var rerender = function (prev) {
+  let rerender = function (prev) {
     doc.querySelectorAll("[data-r]").forEach(function (el) {
       if (el.__raw != null) el.innerHTML = S.redact(el.__raw, prev);
     });
   };
 
-  var updateClearanceUI = function () {
+  let updateClearanceUI = function () {
     doc.querySelectorAll("[data-hab-num]").forEach(function (el) { el.textContent = clearance; });
     doc.querySelectorAll("[data-hab-name]").forEach(function (el) { el.textContent = "Niveau " + clearance + " · " + habName(clearance); });
     doc.querySelectorAll(".clr__opt").forEach(function (b) {
@@ -340,13 +340,13 @@
     // Mode staff : aperçu du site « comme » un niveau inférieur, le temps de la session.
     n = Math.min(n, sess.reel);
     if (n === sess.reel) store.del("s73.voir", true); else store.set("s73.voir", n, true);
-    var prev = clearance;
+    let prev = clearance;
     clearance = n;
     updateClearanceUI();
     rerender(prev);
     doc.dispatchEvent(new CustomEvent("s73:clearance", { detail: { level: n, prev: prev } }));
     if (!(opts && opts.silent)) {
-      var diff = n > prev ? "Informations déclassifiées." : n < prev ? "Informations reclassifiées." : "Aucun changement.";
+      let diff = n > prev ? "Informations déclassifiées." : n < prev ? "Informations reclassifiées." : "Aucun changement.";
       S.toast("<b>" + (n === sess.reel ? "Retour à ton niveau · " : "Aperçu comme niveau ") + n + "</b> " + esc(habName(n)) + ". " + diff);
     }
     renderClrPop();
@@ -355,7 +355,7 @@
   };
 
   doc.addEventListener("click", function (e) {
-    var bar = e.target.closest(".rd");
+    let bar = e.target.closest(".rd");
     if (bar && !bar.closest("[data-no-deny]")) denied(bar);
   });
   doc.addEventListener("keydown", function (e) {
@@ -369,8 +369,8 @@
     void bar.offsetWidth;
     bar.classList.add("is-denied");
     S.sfx("deny");
-    var lvl = bar.getAttribute("data-lvl");
-    var fin = S.modeStaff() ? " Mode staff : change l'aperçu avec le bouton « Hab. »."
+    let lvl = bar.getAttribute("data-lvl");
+    let fin = S.modeStaff() ? " Mode staff : change l'aperçu avec le bouton « Hab. »."
       : sess.user ? " Seul le staff du serveur peut relever votre habilitation."
       : sess.mode === "live" ? ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous avec Discord</a> pour recevoir la vôtre.'
       : " Connectez-vous avec le bouton « Hab. » pour recevoir la vôtre.";
@@ -378,17 +378,17 @@
   }
 
   /* ---------- Niveau d'alerte ---------------------------------------- */
-  var ALERTS = ["vert", "jaune", "orange", "rouge", "noir"];
+  let ALERTS = ["vert", "jaune", "orange", "rouge", "noir"];
   // Le niveau officiel vient du staff. Les simulations (brèche, code Oméga)
   // le changent un instant, sans rien enregistrer.
   store.del("s73.alerte", true);
-  var alertLevel = D.config.alerte;
+  let alertLevel = D.config.alerte;
   S.alerts = ALERTS;
   S.getAlert = function () { return alertLevel; };
   S.officialAlert = function () { return D.config.alerte; };
-  var applyAlert = function () {
+  let applyAlert = function () {
     root.setAttribute("data-alert", alertLevel);
-    var a = D.alertes[alertLevel];
+    let a = D.alertes[alertLevel];
     doc.querySelectorAll("[data-alert-code]").forEach(function (el) { el.textContent = a.code; });
     doc.querySelectorAll("[data-alert-title]").forEach(function (el) { el.textContent = a.titre; });
     doc.querySelectorAll("[data-alert-text]").forEach(function (el) { el.textContent = a.texte; });
@@ -429,7 +429,7 @@
   };
 
   /* ---------- Notifications ------------------------------------------ */
-  var toastZone;
+  let toastZone;
   S.toast = function (html, opts) {
     opts = opts || {};
     if (!toastZone) {
@@ -439,12 +439,12 @@
       toastZone.setAttribute("aria-live", "polite");
       doc.body.appendChild(toastZone);
     }
-    var t = doc.createElement("div");
+    let t = doc.createElement("div");
     t.className = "toast" + (opts.warn ? " toast--warn" : "") + (opts.medal ? " toast--medal" : "");
     t.innerHTML = (opts.medal ? '<span class="toast__medal">' + esc(opts.medal) + "</span>" : "") + "<span>" + html +
       (opts.actions ? '<span class="toast__acts">' + opts.actions.map(function (a, i) { return '<button type="button" data-i="' + i + '">' + esc(a[0]) + "</button>"; }).join("") + "</span>" : "") + "</span>";
     if (opts.actions) t.addEventListener("click", function (e) {
-      var b = e.target.closest("[data-i]");
+      let b = e.target.closest("[data-i]");
       if (!b) return;
       opts.actions[+b.getAttribute("data-i")][1]();
       t.classList.add("is-out");
@@ -459,17 +459,17 @@
   };
 
   /* ---------- Carnet de service --------------------------------------- */
-  var blankCarnet = function () { return { badges: {}, seen: {}, pages: {}, fav: {}, rules: {}, planning: {}, stats: {}, flags: {} }; };
-  var carnet = blankCarnet();
+  let blankCarnet = function () { return { badges: {}, seen: {}, pages: {}, fav: {}, rules: {}, planning: {}, stats: {}, flags: {} }; };
+  let carnet = blankCarnet();
   try {
-    var raw = JSON.parse(store.get("s73.carnet") || "null");
+    let raw = JSON.parse(store.get("s73.carnet") || "null");
     if (raw && typeof raw === "object") {
       Object.keys(carnet).forEach(function (k) { if (raw[k] && typeof raw[k] === "object") carnet[k] = raw[k]; });
     }
   } catch (e) { /* carnet illisible : on repart de zéro */ }
-  var saveCarnet = function () { store.set("s73.carnet", JSON.stringify(carnet)); };
-  var badgeReady = false;
-  var RULES = {
+  let saveCarnet = function () { store.set("s73.carnet", JSON.stringify(carnet)); };
+  let badgeReady = false;
+  let RULES = {
     arrivee: function () { return true; },
     lecteur: function (c) { return count(c.seen) >= 5; },
     archiviste: function (c) { return D.scp.every(function (s) { return c.seen[s.id]; }); },
@@ -492,17 +492,17 @@
     pirate: function (c) { return !!c.flags.pirate; },
     omega: function (c) { return !!c.flags.omega; }
   };
-  var updateBadgeCount = function () {
-    var n = count(carnet.badges);
+  let updateBadgeCount = function () {
+    let n = count(carnet.badges);
     doc.querySelectorAll("[data-badge-count]").forEach(function (el) { el.textContent = n; });
     doc.querySelectorAll("[data-badge-total]").forEach(function (el) { el.textContent = D.distinctions.length; });
     doc.querySelectorAll(".carnet-btn").forEach(function (el) {
       el.setAttribute("aria-label", "Mon carnet de service : " + n + " distinction" + (n > 1 ? "s" : "") + " sur " + D.distinctions.length);
     });
   };
-  var checkBadges = function () {
+  let checkBadges = function () {
     if (!badgeReady) return;
-    var fresh = [];
+    let fresh = [];
     D.distinctions.forEach(function (b) {
       if (!carnet.badges[b.id] && RULES[b.id] && RULES[b.id](carnet)) {
         carnet.badges[b.id] = Date.now();
@@ -520,7 +520,7 @@
     });
     doc.dispatchEvent(new CustomEvent("s73:carnet"));
   };
-  var changed = function () { saveCarnet(); checkBadges(); doc.dispatchEvent(new CustomEvent("s73:carnet")); };
+  let changed = function () { saveCarnet(); checkBadges(); doc.dispatchEvent(new CustomEvent("s73:carnet")); };
   S.carnet = function () { return carnet; };
   S.isMarked = function (set, id) { return !!(carnet[set] && carnet[set][id]); };
   S.mark = function (set, id, on) {
@@ -529,7 +529,7 @@
     changed();
   };
   S.stat = function (name, val, mode) {
-    var cur = carnet.stats[name] || 0;
+    let cur = carnet.stats[name] || 0;
     carnet.stats[name] = mode === "max" ? Math.max(cur, val) : cur + (val == null ? 1 : val);
     changed();
   };
@@ -544,13 +544,13 @@
 
   /* ---------- Météo du col (déterministe, change chaque heure) ------- */
   S.meteo = function (date) {
-    var d = date || new Date();
-    var h = hash("meteo-" + d.toISOString().slice(0, 13));
-    var m = d.getMonth();
-    var base = [-9, -8, -6, -3, 1, 5, 8, 8, 5, 1, -4, -7][m];
-    var temp = base + (h % 9) - 4;
-    var ciels = ["Dégagé", "Voilé", "Nuageux", "Brouillard", temp > 1 ? "Pluie" : "Neige"];
-    var hiver = m >= 10 || m <= 3;
+    let d = date || new Date();
+    let h = hash("meteo-" + d.toISOString().slice(0, 13));
+    let m = d.getMonth();
+    let base = [-9, -8, -6, -3, 1, 5, 8, 8, 5, 1, -4, -7][m];
+    let temp = base + (h % 9) - 4;
+    let ciels = ["Dégagé", "Voilé", "Nuageux", "Brouillard", temp > 1 ? "Pluie" : "Neige"];
+    let hiver = m >= 10 || m <= 3;
     return {
       temp: temp,
       vent: 8 + ((h >>> 4) % 55),
@@ -559,26 +559,26 @@
       avalanche: 1 + ((h >>> 15) % (hiver ? 5 : 2))
     };
   };
-  var meteoTxt = function () {
-    var w = S.meteo();
+  let meteoTxt = function () {
+    let w = S.meteo();
     return "Surface " + (w.temp > 0 ? "+" : "") + w.temp + " °C · vent " + w.vent + " km/h · " + w.ciel.toLowerCase();
   };
 
   /* ---------- En-tête -------------------------------------------------- */
-  var linkFor = function (p, cls, withLieu) {
+  let linkFor = function (p, cls, withLieu) {
     return '<a class="' + cls + '" href="' + p.file + '.html" data-nav="' + p.id + '"' + (p.staff ? " data-staff-only hidden" : "") + ">" +
       (withLieu ? "<b>" + esc(p.label) + "</b><small>" + esc(p.lieu) + "</small>" : esc(p.label)) + "</a>";
   };
-  var buildHeader = function () {
-    var slot = doc.getElementById("s73-header");
+  let buildHeader = function () {
+    let slot = doc.getElementById("s73-header");
     if (!slot) return;
-    var top = PAGES.filter(function (p) { return p.top; }).map(function (p) { return linkFor(p, "nav__link"); }).join("");
-    var more = Object.keys(GROUPES).map(function (g) {
-      var list = PAGES.filter(function (p) { return !p.top && p.groupe === g; });
+    let top = PAGES.filter(function (p) { return p.top; }).map(function (p) { return linkFor(p, "nav__link"); }).join("");
+    let more = Object.keys(GROUPES).map(function (g) {
+      let list = PAGES.filter(function (p) { return !p.top && p.groupe === g; });
       if (!list.length) return "";
       return '<div class="more__grp"><p>' + GROUPES[g] + "</p>" + list.map(function (p) { return linkFor(p, "more__link", true); }).join("") + "</div>";
     }).join("");
-    var drawer = Object.keys(GROUPES).map(function (g) {
+    let drawer = Object.keys(GROUPES).map(function (g) {
       return '<p class="drawer__grp">' + GROUPES[g] + "</p>" + PAGES.filter(function (p) { return p.groupe === g; }).map(function (p) {
         return '<a href="' + p.file + '.html" data-nav="' + p.id + '"' + (p.staff ? " data-staff-only hidden" : "") + ">" + esc(p.label) + "<small>" + esc(p.lieu) + "</small></a>";
       }).join("");
@@ -620,11 +620,11 @@
       "</div>";
 
     // Menu « Plus »
-    var mb2 = doc.getElementById("more-btn"), mp = doc.getElementById("more-pop");
-    var closeMore = function () { mp.hidden = true; mb2.setAttribute("aria-expanded", "false"); };
+    let mb2 = doc.getElementById("more-btn"), mp = doc.getElementById("more-pop");
+    let closeMore = function () { mp.hidden = true; mb2.setAttribute("aria-expanded", "false"); };
     mb2.addEventListener("click", function (e) {
       e.stopPropagation();
-      var open = mp.hidden;
+      let open = mp.hidden;
       mp.hidden = !open;
       mb2.setAttribute("aria-expanded", String(open));
     });
@@ -633,13 +633,13 @@
     doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && !mp.hidden) { closeMore(); mb2.focus(); } });
 
     // Habilitation
-    var btn = doc.getElementById("clr-btn"), pop = doc.getElementById("clr-pop");
-    var closePop = function () { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+    let btn = doc.getElementById("clr-btn"), pop = doc.getElementById("clr-pop");
+    let closePop = function () { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); };
     S.openClearance = function () {
       window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
       pop.hidden = false;
       btn.setAttribute("aria-expanded", "true");
-      var cur = pop.querySelector('[aria-checked="true"]');
+      let cur = pop.querySelector('[aria-checked="true"]');
       if (cur) cur.focus({ preventScroll: true });
     };
     btn.addEventListener("click", function (e) {
@@ -649,7 +649,7 @@
     pop.addEventListener("click", function (e) {
       // Connexion et mode staff : gérés plus bas, pour tout le site.
       if (e.target.closest("[data-demo-login], [data-demo-logout], [data-staff-on], [data-staff-off]")) { closePop(); return; }
-      var o = e.target.closest(".clr__opt");
+      let o = e.target.closest(".clr__opt");
       if (!o) return;
       S.setClearance(o.getAttribute("data-lvl"));
       closePop();
@@ -662,35 +662,35 @@
     doc.getElementById("search-btn").addEventListener("click", function () { S.openSearch(); });
 
     // Menu mobile
-    var drawerEl = doc.getElementById("drawer"), mb = doc.getElementById("menu-btn");
-    var openDrawer = function () { drawerEl.hidden = false; mb.setAttribute("aria-expanded", "true"); doc.body.style.overflow = "hidden"; doc.getElementById("drawer-close").focus(); };
+    let drawerEl = doc.getElementById("drawer"), mb = doc.getElementById("menu-btn");
+    let openDrawer = function () { drawerEl.hidden = false; mb.setAttribute("aria-expanded", "true"); doc.body.style.overflow = "hidden"; doc.getElementById("drawer-close").focus(); };
     S.closeDrawer = function () { if (drawerEl.hidden) return; drawerEl.hidden = true; mb.setAttribute("aria-expanded", "false"); doc.body.style.overflow = ""; };
     mb.addEventListener("click", openDrawer);
     doc.getElementById("drawer-close").addEventListener("click", function () { S.closeDrawer(); mb.focus(); });
     doc.addEventListener("keydown", function (e) { if (e.key === "Escape" && !drawerEl.hidden) { S.closeDrawer(); mb.focus(); } });
   };
 
-  var levelsHtml = function (max) {
+  let levelsHtml = function (max) {
     return '<ul class="clr__list" role="menu" aria-label="Choisir un niveau">' + D.habilitations.filter(function (h) { return h.niveau <= max; }).map(function (h) {
       return '<li><button type="button" class="clr__opt" role="menuitemradio" data-lvl="' + h.niveau + '" aria-checked="' + (h.niveau === clearance) + '">' +
         "<b>" + h.niveau + "</b><span>" + esc(h.nom) + "</span><small>" + (h.niveau === 5 ? "O5" : "N" + h.niveau) + "</small></button></li>";
     }).join("") + "</ul>";
   };
-  var SOURCES = {
+  let SOURCES = {
     role: "Attribuée par tes rôles sur le serveur Discord.",
     staff: "Attribuée par l'administration du site.",
     defaut: "Niveau par défaut des membres. Le staff peut le relever.",
     admin: "Administrateur : accès complet."
   };
   function renderClrPop() {
-    var pop = doc.getElementById("clr-pop"), btn = doc.getElementById("clr-btn");
+    let pop = doc.getElementById("clr-pop"), btn = doc.getElementById("clr-btn");
     if (!pop) return;
-    var demo = sess.mode === "demo";
-    var who = sess.user ? '<div class="who">' + S.avatar(sess.user) + "<div><b>" + esc(sess.user.nom) + "</b><small>" +
+    let demo = sess.mode === "demo";
+    let who = sess.user ? '<div class="who">' + S.avatar(sess.user) + "<div><b>" + esc(sess.user.nom) + "</b><small>" +
       (sess.admin ? "Administrateur" : "Membre du serveur") + (demo ? " · démo" : "") + "</small></div></div>" : "";
-    var sortir = demo ? '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>'
+    let sortir = demo ? '<button type="button" class="btn btn--sm" data-demo-logout>Se déconnecter</button>'
       : '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
-    var out = demo ? '<p class="clr__demo">Mode démonstration</p>' : "";
+    let out = demo ? '<p class="clr__demo">Mode démonstration</p>' : "";
     if (S.modeStaff()) {
       out += who + '<p class="clr__staff"><i></i>Mode staff actif</p>' +
         "<p>Ton niveau réel est " + sess.reel + ". Prévisualise le site comme le verrait un membre :</p>" + levelsHtml(sess.reel) +
@@ -717,10 +717,10 @@
   }
   // Bandeau du mode staff, en haut de chaque page
   function renderStaffBar() {
-    var bar = doc.getElementById("staffbar");
+    let bar = doc.getElementById("staffbar");
     if (!bar) return;
     if (!S.modeStaff()) { bar.hidden = true; bar.innerHTML = ""; return; }
-    var cur = D.config.alerte;
+    let cur = D.config.alerte;
     bar.innerHTML = '<div class="wrap staffbar__in">' +
       '<span class="staffbar__tag"><i></i>Mode staff</span>' +
       '<span class="staffbar__who">' + S.avatar(sess.user, "av--sm") + "<b>" + esc(sess.user ? sess.user.nom : "Staff") + "</b></span>" +
@@ -736,23 +736,23 @@
   }
   S.renderClrPop = renderClrPop;
 
-  var markNav = function (id) {
+  let markNav = function (id) {
     doc.querySelectorAll("[data-nav]").forEach(function (a) {
       if (a.getAttribute("data-nav") === id) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     });
-    var mb = doc.getElementById("more-btn");
+    let mb = doc.getElementById("more-btn");
     if (mb) mb.classList.toggle("is-current", !!byId[id] && !byId[id].top);
     // Barre défilante : la page courante reste visible
-    var strip = doc.getElementById("navstrip"), cur = strip && strip.querySelector('[aria-current="page"]');
+    let strip = doc.getElementById("navstrip"), cur = strip && strip.querySelector('[aria-current="page"]');
     if (cur && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = cur.offsetLeft - strip.clientWidth / 2 + cur.offsetWidth / 2;
   };
 
   /* ---------- Pied de page ------------------------------------------- */
-  var buildFooter = function () {
-    var slot = doc.getElementById("s73-footer");
+  let buildFooter = function () {
+    let slot = doc.getElementById("s73-footer");
     if (!slot) return;
-    var cols = Object.keys(GROUPES).map(function (g) {
+    let cols = Object.keys(GROUPES).map(function (g) {
       return "<div><h2>" + GROUPES[g] + '</h2><ul class="ftr__links">' + PAGES.filter(function (p) { return p.groupe === g; }).map(function (p) {
         return "<li" + (p.staff ? " data-staff-only hidden" : "") + '><a href="' + p.file + '.html">' + esc(p.label) + "</a></li>";
       }).join("") + "</ul></div>";
@@ -779,15 +779,17 @@
   };
 
   /* ---------- Discord ------------------------------------------------- */
-  var applyDiscord = function (scope) {
-    var url = D.config.discord;
+  let applyDiscord = function (scope) {
+    let url = D.config.discord;
     (scope || doc).querySelectorAll("[data-discord]").forEach(function (el) {
       if (url) {
         el.setAttribute("href", url);
         el.setAttribute("target", "_blank");
         el.setAttribute("rel", "noopener");
+        el.setAttribute("title", "Ouvre l'invitation au serveur Discord dans un nouvel onglet");
+        if (!el.querySelector("svg")) el.insertAdjacentHTML("afterbegin", ICON.chat);
       } else {
-        var span = doc.createElement("span");
+        let span = doc.createElement("span");
         span.className = el.className;
         span.setAttribute("aria-disabled", "true");
         span.style.opacity = ".6";
@@ -804,7 +806,7 @@
   S.applyDiscord = applyDiscord;
 
   /* ---------- Horloge -------------------------------------------------- */
-  var clockFmt, dateFmt, hourFmt;
+  let clockFmt, dateFmt, hourFmt;
   try {
     clockFmt = new Intl.DateTimeFormat("fr-FR", { timeZone: D.config.fuseau, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
     dateFmt = new Intl.DateTimeFormat("fr-FR", { timeZone: D.config.fuseau, weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -814,15 +816,15 @@
     dateFmt = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     hourFmt = new Intl.DateTimeFormat("fr-FR", { hour: "numeric", hour12: false });
   }
-  var lastMeteoHour = -1;
-  var tick = function () {
-    var now = new Date();
-    var t = clockFmt.format(now), d = dateFmt.format(now);
+  let lastMeteoHour = -1;
+  let tick = function () {
+    let now = new Date();
+    let t = clockFmt.format(now), d = dateFmt.format(now);
     doc.querySelectorAll("[data-clock]").forEach(function (el) { el.textContent = t; });
     doc.querySelectorAll("[data-date]").forEach(function (el) { el.textContent = d; });
     if (now.getHours() !== lastMeteoHour) {
       lastMeteoHour = now.getHours();
-      var mt = meteoTxt();
+      let mt = meteoTxt();
       doc.querySelectorAll("[data-meteo]").forEach(function (el) { el.textContent = mt; });
     }
     doc.dispatchEvent(new CustomEvent("s73:tick", { detail: { now: now } }));
@@ -830,18 +832,18 @@
   S.formatClock = function (d) { return clockFmt.format(d); };
   S.siteHour = function (d) { return parseInt(hourFmt.format(d || new Date()), 10) % 24; };
   S.formatCountdown = function (ms) {
-    var s = Math.max(0, Math.floor(ms / 1000));
-    var j = Math.floor(s / 86400); s -= j * 86400;
-    var h = Math.floor(s / 3600); s -= h * 3600;
-    var m = Math.floor(s / 60); s -= m * 60;
+    let s = Math.max(0, Math.floor(ms / 1000));
+    let j = Math.floor(s / 86400); s -= j * 86400;
+    let h = Math.floor(s / 3600); s -= h * 3600;
+    let m = Math.floor(s / 60); s -= m * 60;
     return j + " j " + pad(h) + ":" + pad(m) + ":" + pad(s);
   };
 
   /* ---------- Dossier (fenêtre papier) ------------------------------ */
-  var modal, modalList = [], modalIndex = 0, lastFocus = null, speaking = false;
-  var scpById = {};
+  let modal, modalList = [], modalIndex = 0, lastFocus = null, speaking = false;
+  let scpById = {};
   D.scp.forEach(function (s) { scpById[s.id] = s; });
-  var zoneById = {};
+  let zoneById = {};
   D.zones.forEach(function (z) { zoneById[z.id] = z; });
   S.scpById = scpById;
   S.zoneById = zoneById;
@@ -849,25 +851,25 @@
     q = norm(q).replace(/^scp[-\s]?/, "").trim();
     if (!q) return null;
     if (scpById[q]) return scpById[q];
-    var num = q.replace(/^0+/, "");
-    for (var i = 0; i < D.scp.length; i++) {
-      var s = D.scp[i];
+    let num = q.replace(/^0+/, "");
+    for (let i = 0; i < D.scp.length; i++) {
+      let s = D.scp[i];
       if (s.id.replace(/^0+/, "") === num) return s;
       if (norm(s.code) === q || norm(s.code).replace(/^ano-/, "") === q) return s;
     }
     return null;
   };
   S.randomDossier = function () {
-    var s = D.scp[Math.floor(Math.random() * D.scp.length)];
+    let s = D.scp[Math.floor(Math.random() * D.scp.length)];
     S.openDossier(s.id);
   };
 
-  var MENACE = ["", "Minime", "Faible", "Modérée", "Élevée", "Extrême"];
+  let MENACE = ["", "Minime", "Faible", "Modérée", "Élevée", "Extrême"];
   S.menaceLabel = function (n) { return MENACE[n]; };
-  var STAMPS = ["Usage officiel", "Confidentiel", "Restreint", "Secret", "Très secret", "Thaumiel"];
+  let STAMPS = ["Usage officiel", "Confidentiel", "Restreint", "Secret", "Très secret", "Thaumiel"];
   S.stamps = STAMPS;
 
-  var buildModal = function () {
+  let buildModal = function () {
     modal = doc.createElement("div");
     modal.className = "modal";
     modal.id = "dossier";
@@ -892,19 +894,19 @@
       "</div>";
     doc.body.appendChild(modal);
     modal.addEventListener("click", function (e) {
-      var id = modalList[modalIndex];
+      let id = modalList[modalIndex];
       if (e.target.closest("[data-close]")) S.closeDossier();
       else if (e.target.closest("[data-prev]")) step(-1);
       else if (e.target.closest("[data-next]")) step(1);
       else if (e.target.closest("[data-fav]")) {
-        var on = !S.isMarked("fav", id);
+        let on = !S.isMarked("fav", id);
         S.mark("fav", id, on);
         syncFav();
         S.toast(on ? "<b>Dossier suivi.</b> Retrouve-le avec le filtre « Suivis »." : "<b>Dossier retiré</b> de ta liste de suivi.");
       }
       else if (e.target.closest("[data-speak]")) toggleSpeak();
       else if (e.target.closest("[data-link]")) {
-        var url = BUNDLE ? location.href.split("#")[0] + "#scp-" + id : new URL("confinement.html#scp-" + id, location.href).href;
+        let url = BUNDLE ? location.href.split("#")[0] + "#scp-" + id : new URL("confinement.html#scp-" + id, location.href).href;
         copyText(url, "<b>Lien copié.</b> " + esc(scpById[id].code));
       }
       else if (e.target.closest("[data-open-hab]")) { S.closeDossier(); if (S.openClearance) S.openClearance(); }
@@ -914,54 +916,54 @@
       else if (e.key === "ArrowLeft") step(-1);
       else if (e.key === "ArrowRight") step(1);
       else if (e.key === "Tab") {
-        var f = modal.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])');
+        let f = modal.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])');
         if (!f.length) return;
-        var first = f[0], last = f[f.length - 1];
+        let first = f[0], last = f[f.length - 1];
         if (e.shiftKey && doc.activeElement === first) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && doc.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     });
   };
-  var syncFav = function () {
-    var b = modal.querySelector("[data-fav]");
-    var on = S.isMarked("fav", modalList[modalIndex]);
+  let syncFav = function () {
+    let b = modal.querySelector("[data-fav]");
+    let on = S.isMarked("fav", modalList[modalIndex]);
     b.setAttribute("aria-pressed", String(on));
     b.classList.toggle("is-on", on);
   };
-  var stopSpeaking = function () {
+  let stopSpeaking = function () {
     speaking = false;
     S.stopSpeak();
-    var b = modal && modal.querySelector("[data-speak]");
+    let b = modal && modal.querySelector("[data-speak]");
     if (b) { b.innerHTML = ICON.speak; b.classList.remove("is-on"); b.setAttribute("aria-label", "Lire le dossier à voix haute"); }
   };
-  var toggleSpeak = function () {
+  let toggleSpeak = function () {
     if (speaking) { stopSpeaking(); return; }
-    var s = scpById[modalList[modalIndex]];
-    var txt = "Objet numéro " + s.code + ", " + s.nom + ". Classe " + D.classesObjet[s.classe].nom + ". " +
+    let s = scpById[modalList[modalIndex]];
+    let txt = "Objet numéro " + s.code + ", " + s.nom + ". Classe " + D.classesObjet[s.classe].nom + ". " +
       "Procédures de confinement spéciales. " + S.redactSpeech(s.procedures) + " Description. " + S.redactSpeech(s.description);
     speaking = S.speak(txt, { onend: stopSpeaking });
     if (speaking) {
-      var b = modal.querySelector("[data-speak]");
+      let b = modal.querySelector("[data-speak]");
       b.innerHTML = ICON.stop;
       b.classList.add("is-on");
       b.setAttribute("aria-label", "Arrêter la lecture");
     }
   };
-  var step = function (d) {
+  let step = function (d) {
     if (modalList.length < 2) return;
     stopSpeaking();
     modalIndex = (modalIndex + d + modalList.length) % modalList.length;
     renderDossier();
     modal.querySelector(".modal__scroll").scrollTop = 0;
   };
-  var renderDossier = function () {
-    var s = scpById[modalList[modalIndex]];
+  let renderDossier = function () {
+    let s = scpById[modalList[modalIndex]];
     if (!S.isMarked("seen", s.id)) S.mark("seen", s.id, true);
-    var cls = D.classesObjet[s.classe];
-    var z = zoneById[s.zone];
-    var meter = "";
-    for (var i = 1; i <= 5; i++) meter += i <= s.menace ? "■" : "□";
-    var art = modal.querySelector("[data-doc]");
+    let cls = D.classesObjet[s.classe];
+    let z = zoneById[s.zone];
+    let meter = "";
+    for (let i = 1; i <= 5; i++) meter += i <= s.menace ? "■" : "□";
+    let art = modal.querySelector("[data-doc]");
     art.style.setProperty("--c", "var(--c-" + s.classe + ")");
     art.innerHTML =
       '<header class="doc__head"><div class="doc__org">' + S.emblem() +
@@ -1015,10 +1017,10 @@
   });
 
   /* ---------- Recherche globale (Ctrl+K) ---------------------------- */
-  var palette, pIndex = null, pResults = [], pSel = 0;
-  var buildIndex = function () {
-    var ix = [];
-    var add = function (type, title, sub, run, extra) {
+  let palette, pIndex = null, pResults = [], pSel = 0;
+  let buildIndex = function () {
+    let ix = [];
+    let add = function (type, title, sub, run, extra) {
       ix.push({ type: type, title: title, sub: sub || "", run: run, hay: norm(title + " " + (sub || "") + " " + (extra || "")) });
     };
     PAGES.forEach(function (p) { add("Page", p.label, p.lieu, function () { S.go(p.file + ".html"); }); });
@@ -1048,7 +1050,7 @@
     add("Action", "Expérience avec SCP-914", "Laboratoire", function () { S.go("laboratoire.html#scp914"); }, "horlogerie machine");
     return ix;
   };
-  var buildPalette = function () {
+  let buildPalette = function () {
     palette = doc.createElement("div");
     palette.className = "palette";
     palette.hidden = true;
@@ -1065,7 +1067,7 @@
         '<div class="palette__foot"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>Entrée</kbd> ouvrir</span><span><kbd>Ctrl</kbd>+<kbd>K</kbd> depuis toutes les pages</span></div>' +
       "</div>";
     doc.body.appendChild(palette);
-    var input = palette.querySelector("input");
+    let input = palette.querySelector("input");
     input.addEventListener("input", function () { runSearch(input.value); });
     input.addEventListener("keydown", function (e) {
       if (e.key === "ArrowDown") { e.preventDefault(); selectP(pSel + 1); }
@@ -1075,24 +1077,24 @@
     });
     palette.addEventListener("click", function (e) {
       if (e.target.closest("[data-pclose]")) { S.closeSearch(); return; }
-      var li = e.target.closest("[data-pi]");
+      let li = e.target.closest("[data-pi]");
       if (li) activateP(+li.getAttribute("data-pi"));
     });
     palette.addEventListener("mousemove", function (e) {
-      var li = e.target.closest("[data-pi]");
+      let li = e.target.closest("[data-pi]");
       if (li && +li.getAttribute("data-pi") !== pSel) selectP(+li.getAttribute("data-pi"), true);
     });
   };
-  var runSearch = function (q) {
+  let runSearch = function (q) {
     if (!pIndex) pIndex = buildIndex();
-    var words = norm(q.trim()).split(/\s+/).filter(Boolean);
-    var list = palette.querySelector(".palette__list");
+    let words = norm(q.trim()).split(/\s+/).filter(Boolean);
+    let list = palette.querySelector(".palette__list");
     if (!words.length) {
       pResults = pIndex.filter(function (x) { return x.type === "Page" || x.type === "Action"; });
     } else {
       pResults = pIndex.map(function (x) {
         if (!words.every(function (w) { return x.hay.indexOf(w) >= 0; })) return null;
-        var t = norm(x.title), sc = 0;
+        let t = norm(x.title), sc = 0;
         words.forEach(function (w) { if (t.indexOf(w) === 0) sc += 4; else if (t.indexOf(w) > 0) sc += 2; else sc += 1; });
         if (x.type === "Dossier") sc += 1;
         return { x: x, sc: sc };
@@ -1108,18 +1110,18 @@
     }).join("");
     selectP(0);
   };
-  var selectP = function (i, noScroll) {
+  let selectP = function (i, noScroll) {
     if (!pResults.length) return;
     pSel = (i + pResults.length) % pResults.length;
     palette.querySelectorAll("[data-pi]").forEach(function (li) {
-      var on = +li.getAttribute("data-pi") === pSel;
+      let on = +li.getAttribute("data-pi") === pSel;
       li.setAttribute("aria-selected", String(on));
       if (on && !noScroll) li.scrollIntoView({ block: "nearest" });
     });
     palette.querySelector("input").setAttribute("aria-activedescendant", "pr-" + pSel);
   };
-  var activateP = function (i) {
-    var x = pResults[i];
+  let activateP = function (i) {
+    let x = pResults[i];
     if (!x) return;
     S.closeSearch(true);
     x.run();
@@ -1129,7 +1131,7 @@
     if (S.closeDrawer) S.closeDrawer();
     palette.hidden = false;
     doc.body.style.overflow = "hidden";
-    var input = palette.querySelector("input");
+    let input = palette.querySelector("input");
     input.value = q || "";
     runSearch(input.value);
     input.focus();
@@ -1139,21 +1141,21 @@
     if (!palette || palette.hidden) return;
     palette.hidden = true;
     if (!modal || modal.hidden) doc.body.style.overflow = "";
-    if (!silent) { var b = doc.getElementById("search-btn"); if (b) b.focus(); }
+    if (!silent) { let b = doc.getElementById("search-btn"); if (b) b.focus(); }
   };
   doc.addEventListener("keydown", function (e) {
-    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName || "") || e.target.isContentEditable;
+    let typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName || "") || e.target.isContentEditable;
     if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) { e.preventDefault(); S.openSearch(); }
     else if (e.key === "/" && !typing && !(palette && !palette.hidden)) { e.preventDefault(); S.openSearch(); }
   });
 
   /* ---------- Séquence de démarrage -------------------------------- */
-  var booting = false, bootPending = false;
-  var boot = function () {
+  let booting = false, bootPending = false;
+  let boot = function () {
     if (!settings.boot || !store.ok(true) || store.get("s73.boot", true) || reduced) { store.set("s73.boot", "1", true); return; }
     store.set("s73.boot", "1", true);
     booting = true;
-    var el = doc.createElement("div");
+    let el = doc.createElement("div");
     el.className = "boot";
     el.setAttribute("role", "status");
     el.innerHTML =
@@ -1162,9 +1164,9 @@
       '<div class="boot__log" aria-live="off"></div><div class="boot__bar"><i></i></div>' +
       '<div class="boot__foot"><span>Connexion au réseau sécurisé</span><button type="button" class="boot__skip">Passer</button></div></div>';
     doc.body.appendChild(el);
-    var log = el.querySelector(".boot__log"), bar = el.querySelector(".boot__bar i");
-    var w = S.meteo();
-    var lines = [
+    let log = el.querySelector(".boot__log"), bar = el.querySelector(".boot__bar i");
+    let w = S.meteo();
+    let lines = [
       "> Initialisation du terminal ............ <span class=\"ok\">OK</span>",
       "> Liaison avec le nœud alpin ............ <span class=\"ok\">OK</span>",
       "> Conditions en surface : " + (w.temp > 0 ? "+" : "") + w.temp + " °C, vent " + w.vent + " km/h",
@@ -1173,8 +1175,8 @@
       "> Identité : <span class=\"hl\">" + (sess.user ? esc(sess.user.nom.toUpperCase()) + (sess.mode === "live" ? " (DISCORD)" : " (DÉMO)") : "VISITEUR NON CONNECTÉ") + "</span>",
       "> Habilitation : <span class=\"hl\">NIVEAU " + clearance + " · " + esc(habName(clearance).toUpperCase()) + "</span>"
     ];
-    var timers = [], done = false;
-    var finish = function () {
+    let timers = [], done = false;
+    let finish = function () {
       if (done) return;
       done = true;
       booting = false;
@@ -1201,41 +1203,41 @@
   };
 
   /* ---------- Portes blindées & navigation ------------------------ */
-  var doors;
-  var buildDoors = function () {
+  let doors;
+  let buildDoors = function () {
     doors = doc.createElement("div");
     doors.className = "doors";
     doors.setAttribute("aria-hidden", "true");
     doors.innerHTML = '<div class="doors__l"></div><div class="doors__r"></div>';
     doc.body.appendChild(doors);
   };
-  var parseHref = function (href) {
-    var m = /^(?:\.\/)?([a-z0-9-]+)\.html(?:#([\w.~-]+))?$/i.exec(href || "");
+  let parseHref = function (href) {
+    let m = /^(?:\.\/)?([a-z0-9-]+)\.html(?:#([\w.~-]+))?$/i.exec(href || "");
     if (!m || !byFile[m[1]]) return null;
     return { page: byFile[m[1]], hash: m[2] || "" };
   };
-  var hashHandlers = [];
+  let hashHandlers = [];
   S.onHash = function (fn) { hashHandlers.push(fn); };
-  var flashTarget = function (el) {
+  let flashTarget = function (el) {
     el.classList.remove("is-target");
     void el.offsetWidth;
     el.classList.add("is-target");
     setTimeout(function () { el.classList.remove("is-target"); }, 2200);
   };
   S.flashTarget = flashTarget;
-  var scrollToHash = function (h) {
+  let scrollToHash = function (h) {
     if (!h) return false;
     if (h === "contenu") {
-      var mm = doc.querySelector("main:not([hidden])");
+      let mm = doc.querySelector("main:not([hidden])");
       if (mm) { mm.setAttribute("tabindex", "-1"); mm.focus(); }
       return true;
     }
     if (/^scp-/.test(h)) {
-      var s = S.findScp(h.slice(4));
+      let s = S.findScp(h.slice(4));
       if (s) { S.openDossier(s.id); return true; }
     }
-    for (var i = 0; i < hashHandlers.length; i++) { if (hashHandlers[i](h)) return true; }
-    var t = doc.getElementById(h);
+    for (let i = 0; i < hashHandlers.length; i++) { if (hashHandlers[i](h)) return true; }
+    let t = doc.getElementById(h);
     if (t) {
       t.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
       if (t.tagName !== "SECTION" && t.tagName !== "MAIN") flashTarget(t);
@@ -1245,7 +1247,7 @@
   };
   S.scrollToHash = scrollToHash;
   S.go = function (href) {
-    var target = parseHref(href);
+    let target = parseHref(href);
     if (!target) { location.href = href; return; }
     if (S.closeDrawer) S.closeDrawer();
     if (target.page.id === currentPage) {
@@ -1258,7 +1260,7 @@
     doors.classList.add("is-closed");
     setTimeout(function () { finishNav(target, href); }, 440);
   };
-  var finishNav = function (target, href) {
+  let finishNav = function (target, href) {
     if (BUNDLE) {
       showView(target.page.id, target.hash);
       requestAnimationFrame(function () { requestAnimationFrame(function () { doors.classList.remove("is-closed"); }); });
@@ -1269,11 +1271,11 @@
   };
   doc.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var a = e.target.closest("a[href]");
+    let a = e.target.closest("a[href]");
     if (!a || a.target === "_blank") return;
-    var href = a.getAttribute("href");
+    let href = a.getAttribute("href");
     if (href.charAt(0) === "#") {
-      var h = href.slice(1);
+      let h = href.slice(1);
       if (h && (BUNDLE || !doc.getElementById(h))) { e.preventDefault(); scrollToHash(h); }
       return;
     }
@@ -1286,18 +1288,18 @@
   });
 
   /* ---------- Code du Conseil O5 (↑ ↑ ↓ ↓ ← → ← → B A) ------------ */
-  var KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
-  var kPos = 0;
+  let KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+  let kPos = 0;
   doc.addEventListener("keydown", function (e) {
-    var k = (e.key || "").toLowerCase();
+    let k = (e.key || "").toLowerCase();
     kPos = k === KONAMI[kPos] ? kPos + 1 : (k === KONAMI[0] ? 1 : 0);
     if (kPos === KONAMI.length) { kPos = 0; S.omega(); }
   });
   S.omega = function () {
     if (doc.querySelector(".omega")) return;
-    var prev = alertLevel;
+    let prev = alertLevel;
     S.setAlert("noir");
-    var el = doc.createElement("div");
+    let el = doc.createElement("div");
     el.className = "omega";
     el.setAttribute("role", "alertdialog");
     el.setAttribute("aria-label", "Protocole Oméga");
@@ -1306,17 +1308,17 @@
       '<p class="omega__small">Cet incident n\'a jamais eu lieu.</p><button type="button" class="btn">Reprendre le service</button></div>';
     doc.body.appendChild(el);
     [220, 180, 150].forEach(function (f, i) { S.tone(f, 0.5, { type: "sawtooth", vol: 0.05, delay: i * 0.45 }); });
-    var close = function () { el.remove(); S.setAlert(prev); S.flag("omega"); };
+    let close = function () { el.remove(); S.setAlert(prev); S.flag("omega"); };
     el.querySelector("button").addEventListener("click", close);
     el.querySelector("button").focus();
   };
 
   /* ---------- Mode « un seul fichier » (aperçu) -------------------- */
-  var showView = function (id, h) {
-    var views = doc.querySelectorAll("main[data-view]");
-    var found = false;
+  let showView = function (id, h) {
+    let views = doc.querySelectorAll("main[data-view]");
+    let found = false;
     views.forEach(function (v) {
-      var on = v.getAttribute("data-view") === id;
+      let on = v.getAttribute("data-view") === id;
       v.hidden = !on;
       if (on) found = true;
     });
@@ -1324,12 +1326,12 @@
     currentPage = id;
     doc.body.setAttribute("data-page", id);
     markNav(id);
-    var p = byId[id];
+    let p = byId[id];
     doc.title = id === "accueil" ? "Intranet du Site-73" : p.label + " · Site-73";
     window.scrollTo(0, 0);
     try { history.replaceState(null, "", "#" + (h || id)); } catch (e) { /* ignoré */ }
     if (h) setTimeout(function () { scrollToHash(h); }, 60);
-    var main = doc.querySelector('main[data-view="' + id + '"]');
+    let main = doc.querySelector('main[data-view="' + id + '"]');
     if (main) { main.setAttribute("tabindex", "-1"); main.focus({ preventScroll: true }); }
     S.mark("pages", id, true);
     if (main) { reinitAnimations(main); setTimeout(function () { S.animer(main); }, 30); }
@@ -1338,43 +1340,43 @@
   S.currentPage = function () { return currentPage; };
 
   /* ---------- Session : chargement, démonstration, API staff -------- */
-  var staticArchives = D.archives.slice(), staticEvenements = (D.evenements || []).slice(), staticAlerte = D.config.alerte;
-  var dateParis;
+  let staticArchives = D.archives.slice(), staticEvenements = (D.evenements || []).slice(), staticAlerte = D.config.alerte;
+  let dateParis;
   try {
-    var dpFmt = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
+    let dpFmt = new Intl.DateTimeFormat("en-CA", { timeZone: D.config.fuseau, year: "numeric", month: "2-digit", day: "2-digit" });
     dateParis = function (d) { return dpFmt.format(d); };
   } catch (e) { dateParis = function (d) { return d.toISOString().slice(0, 10); }; }
   // "2026-09-26T21:00" (heure de Paris) → ISO avec le bon décalage (été/hiver)
   S.isoParis = function (local) {
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local || "")) return null;
-    var dec = function (d) {
+    let dec = function (d) {
       try {
-        var nom = new Intl.DateTimeFormat("en-US", { timeZone: D.config.fuseau, timeZoneName: "shortOffset" }).formatToParts(d)
+        let nom = new Intl.DateTimeFormat("en-US", { timeZone: D.config.fuseau, timeZoneName: "shortOffset" }).formatToParts(d)
           .filter(function (x) { return x.type === "timeZoneName"; })[0].value;
-        var m = /GMT(?:([+-]\d+)(?::(\d+))?)?/.exec(nom);
-        var h = m && m[1] ? +m[1] : 0;
+        let m = /GMT(?:([+-]\d+)(?::(\d+))?)?/.exec(nom);
+        let h = m && m[1] ? +m[1] : 0;
         return h * 60 + (m && m[2] ? (h < 0 ? -1 : 1) * +m[2] : 0);
       } catch (e) { return 120; }
     };
-    var approx = new Date(local + ":00Z");
+    let approx = new Date(local + ":00Z");
     if (isNaN(approx)) return null;
-    var min = dec(new Date(approx.getTime() - dec(approx) * 60000)), a = Math.abs(min);
+    let min = dec(new Date(approx.getTime() - dec(approx) * 60000)), a = Math.abs(min);
     return local + ":00" + (min >= 0 ? "+" : "-") + pad(Math.floor(a / 60)) + ":" + pad(a % 60);
   };
 
-  var reindex = function () {
+  let reindex = function () {
     scpById = {}; D.scp.forEach(function (x) { scpById[x.id] = x; });
     zoneById = {}; D.zones.forEach(function (z) { zoneById[z.id] = z; });
     S.scpById = scpById; S.zoneById = zoneById; pIndex = null;
   };
-  var appliquerContenu = function (p) {
+  let appliquerContenu = function (p) {
     Object.keys(p.data).forEach(function (k) { D[k] = p.data[k]; });
     reindex();
   };
 
   // Faux serveur local du mode démonstration (aperçu sans Worker)
-  var ilYa = function (h) { return new Date(Date.now() - h * 3600000).toISOString(); };
-  var demoGraine = function () {
+  let ilYa = function (h) { return new Date(Date.now() - h * 3600000).toISOString(); };
+  let demoGraine = function () {
     return {
       membres: [
         { id: "demo-admin", nom: "Admin (démo)", pseudo: "staff", admin: true, derniereVisite: ilYa(0) },
@@ -1389,25 +1391,25 @@
       journal: [{ le: ilYa(48), par: "Admin (démo)", action: "Habilitation de Exemple · Karim Belkacem réglée sur le niveau 4" }]
     };
   };
-  var demoLire = function () {
-    var d = null;
+  let demoLire = function () {
+    let d = null;
     try { d = JSON.parse(store.get("s73.demo.db") || "null"); } catch (e) { d = null; }
     if (!d || !d.membres) return demoGraine();
     // Base créée par une ancienne version : il manque le membre « vous ».
     if (!d.membres.some(function (m) { return m.id === "demo-membre"; })) d.membres.splice(1, 0, demoGraine().membres[1]);
     return d;
   };
-  var demoEcrire = function (d) { store.set("s73.demo.db", JSON.stringify(d)); };
-  var habDe = function (m) {
+  let demoEcrire = function (d) { store.set("s73.demo.db", JSON.stringify(d)); };
+  let habDe = function (m) {
     if (m.admin) return { niveau: 5, source: "admin" };
     if (typeof m.override === "number") return { niveau: m.override, source: "staff" };
     if (typeof m.roleHab === "number") return { niveau: m.roleHab, source: "role" };
     return { niveau: D.config.habilitationParDefaut || 1, source: "defaut" };
   };
-  var demoEtat = function (d) {
+  let demoEtat = function (d) {
     return {
       membres: d.membres.map(function (m) {
-        var h = habDe(m);
+        let h = habDe(m);
         return Object.assign({}, m, { habilitation: h.niveau, source: h.source, override: typeof m.override === "number" ? m.override : null, admin: !!m.admin });
       }).sort(function (a, b) { return (b.derniereVisite || "").localeCompare(a.derniereVisite || ""); }),
       etat: d.etat || { alerte: staticAlerte, par: null, le: null },
@@ -1416,16 +1418,16 @@
       journal: d.journal.slice(0, 60)
     };
   };
-  var demoAction = function (action, c) {
-    var d = demoLire(), par = sess.user ? sess.user.nom : "Admin (démo)", now = new Date().toISOString();
-    var t = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
-    var err = function (m) { throw new Error(m); };
-    var log = function (a) { d.journal.unshift({ le: now, par: par, action: a }); d.journal = d.journal.slice(0, 200); };
-    var niveauOk = function (n) { return typeof n === "number" && n % 1 === 0 && n >= 0 && n <= 5; };
+  let demoAction = function (action, c) {
+    let d = demoLire(), par = sess.user ? sess.user.nom : "Admin (démo)", now = new Date().toISOString();
+    let t = function (v, max) { return typeof v === "string" ? v.trim().slice(0, max) : ""; };
+    let err = function (m) { throw new Error(m); };
+    let log = function (a) { d.journal.unshift({ le: now, par: par, action: a }); d.journal = d.journal.slice(0, 200); };
+    let niveauOk = function (n) { return typeof n === "number" && n % 1 === 0 && n >= 0 && n <= 5; };
     // Comme le vrai serveur : rien ne passe hors du mode staff.
     if (!S.modeStaff()) err("Réservé au staff, en mode staff.");
     if (action === "habilitation") {
-      var m = d.membres.filter(function (x) { return x.id === c.id; })[0];
+      let m = d.membres.filter(function (x) { return x.id === c.id; })[0];
       if (!m) err("Membre introuvable.");
       if (c.niveau === null) delete m.override; else if (niveauOk(c.niveau)) m.override = c.niveau; else err("Niveau invalide (0 à 5).");
       m.modifiePar = par; m.modifieLe = now;
@@ -1435,32 +1437,32 @@
       d.etat = { alerte: c.niveau, par: par, le: now };
       log("Niveau d'alerte du site : " + D.alertes[c.niveau].code);
     } else if (action === "communique.ajouter") {
-      var titre = t(c.titre, 120), texte = t(c.texte, 2000);
+      let titre = t(c.titre, 120), texte = t(c.texte, 2000);
       if (!titre || !texte) err("Titre et texte obligatoires.");
-      var niv = niveauOk(c.niveau) ? c.niveau : 0;
+      let niv = niveauOk(c.niveau) ? c.niveau : 0;
       d.communiques.unshift({ id: "c" + Date.now(), date: dateParis(new Date()), titre: titre, texte: texte, niveau: niv, auteur: par, creeLe: now });
       log("Communiqué publié : « " + titre + " »" + (niv ? " (niveau " + niv + ")" : ""));
     } else if (action === "communique.supprimer") {
-      var cc = d.communiques.filter(function (x) { return x.id === c.id; })[0];
+      let cc = d.communiques.filter(function (x) { return x.id === c.id; })[0];
       if (!cc) err("Communiqué introuvable.");
       d.communiques = d.communiques.filter(function (x) { return x.id !== c.id; });
       log("Communiqué supprimé : « " + cc.titre + " »");
     } else if (action === "evenement.enregistrer") {
-      var ti = t(c.titre, 100), date = S.isoParis(c.date), duree = Number(c.duree);
+      let ti = t(c.titre, 100), date = S.isoParis(c.date), duree = Number(c.duree);
       if (!ti || !date) err("Titre et date obligatoires.");
       if (!D.typesEvenement[c.type]) err("Type d'événement inconnu.");
       if (!(duree >= 15 && duree <= 720)) err("Durée entre 15 et 720 minutes.");
-      var liste = (d.evenements || staticEvenements).slice();
-      var ev = { id: c.id || "evt-" + Date.now().toString(36), date: date, duree: duree, type: c.type, titre: ti, lieu: t(c.lieu, 120), texte: t(c.texte, 1000) };
-      var i = -1;
+      let liste = (d.evenements || staticEvenements).slice();
+      let ev = { id: c.id || "evt-" + Date.now().toString(36), date: date, duree: duree, type: c.type, titre: ti, lieu: t(c.lieu, 120), texte: t(c.texte, 1000) };
+      let i = -1;
       liste.forEach(function (x, j) { if (x.id === ev.id) i = j; });
       if (i >= 0) liste[i] = ev; else liste.push(ev);
       liste.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
       d.evenements = liste;
       log("Événement " + (i >= 0 ? "modifié" : "ajouté") + " : « " + ti + " »");
     } else if (action === "evenement.supprimer") {
-      var l2 = (d.evenements || staticEvenements).slice();
-      var cible = l2.filter(function (x) { return x.id === c.id; })[0];
+      let l2 = (d.evenements || staticEvenements).slice();
+      let cible = l2.filter(function (x) { return x.id === c.id; })[0];
       if (!cible) err("Événement introuvable.");
       d.evenements = l2.filter(function (x) { return x.id !== c.id; });
       log("Événement supprimé : « " + cible.titre + " »");
@@ -1470,8 +1472,8 @@
     demoEcrire(d);
     return demoEtat(d);
   };
-  var demoAppliquer = function () {
-    var d = demoLire();
+  let demoAppliquer = function () {
+    let d = demoLire();
     D.config.alerte = d.etat && ALERTS.indexOf(d.etat.alerte) >= 0 ? d.etat.alerte : staticAlerte;
     D.archives = d.communiques.filter(function (c) { return (c.niveau || 0) <= clearance; }).map(function (c) {
       return { id: c.id, date: c.date, type: "communique", titre: c.titre, texte: c.texte, auteur: c.auteur, niveau: c.niveau || 0, dyn: true };
@@ -1479,7 +1481,7 @@
     D.evenements = d.evenements || staticEvenements;
   };
 
-  var appelStaff = function (options) {
+  let appelStaff = function (options) {
     return fetch("/api/staff", Object.assign({ credentials: "same-origin" }, options)).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
         if (!r.ok) throw new Error(j.erreur || "Erreur du serveur (" + r.status + ").");
@@ -1501,7 +1503,7 @@
   };
   // Après une action du staff : recharge le contenu et prévient les pages.
   S.rafraichirContenu = function (action) {
-    var fin = function () {
+    let fin = function () {
       if (action === "alerte") {
         alertLevel = D.config.alerte;
         applyAlert();
@@ -1512,30 +1514,30 @@
       doc.dispatchEvent(new CustomEvent("s73:dynamic"));
     };
     if (sess.mode !== "live") { demoAppliquer(); fin(); return Promise.resolve(); }
-    return fetch("/api/contenu", { credentials: "same-origin" }).then(function (r) { return r.json(); })
+    return fetch("/api/contenu", { credentials: "same-origin", cache: "no-store" }).then(function (r) { return r.json(); })
       .then(function (p) { if (p && p.data) appliquerContenu(p); fin(); }, fin);
   };
 
   // Démonstration : visiteur, membre (habilitation réglée dans la console
   // staff de démonstration) ou staff (après le code d'accès, pour l'onglet).
-  var demoStaff = function () {
-    try { var x = JSON.parse(store.get("s73.demo.staff", true) || "null"); return x && x.nom ? x : null; } catch (e) { return null; }
+  let demoStaff = function () {
+    try { let x = JSON.parse(store.get("s73.demo.staff", true) || "null"); return x && x.nom ? x : null; } catch (e) { return null; }
   };
-  var niveauVu = function () {
-    var voir = S.modeStaff() ? parseInt(store.get("s73.voir", true), 10) : NaN;
+  let niveauVu = function () {
+    let voir = S.modeStaff() ? parseInt(store.get("s73.voir", true), 10) : NaN;
     return !isNaN(voir) && voir >= 0 && voir <= sess.reel ? voir : sess.reel;
   };
-  var passerEnDemo = function () {
+  let passerEnDemo = function () {
     sess.mode = "demo";
-    var st = demoStaff();
+    let st = demoStaff();
     if (st) {
       sess.admin = true;
       sess.user = { id: "demo-admin", nom: st.nom, avatar: null };
       sess.reel = 5;
       sess.source = "admin";
     } else if (store.get("s73.demo.profil") === "membre") {
-      var moi = demoLire().membres.filter(function (m) { return m.id === "demo-membre"; })[0] || {};
-      var h = habDe(moi);
+      let moi = demoLire().membres.filter(function (m) { return m.id === "demo-membre"; })[0] || {};
+      let h = habDe(moi);
       sess.admin = false;
       sess.user = { id: "demo-membre", nom: "Membre (démo)", avatar: null };
       sess.reel = h.niveau;
@@ -1546,7 +1548,7 @@
     clearance = niveauVu();
     demoAppliquer();
   };
-  var applySessionUI = function () {
+  let applySessionUI = function () {
     root.setAttribute("data-staff", S.modeStaff() ? "on" : "off");
     doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !S.modeStaff(); });
     doc.querySelectorAll("[data-public-only]").forEach(function (el) { el.hidden = S.modeStaff(); });
@@ -1557,7 +1559,7 @@
     doc.dispatchEvent(new CustomEvent("s73:session"));
   };
   // Après un changement de session : tout le site se remet à jour.
-  var sessionChangee = function (prev) {
+  let sessionChangee = function (prev) {
     if (sess.mode === "demo") demoAppliquer();
     rerender(prev);
     applySessionUI();
@@ -1567,7 +1569,7 @@
   };
   S.demoConnexion = function (entrer) {
     if (sess.mode !== "demo") return;
-    var prev = clearance;
+    let prev = clearance;
     if (entrer) store.set("s73.demo.profil", "membre"); else store.del("s73.demo.profil");
     if (!entrer) { store.del("s73.demo.staff", true); staffId = ""; store.del("s73.staff", true); store.del("s73.voir", true); }
     passerEnDemo();
@@ -1579,32 +1581,32 @@
   };
 
   // Empreinte SHA-256 (le code staff n'est jamais écrit en clair dans le site)
-  var sha256 = function (txt) {
-    var bin = unescape(encodeURIComponent(txt)), K = [], H = [], i, j, n = 0;
-    var frac = function (x) { return ((x - Math.floor(x)) * 4294967296) | 0; };
-    for (var c = 2; n < 64; c++) {
-      var premier = true;
+  let sha256 = function (txt) {
+    let bin = unescape(encodeURIComponent(txt)), K = [], H = [], i, j, n = 0;
+    let frac = function (x) { return ((x - Math.floor(x)) * 4294967296) | 0; };
+    for (let c = 2; n < 64; c++) {
+      let premier = true;
       for (j = 2; j * j <= c; j++) if (c % j === 0) { premier = false; break; }
       if (!premier) continue;
       if (n < 8) H[n] = frac(Math.pow(c, 1 / 2));
       K[n++] = frac(Math.pow(c, 1 / 3));
     }
-    var mots = [], len = bin.length;
+    let mots = [], len = bin.length;
     for (i = 0; i < len; i++) mots[i >> 2] |= bin.charCodeAt(i) << (24 - (i % 4) * 8);
     mots[len >> 2] |= 0x80 << (24 - (len % 4) * 8);
-    var total = (((len + 8) >> 6) + 1) * 16;
+    let total = (((len + 8) >> 6) + 1) * 16;
     for (i = mots.length; i < total; i++) mots[i] = mots[i] || 0;
     mots[total - 1] = len * 8;
-    var rot = function (x, k) { return (x >>> k) | (x << (32 - k)); };
+    let rot = function (x, k) { return (x >>> k) | (x << (32 - k)); };
     for (i = 0; i < total; i += 16) {
-      var W = mots.slice(i, i + 16), a = H[0], b = H[1], cc = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+      let W = mots.slice(i, i + 16), a = H[0], b = H[1], cc = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
       for (j = 0; j < 64; j++) {
         if (j >= 16) {
-          var w15 = W[j - 15], w2 = W[j - 2];
+          let w15 = W[j - 15], w2 = W[j - 2];
           W[j] = (W[j - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + W[j - 7] + (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0;
         }
-        var t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + W[j]) | 0;
-        var t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & cc) ^ (b & cc))) | 0;
+        let t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[j] + W[j]) | 0;
+        let t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & cc) ^ (b & cc))) | 0;
         h = g; g = f; f = e; e = (d + t1) | 0; d = cc; cc = b; b = a; a = (t1 + t2) | 0;
       }
       H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + cc) | 0; H[3] = (H[3] + d) | 0;
@@ -1614,29 +1616,29 @@
   };
   S.util.sha256 = sha256;
   // Même normalisation que scripts/build.mjs
-  var empreinteCode = function (code) { return sha256("site73-staff:" + String(code || "").replace(/\s+/g, "").toUpperCase()); };
+  let empreinteCode = function (code) { return sha256("site73-staff:" + String(code || "").replace(/\s+/g, "").toUpperCase()); };
 
   // Code d'accès du mode staff (démonstration uniquement)
-  var ESSAIS = 5, BLOCAGE = 30000;
+  let ESSAIS = 5, BLOCAGE = 30000;
   S.blocageStaff = function () {
-    var b = parseInt(store.get("s73.staff.bloque"), 10);
+    let b = parseInt(store.get("s73.staff.bloque"), 10);
     return b && b > Date.now() ? b - Date.now() : 0;
   };
   S.connexionStaffDemo = function (nom, code) {
     if (sess.mode !== "demo") return { ok: false, message: "En ligne, l'accès staff passe par Discord." };
     if (!D.config.codeStaffEmpreinte) return { ok: false, message: "Aucun code staff n'est configuré (config.codeStaff dans contenu/donnees.mjs)." };
-    var reste = S.blocageStaff();
+    let reste = S.blocageStaff();
     if (reste) return { ok: false, bloque: reste, message: "Trop d'essais. Réessaie dans " + Math.ceil(reste / 1000) + " s." };
     if (empreinteCode(code) !== D.config.codeStaffEmpreinte) {
-      var n = (parseInt(store.get("s73.staff.essais"), 10) || 0) + 1;
+      let n = (parseInt(store.get("s73.staff.essais"), 10) || 0) + 1;
       if (n >= ESSAIS) { store.set("s73.staff.bloque", String(Date.now() + BLOCAGE)); store.del("s73.staff.essais"); return { ok: false, bloque: BLOCAGE, message: "Code refusé. Accès bloqué pendant " + BLOCAGE / 1000 + " s." }; }
       store.set("s73.staff.essais", String(n));
       return { ok: false, message: "Code refusé. " + (ESSAIS - n) + " essai" + (ESSAIS - n > 1 ? "s" : "") + " avant blocage." };
     }
     store.del("s73.staff.essais");
-    var nomPropre = String(nom || "").replace(/[<>]/g, "").trim().slice(0, 40) || "Admin (démo)";
+    let nomPropre = String(nom || "").replace(/[<>]/g, "").trim().slice(0, 40) || "Admin (démo)";
     store.set("s73.demo.staff", JSON.stringify({ nom: nomPropre }), true);
-    var prev = clearance;
+    let prev = clearance;
     staffId = "demo-admin";
     store.set("s73.staff", staffId, true);
     passerEnDemo();
@@ -1646,7 +1648,7 @@
   };
   S.entrerModeStaff = function () {
     if (!sess.admin) { if (!doc.getElementById("staff-guard")) S.go("staff.html"); return false; }
-    var prev = clearance;
+    let prev = clearance;
     activerStaff(true);
     clearance = niveauVu();
     sessionChangee(prev);
@@ -1654,7 +1656,7 @@
     return true;
   };
   S.quitterModeStaff = function () {
-    var prev = clearance;
+    let prev = clearance;
     activerStaff(false);
     store.del("s73.voir", true);
     if (sess.mode === "demo") { store.del("s73.demo.staff", true); passerEnDemo(); }
@@ -1670,7 +1672,7 @@
   });
   doc.addEventListener("change", function (e) {
     if (e.target.id === "sb-alerte") {
-      var v = e.target.value;
+      let v = e.target.value;
       e.target.value = D.config.alerte;
       S.proposerAlerte(v);
     } else if (e.target.id === "sb-voir") {
@@ -1678,14 +1680,22 @@
     }
   });
 
-  var chargerSession = function () {
+  // Adresse relative : sur un hébergement sans serveur (Live Server, fichiers
+  // simples), elle tombe sur public/api/contenu.json, qui répond « demo »
+  // sans erreur 404. Sur Cloudflare, le Worker répond à sa place.
+  let chargerSession = function () {
     if (BUNDLE || location.protocol === "file:") { passerEnDemo(); return Promise.resolve(); }
-    var ctrl = window.AbortController ? new AbortController() : null;
-    var minuteur = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
-    return fetch("/api/contenu", { credentials: "same-origin", headers: { accept: "application/json" }, signal: ctrl ? ctrl.signal : undefined })
+    let ctrl = window.AbortController ? new AbortController() : null;
+    let minuteur = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return fetch("api/contenu.json", { credentials: "same-origin", cache: "no-store", headers: { accept: "application/json" }, signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
       .then(function (p) {
         clearTimeout(minuteur);
+        if (p && p.mode === "demo") {
+          if (window.console) console.info("Site-73 : aucun serveur sur cet hébergement, le site passe en mode démonstration.");
+          passerEnDemo();
+          return;
+        }
         if (!p || p.mode !== "live" || !p.data) throw new Error("réponse inattendue");
         appliquerContenu(p);
         sess.mode = "live";
@@ -1701,11 +1711,11 @@
       })
       .catch(function () { clearTimeout(minuteur); passerEnDemo(); });
   };
-  var apresSession = function () {
+  let apresSession = function () {
     alertLevel = D.config.alerte;
     applyAlert();
     // Le staff a changé l'alerte depuis la dernière visite : alarme une fois.
-    var vue = store.get("s73.alerte.vue");
+    let vue = store.get("s73.alerte.vue");
     if (vue && vue !== alertLevel) setTimeout(function () { S.alarme(alertLevel); }, BUNDLE || booting || bootPending ? 3200 : 700);
     else store.set("s73.alerte.vue", alertLevel);
     doc.querySelectorAll("[data-last-update]").forEach(function (el) {
@@ -1713,7 +1723,7 @@
     });
     applySessionUI();
   };
-  var MESSAGES = {
+  let MESSAGES = {
     ok: [false, function () { return "<b>Connecté · " + esc(sess.user ? sess.user.nom : "") + ".</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + ")."; }],
     fermee: [false, "<b>Déconnecté.</b> À bientôt au Site-73."],
     annulee: [true, "<b>Connexion annulée.</b>"],
@@ -1722,35 +1732,35 @@
     discord: [true, "<b>Discord n'a pas répondu.</b> Réessaie dans un instant."],
     config: [true, "<b>Connexion indisponible.</b> La connexion Discord n'est pas encore configurée sur ce site."]
   };
-  var messageConnexion = function () {
-    var q = /[?&]connexion=([a-z]+)/.exec(location.search);
+  let messageConnexion = function () {
+    let q = /[?&]connexion=([a-z]+)/.exec(location.search);
     if (!q || !MESSAGES[q[1]]) return;
-    var m = MESSAGES[q[1]];
+    let m = MESSAGES[q[1]];
     setTimeout(function () { S.toast(typeof m[1] === "function" ? m[1]() : m[1], { warn: m[0], duration: 6000 }); }, booting ? 2600 : 300);
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { /* ignoré */ }
   };
 
   /* ---------- Apparitions au défilement & compteurs ------------------ */
-  var LISTES = ".cells, .sectors, .groups, .units, .steps, .badges, .evt-list, .tl, .articles, .codes, .clearance, .classes, .pclasses, .glossary, .zone-index, .st-list, .comms, .stats, .seen-grid, .faq, .plan-list, .status, .hero__facts, .st-journal, .ticks";
-  var BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .cons__card, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
-  var observateur = null;
-  var compter = function (el) {
+  let LISTES = ".cells, .sectors, .groups, .units, .steps, .badges, .evt-list, .tl, .articles, .codes, .clearance, .classes, .pclasses, .glossary, .zone-index, .st-list, .comms, .stats, .seen-grid, .faq, .plan-list, .status, .hero__facts, .st-journal, .ticks";
+  let BLOCS = ".sec__head, .sec__row, .memo, .daily, .next, .toolbar, .map-layout, .dept, .quiz, .crt, .creator, .gen, .m914-layout, .g173, .simon, .pa, .phon, .proc, .cta-band, .evt-hero, .cal, .table-wrap, .rules-toc, .st-alerte, .cons__card, .idcard-stage, .settings, .compte, .proto-ctrl, .game-side, .creator__caption, .output";
+  let observateur = null;
+  let compter = function (el) {
     if (reduced || el.getAttribute("data-compte")) return;
-    var txt = el.textContent, m = /\d[\d\s  ]*/.exec(txt);
+    let txt = el.textContent, m = /\d[\d\s  ]*/.exec(txt);
     if (!m) return;
-    var cible = parseInt(m[0].replace(/\D/g, ""), 10);
+    let cible = parseInt(m[0].replace(/\D/g, ""), 10);
     if (!(cible > 1)) return;
     el.setAttribute("data-compte", "1");
-    var avant = txt.slice(0, m.index), apres = txt.slice(m.index + m[0].length), debut = null;
-    var etape = function (t) {
+    let avant = txt.slice(0, m.index), apres = txt.slice(m.index + m[0].length), debut = null;
+    let etape = function (t) {
       if (debut === null) debut = t;
-      var k = Math.min(1, (t - debut) / 1100), v = Math.round(cible * (1 - Math.pow(1 - k, 3)));
+      let k = Math.min(1, (t - debut) / 1100), v = Math.round(cible * (1 - Math.pow(1 - k, 3)));
       el.textContent = avant + v.toLocaleString("fr-FR").replace(/ /g, " ") + (m[0].match(/\s$/) ? " " : "") + apres;
       if (k < 1) requestAnimationFrame(etape);
     };
     requestAnimationFrame(etape);
   };
-  var reveler = function (el) {
+  let reveler = function (el) {
     if (el.classList.contains("rv-wait")) {
       Array.prototype.forEach.call(el.children, function (c, i) { c.style.setProperty("--i", Math.min(i, 14)); });
       el.classList.remove("rv-wait");
@@ -1776,8 +1786,8 @@
         });
       }, { rootMargin: "0px 0px -8% 0px" });
     }
-    var h = window.innerHeight || 800;
-    var preparer = function (el, cls) {
+    let h = window.innerHeight || 800;
+    let preparer = function (el, cls) {
       if (el.getAttribute("data-rv") || el.closest(".rv-wait, .rv-wait-b, [hidden]")) return;
       el.setAttribute("data-rv", "1");
       el.classList.add(cls);
@@ -1800,7 +1810,7 @@
     clearTimeout(liste.__rv);
     liste.__rv = setTimeout(function () { liste.classList.remove("rv-go"); }, 2200);
   };
-  var reinitAnimations = function (zone) {
+  let reinitAnimations = function (zone) {
     zone.querySelectorAll("[data-rv]").forEach(function (el) {
       el.removeAttribute("data-rv");
       el.classList.remove("rv-wait", "rv-wait-b", "rv-go", "rv-go-b");
@@ -1812,12 +1822,12 @@
   /* ---------- Mode staff : sas, alarme, effets ------------------------ */
   // Écran plein « Accès autorisé » / « Mode staff désactivé »
   S.animStaff = function (sens) {
-    var nom = sess.user ? sess.user.nom : "";
-    var msg = sens === "on"
+    let nom = sess.user ? sess.user.nom : "";
+    let msg = sens === "on"
       ? "<b>Mode staff activé.</b> Les commandes du staff apparaissent en haut de chaque page. Tu peux prévisualiser le site niveau par niveau."
       : "<b>Mode staff désactivé.</b> Tu vois l'intranet comme les membres.";
     if (reduced) { S.toast(msg); S.sfx(sens === "on" ? "ok" : "tick"); return; }
-    var el = doc.createElement("div");
+    let el = doc.createElement("div");
     el.className = "acces acces--" + sens;
     el.setAttribute("aria-hidden", "true");
     el.innerHTML = '<div class="acces__vol acces__vol--h"></div><div class="acces__vol acces__vol--b"></div>' +
@@ -1832,11 +1842,11 @@
   };
   // Alarme quand le niveau d'alerte officiel change
   S.alarme = function (level) {
-    var A = D.alertes[level];
+    let A = D.alertes[level];
     if (!A) return;
     try { store.set("s73.alerte.vue", level); } catch (e) { /* ignoré */ }
     if (reduced) return;
-    var el = doc.createElement("div");
+    let el = doc.createElement("div");
     el.className = "alarme";
     el.setAttribute("aria-hidden", "true");
     el.style.setProperty("--c", "var(--a-" + level + ")");
@@ -1850,11 +1860,11 @@
   };
 
   // Barre de progression de lecture sous l'en-tête
-  var prog = null, progRaf = 0;
-  var majProgression = function () {
+  let prog = null, progRaf = 0;
+  let majProgression = function () {
     progRaf = 0;
     if (!prog) return;
-    var max = doc.documentElement.scrollHeight - window.innerHeight;
+    let max = doc.documentElement.scrollHeight - window.innerHeight;
     prog.style.transform = "scaleX(" + (max > 0 ? Math.min(1, window.scrollY / max) : 0).toFixed(4) + ")";
   };
   window.addEventListener("scroll", function () { if (!progRaf) progRaf = requestAnimationFrame(majProgression); }, { passive: true });
@@ -1863,30 +1873,30 @@
   // Onde au clic sur les boutons
   doc.addEventListener("pointerdown", function (e) {
     if (reduced) return;
-    var b = e.target.closest(".btn, .seg button, .cons__nav button, .cons__rac, .staffbar__btn");
+    let b = e.target.closest(".btn, .seg button, .cons__nav button, .cons__rac, .staffbar__btn");
     if (!b || b.disabled) return;
-    var r = b.getBoundingClientRect();
-    var zone = doc.createElement("span");
+    let r = b.getBoundingClientRect();
+    let zone = doc.createElement("span");
     zone.className = "onde";
     zone.setAttribute("aria-hidden", "true");
-    var t = Math.max(r.width, r.height) * 2.2;
+    let t = Math.max(r.width, r.height) * 2.2;
     zone.innerHTML = '<i style="width:' + t + "px;height:" + t + "px;left:" + (e.clientX - r.left - t / 2) + "px;top:" + (e.clientY - r.top - t / 2) + 'px"></i>';
     b.appendChild(zone);
     setTimeout(function () { zone.remove(); }, 700);
   });
 
   // Lueur qui suit le pointeur sur les cartes
-  var LUEUR = ".stat, .st-item, .badge, .cons__card, .cons__rac, .status__cell, .unit, .group, .step, .evt, .article, .code-card";
-  var lueurRaf = 0, lueurEv = null;
+  let LUEUR = ".stat, .st-item, .badge, .cons__card, .cons__rac, .status__cell, .unit, .group, .step, .evt, .article, .code-card";
+  let lueurRaf = 0, lueurEv = null;
   doc.addEventListener("pointermove", function (e) {
     if (reduced || e.pointerType === "touch") return;
     lueurEv = e;
     if (lueurRaf) return;
     lueurRaf = requestAnimationFrame(function () {
       lueurRaf = 0;
-      var el = lueurEv.target.closest && lueurEv.target.closest(LUEUR);
+      let el = lueurEv.target.closest && lueurEv.target.closest(LUEUR);
       if (!el) return;
-      var r = el.getBoundingClientRect();
+      let r = el.getBoundingClientRect();
       el.style.setProperty("--lx", (lueurEv.clientX - r.left) + "px");
       el.style.setProperty("--ly", (lueurEv.clientY - r.top) + "px");
       el.classList.add("lueur");
@@ -1894,37 +1904,37 @@
   }, { passive: true });
 
   // Neige sur l'accueil (le site est à 2 140 m d'altitude)
-  var neige = function () {
-    var hero = doc.querySelector(".hero");
+  let neige = function () {
+    let hero = doc.querySelector(".hero");
     if (!hero || hero.querySelector(".neige")) return;
-    var cv = doc.createElement("canvas");
+    let cv = doc.createElement("canvas");
     cv.className = "neige";
     cv.setAttribute("aria-hidden", "true");
     hero.insertBefore(cv, hero.firstChild);
-    var ctx = cv.getContext && cv.getContext("2d");
+    let ctx = cv.getContext && cv.getContext("2d");
     if (!ctx) return;
-    var W = 0, H = 0, dpr = 1, flocons = [], vent = 0;
-    var taille = function () {
+    let W = 0, H = 0, dpr = 1, flocons = [], vent = 0;
+    let taille = function () {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = hero.clientWidth; H = hero.clientHeight;
       cv.width = W * dpr; cv.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var n = Math.round(Math.min(90, W * H / 9000));
+      let n = Math.round(Math.min(90, W * H / 9000));
       while (flocons.length < n) flocons.push({ x: Math.random() * W, y: Math.random() * H, r: .6 + Math.random() * 1.8, v: .25 + Math.random() * .7, o: .2 + Math.random() * .5, p: Math.random() * 6.28 });
       flocons.length = n;
     };
     taille();
     window.addEventListener("resize", taille);
-    hero.addEventListener("pointermove", function (e) { var r = hero.getBoundingClientRect(); vent = ((e.clientX - r.left) / r.width - .5) * 1.2; });
-    var visible = true;
+    hero.addEventListener("pointermove", function (e) { let r = hero.getBoundingClientRect(); vent = ((e.clientX - r.left) / r.width - .5) * 1.2; });
+    let visible = true;
     if (window.IntersectionObserver) new IntersectionObserver(function (en) { visible = en[0].isIntersecting; }).observe(hero);
-    var boucle = function () {
+    let boucle = function () {
       requestAnimationFrame(boucle);
       if (!visible || doc.hidden || root.getAttribute("data-motion") === "reduit") { if (cv.style.opacity !== "0") cv.style.opacity = "0"; return; }
       cv.style.opacity = "";
       ctx.clearRect(0, 0, W, H);
-      for (var i = 0; i < flocons.length; i++) {
-        var f = flocons[i];
+      for (let i = 0; i < flocons.length; i++) {
+        let f = flocons[i];
         f.p += .01;
         f.y += f.v;
         f.x += Math.sin(f.p) * .3 + vent * f.v;
@@ -1947,11 +1957,11 @@
   prog = doc.querySelector(".lecture i");
   majProgression();
   neige();
-  var vig = doc.createElement("div");
+  let vig = doc.createElement("div");
   vig.className = "vignette";
   vig.setAttribute("aria-hidden", "true");
   doc.body.appendChild(vig);
-  var cadre = doc.createElement("div");
+  let cadre = doc.createElement("div");
   cadre.className = "cadre-staff";
   cadre.setAttribute("aria-hidden", "true");
   cadre.innerHTML = "<span>Mode staff</span>";
@@ -1962,11 +1972,11 @@
   updateBadgeCount();
   applyDiscord();
   doc.querySelectorAll("[data-last-update]").forEach(function (el) {
-    var last = D.archives.map(function (a) { return a.date; }).sort().pop();
+    let last = D.archives.map(function (a) { return a.date; }).sort().pop();
     el.textContent = fmtDate(last);
   });
   doc.querySelectorAll("[data-emblem]").forEach(function (el) { el.innerHTML = S.emblem(); });
-  var fill = function (sel, val) { doc.querySelectorAll(sel).forEach(function (el) { el.textContent = val; }); };
+  let fill = function (sel, val) { doc.querySelectorAll(sel).forEach(function (el) { el.textContent = val; }); };
   fill("[data-scp-count]", D.scp.length);
   fill("[data-personnel]", D.config.personnelActif);
   fill("[data-dept-count]", D.departements.length);
@@ -1980,16 +1990,16 @@
   setInterval(tick, 1000);
 
   if (BUNDLE) {
-    var h0 = (location.hash || "").slice(1);
-    var start = "accueil", sub = "";
+    let h0 = (location.hash || "").slice(1);
+    let start = "accueil", sub = "";
     if (byId[h0]) start = h0;
     else if (/^scp-/.test(h0)) { start = "confinement"; sub = h0; }
     else if (/^zone-/.test(h0)) { start = "plan"; sub = h0; }
     else if (/^dept-/.test(h0)) { start = "personnel"; sub = h0; }
     else if (/^evt-/.test(h0)) { start = "evenements"; sub = h0; }
     else if (h0) {
-      var t0 = doc.getElementById(h0);
-      var v0 = t0 && t0.closest("main[data-view]");
+      let t0 = doc.getElementById(h0);
+      let v0 = t0 && t0.closest("main[data-view]");
       if (v0) { start = v0.getAttribute("data-view"); sub = h0; }
     }
     currentPage = start;
@@ -2018,7 +2028,7 @@
   // Appelé par les modules de pages une fois tout construit.
   S.ready = function () {
     carnet.pages[currentPage] = carnet.pages[currentPage] || Date.now();
-    var hr = S.siteHour();
+    let hr = S.siteHour();
     if (hr >= 0 && hr < 5) carnet.flags.nuit = true;
     saveCarnet();
     badgeReady = true;

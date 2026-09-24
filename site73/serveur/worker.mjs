@@ -1,6 +1,8 @@
 // Worker Cloudflare du Site-73.
 // Les pages de public/ sont servies directement par Cloudflare (fichiers
-// statiques). Le Worker ne répond qu'aux routes /api/… ci-dessous.
+// statiques). Le Worker répond aux routes /api/… ci-dessous (wrangler.jsonc :
+// run_worker_first), avant les fichiers. Aussi utilisé par Cloudflare Pages
+// via functions/api/[[chemin]].js.
 import { initialiser, json } from "./commun.mjs";
 import contenu from "./routes/contenu.mjs";
 import connexion from "./routes/connexion.mjs";
@@ -10,6 +12,7 @@ import staff from "./routes/staff.mjs";
 
 const ROUTES = {
   "/api/contenu": contenu,
+  "/api/contenu.json": contenu, // adresse utilisée par les pages (voir public/api/contenu.json)
   "/api/auth/login": connexion,
   "/api/auth/callback": retourDiscord,
   "/api/auth/logout": deconnexion,

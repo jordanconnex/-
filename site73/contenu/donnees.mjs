@@ -21,9 +21,9 @@ const donnees = {
   /* ---------------------------------------------------------------------- */
   config: {
     nom: "Site-73",
-    // Lien d'invitation Discord du serveur. Laisse vide tant qu'il n'est pas prêt :
-    // les boutons Discord afficheront alors « Lien bientôt disponible ».
-    discord: "",
+    // Lien d'invitation Discord du serveur (boutons « Rejoindre le Discord »,
+    // pied de page). Laisse vide pour afficher « lien bientôt disponible ».
+    discord: "https://discord.gg/RqM7Nvam2R",
     // Niveau d'alerte de départ : vert | jaune | orange | rouge | noir.
     // Une fois le site en ligne, le staff le change depuis l'espace staff.
     alerte: "vert",
