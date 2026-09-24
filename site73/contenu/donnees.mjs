@@ -27,6 +27,10 @@ const donnees = {
     // Niveau d'alerte de départ : vert | jaune | orange | rouge | noir.
     // Une fois le site en ligne, le staff le change depuis l'espace staff.
     alerte: "vert",
+    // Animations : "systeme" suit l'option « réduire les animations » de l'appareil
+    // du visiteur (il peut les réactiver en un clic) ; "toujours" les active pour tous.
+    // Chacun peut aussi choisir dans Mon carnet → Réglages.
+    animations: "systeme",
     // Habilitation utilisée seulement en mode démonstration (aperçu sans serveur).
     // En ligne, l'habilitation vient des rôles Discord et de l'espace staff.
     habilitationParDefaut: 2,

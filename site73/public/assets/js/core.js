@@ -12,7 +12,8 @@
   var doc = document;
   var root = doc.documentElement;
   var BUNDLE = !!window.S73_BUNDLE;
-  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var systemeReduit = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var reduced = systemeReduit; // recalculé dès que le stockage est disponible (voir « Animations »)
 
   /* ---------- Stockage (toujours protégé) ---------------------------- */
   var store = {
@@ -34,6 +35,23 @@
     }
   };
   S.store = store;
+
+  /* ---------- Animations -------------------------------------------- */
+  // Choix du visiteur (on | off), sinon réglage du site, sinon préférence de l'appareil.
+  var choixMouvement = store.get("s73.motion");
+  var calculerMouvement = function () {
+    reduced = choixMouvement === "off" || (choixMouvement !== "on" && D.config.animations !== "toujours" && systemeReduit);
+    root.setAttribute("data-motion", reduced ? "reduit" : "normal");
+  };
+  calculerMouvement();
+  S.getMotion = function () { return choixMouvement || "auto"; };
+  S.systemeReduit = function () { return systemeReduit; };
+  S.setMotion = function (v) {
+    choixMouvement = v === "on" || v === "off" ? v : null;
+    if (choixMouvement) store.set("s73.motion", choixMouvement); else store.del("s73.motion");
+    calculerMouvement();
+    doc.dispatchEvent(new CustomEvent("s73:settings", { detail: { key: "motion", value: S.getMotion() } }));
+  };
 
   /* ---------- Utilitaires -------------------------------------------- */
   var esc = function (s) {
@@ -385,7 +403,15 @@
     }
     var t = doc.createElement("div");
     t.className = "toast" + (opts.warn ? " toast--warn" : "") + (opts.medal ? " toast--medal" : "");
-    t.innerHTML = (opts.medal ? '<span class="toast__medal">' + esc(opts.medal) + "</span>" : "") + "<span>" + html + "</span>";
+    t.innerHTML = (opts.medal ? '<span class="toast__medal">' + esc(opts.medal) + "</span>" : "") + "<span>" + html +
+      (opts.actions ? '<span class="toast__acts">' + opts.actions.map(function (a, i) { return '<button type="button" data-i="' + i + '">' + esc(a[0]) + "</button>"; }).join("") + "</span>" : "") + "</span>";
+    if (opts.actions) t.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-i]");
+      if (!b) return;
+      opts.actions[+b.getAttribute("data-i")][1]();
+      t.classList.add("is-out");
+      setTimeout(function () { t.remove(); }, 320);
+    });
     toastZone.appendChild(t);
     while (toastZone.children.length > 3) toastZone.removeChild(toastZone.firstChild);
     setTimeout(function () {
@@ -1563,6 +1589,19 @@
     badgeReady = true;
     if (BUNDLE || bootPending) boot();
     messageConnexion();
+    // L'appareil demande moins d'animations : on le signale une fois par session.
+    if (reduced && !choixMouvement && systemeReduit && !store.get("s73.motion.info", true)) {
+      store.set("s73.motion.info", "1", true);
+      setTimeout(function () {
+        S.toast("<b>Animations réduites.</b> Ton appareil demande moins d'animations, alors l'intranet les a coupées. Tu peux les réactiver.", {
+          duration: 15000,
+          actions: [
+            ["Activer les animations", function () { S.setMotion("on"); S.toast("<b>Animations activées.</b> Tu peux changer ce choix dans Mon carnet → Réglages."); }],
+            ["Garder réduites", function () { S.setMotion("off"); }]
+          ]
+        });
+      }, 900);
+    }
     setTimeout(function () { if (!booting) checkBadges(); }, 700);
     if (BUNDLE) {
       if (S._startHash) setTimeout(function () { scrollToHash(S._startHash); }, 80);

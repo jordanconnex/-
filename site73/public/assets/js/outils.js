@@ -10,7 +10,8 @@
   var U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
   var $ = function (s, r) { return (r || doc).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
-  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduced = document.documentElement.getAttribute("data-motion") === "reduit";
+  document.addEventListener("s73:settings", function () { reduced = document.documentElement.getAttribute("data-motion") === "reduit"; });
 
   var dayKey;
   try {
@@ -787,9 +788,26 @@
       return '<div class="setting"><div><b id="set-' + s[0] + '">' + s[1] + "</b><span>" + s[2] + "</span></div>" +
         '<button type="button" class="switch" role="switch" aria-checked="' + on + '" aria-labelledby="set-' + s[0] + '" data-set="' + s[0] + '"><i></i></button></div>';
     }).join("") +
+      '<div class="setting"><div><b id="set-motion">Animations</b><span data-motion-txt></span></div>' +
+      '<div class="seg" role="radiogroup" aria-labelledby="set-motion">' + [["auto", "Système"], ["on", "Activées"], ["off", "Réduites"]].map(function (x) {
+        return '<button type="button" role="radio" data-motion="' + x[0] + '" aria-checked="' + (S.getMotion() === x[0]) + '" style="--c: var(--signal)">' + x[1] + "</button>";
+      }).join("") + "</div></div>" +
       '<div class="setting"><div><b>Réinitialiser mon carnet</b><span>Efface distinctions, dossiers lus, suivis et planning sur cet appareil.</span></div>' +
       '<div class="setting__act"><button type="button" class="btn btn--sm btn--danger" data-reset>Réinitialiser</button></div></div>';
+    var motionTxt = function () {
+      var el = $("[data-motion-txt]", setBox);
+      if (el) el.textContent = "Défilement, rotations, transitions et portes blindées." +
+        (S.systemeReduit() ? " Ton appareil demande moins d'animations : « Système » les coupe." : " « Système » suit le réglage de ton appareil.");
+    };
+    motionTxt();
     setBox.addEventListener("click", function (e) {
+      var mo = e.target.closest("[data-motion]");
+      if (mo) {
+        S.setMotion(mo.getAttribute("data-motion"));
+        $$("[data-motion]", setBox).forEach(function (b) { b.setAttribute("aria-checked", String(b === mo)); });
+        S.toast("<b>Animations : " + mo.textContent.toLowerCase() + ".</b>");
+        return;
+      }
       var sw = e.target.closest("[data-set]");
       if (sw) {
         var k = sw.getAttribute("data-set"), on = sw.getAttribute("aria-checked") !== "true";

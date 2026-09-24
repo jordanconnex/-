@@ -10,7 +10,8 @@
   var U = S.util, esc = U.esc, norm = U.norm, pad = U.pad;
   var $ = function (s, r) { return (r || doc).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
-  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduced = document.documentElement.getAttribute("data-motion") === "reduit";
+  document.addEventListener("s73:settings", function () { reduced = document.documentElement.getAttribute("data-motion") === "reduit"; });
 
   var CLASS_ORDER = ["sur", "euclide", "keter", "thaumiel", "attente", "neutralise"];
   var DANGER_VAR = ["", "var(--d1)", "var(--d2)", "var(--d3)", "var(--d4)"];
