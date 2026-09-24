@@ -1,9 +1,9 @@
 // Déploiement Cloudflare du Site-73 (Workers + fichiers statiques).
 // Sur Cloudflare : Workers & Pages → Create → Import a repository,
-// « Root directory » = site73. Le reste est lu ici.
+// « Root directory » = site-73. Le reste est lu ici.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "site73",
+  "name": "site-73",
   "main": "serveur/worker.mjs",
   "compatibility_date": "2026-06-01",
 

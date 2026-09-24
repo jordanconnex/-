@@ -50,17 +50,17 @@ Dans Discord : **Paramètres → Avancés → Mode développeur**. Ensuite :
 1. Crée un compte gratuit sur <https://dash.cloudflare.com>.
 2. **Workers & Pages → Create application → Import a repository**. Connecte ton compte GitHub et choisis ce dépôt.
 3. Réglages du projet :
-   - **Project name** : `site73`. Ce nom doit être identique au champ `name` de `wrangler.jsonc`, sinon le déploiement échoue.
-   - **Root directory** (dans *Advanced settings*) : `site73`.
+   - **Project name** : `site-73`. Ce nom doit être identique au champ `name` de `wrangler.jsonc`, sinon le déploiement échoue.
+   - **Root directory** (dans *Advanced settings*) : `site-73`.
    - **Build command** : `npm run build`.
    - **Deploy command** : `npx wrangler deploy` (valeur proposée par défaut).
 4. **Deploy**. Au premier déploiement, Cloudflare crée tout seul l'espace de stockage KV `SITE73` qui garde les membres, l'alerte, les communiqués, les événements et le journal.
-5. L'adresse du site s'affiche, par exemple `https://site73.ton-compte.workers.dev`.
+5. L'adresse du site s'affiche, par exemple `https://site-73.ton-compte.workers.dev`.
 
-Le reste (fichiers publiés, Worker, stockage) est lu dans `site73/wrangler.jsonc`. À chaque envoi sur la branche de production (`main` par défaut), Cloudflare redéploie le site.
+Le reste (fichiers publiés, Worker, stockage) est lu dans `site-73/wrangler.jsonc`. À chaque envoi sur la branche de production (`main` par défaut), Cloudflare redéploie le site.
 
 ### 4. Variables et secrets
-1. Dans Cloudflare : **Workers & Pages → site73 → Settings → Variables and Secrets → Add**. Choisis le type **Secret** pour `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (et, si tu veux, pour toutes les autres).
+1. Dans Cloudflare : **Workers & Pages → site-73 → Settings → Variables and Secrets → Add**. Choisis le type **Secret** pour `DISCORD_CLIENT_SECRET` et `SESSION_SECRET` (et, si tu veux, pour toutes les autres).
 
 | Variable | Valeur |
 |---|---|
@@ -74,11 +74,11 @@ Le reste (fichiers publiés, Worker, stockage) est lu dans `site73/wrangler.json
 | `HABILITATION_PAR_DEFAUT` | *(facultatif)* niveau des membres sans rôle, 1 par défaut |
 | `SITE_URL` | *(facultatif)* adresse du site si tu utilises ton propre nom de domaine |
 
-2. Dans Discord (**OAuth2 → Redirects**), ajoute `https://site73.ton-compte.workers.dev/api/auth/callback`, avec l'adresse réelle de l'étape 3.
+2. Dans Discord (**OAuth2 → Redirects**), ajoute `https://site-73.ton-compte.workers.dev/api/auth/callback`, avec l'adresse réelle de l'étape 3.
 
 Les variables s'appliquent tout de suite, et `wrangler.jsonc` (`"keep_vars": true`) les conserve à chaque déploiement.
 
-**Si le stockage n'a pas été créé tout seul** (erreur « KV namespace » au déploiement) : **Storage & Databases → KV → Create**, nom `site73`. Copie son identifiant, puis dans `wrangler.jsonc` remplace `{ "binding": "SITE73" }` par `{ "binding": "SITE73", "id": "<identifiant>" }`.
+**Si le stockage n'a pas été créé tout seul** (erreur « KV namespace » au déploiement) : **Storage & Databases → KV → Create**, nom `site-73`. Copie son identifiant, puis dans `wrangler.jsonc` remplace `{ "binding": "SITE73" }` par `{ "binding": "SITE73", "id": "<identifiant>" }`.
 
 ### Limites de l'offre gratuite
 Les pages et fichiers statiques sont illimités. Chaque page ouverte appelle une fois le Worker (100 000 appels par jour), qui fait deux lectures KV (100 000 par jour). Chaque connexion Discord et chaque action du staff font une ou deux écritures (1 000 par jour). C'est largement assez pour un serveur de RP.
@@ -86,7 +86,7 @@ Les pages et fichiers statiques sont illimités. Chaque page ouverte appelle une
 Une modification du staff peut mettre jusqu'à une minute pour être vue partout dans le monde : c'est le délai de propagation de KV.
 
 ### Essayer en local (facultatif)
-Il faut [Node.js](https://nodejs.org) **22 ou plus** (vérifie avec `node -v`). Dans le terminal de VS Code, depuis le dossier `site73` :
+Il faut [Node.js](https://nodejs.org) **22 ou plus** (vérifie avec `node -v`). Dans le terminal de VS Code, depuis le dossier `site-73` :
 ```
 npm install
 cp .dev.vars.exemple .dev.vars
@@ -122,7 +122,7 @@ Ouvert sans serveur (fichier local, aperçu claude.ai, hébergement de fichiers 
 
 ## Structure
 ```
-site73/
+site-73/
   wrangler.jsonc, package.json  configuration Cloudflare
   .dev.vars.exemple             liste des variables et secrets
   contenu/donnees.mjs           contenu complet (privé)
