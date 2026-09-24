@@ -1,0 +1,4 @@
+{
+  "mode": "demo",
+  "info": "Aucun serveur sur cet hébergement : le site fonctionne en mode démonstration. Sur Cloudflare, le Worker répond à la place de ce fichier."
+}

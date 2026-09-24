@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Événements · Site-73</title>
+  <meta name="description" content="Calendrier des événements RP du Site-73 : sessions animées, formations, examens et recrutements, avec compte à rebours.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Événements · Site-73">
+  <meta property="og:description" content="Calendrier des événements RP du Site-73 : sessions animées, formations, examens et recrutements, avec compte à rebours.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="evenements">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="evenements">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">EVT</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Calendrier · Salle de briefing, niveau −1</p>
+          <h1 class="sign__title">Événements</h1>
+          <p class="sign__lede">Sessions animées, formations, examens et recrutements. Ajoute les événements à ton planning pour ne rien manquer.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-EVT-006</dd></div>
+          <div><dt>Programmés</dt><dd data-event-count>8</dd></div>
+          <div><dt>Fuseau</dt><dd>Paris</dd></div>
+          <div><dt>Mise à jour</dt><dd data-last-update></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" aria-label="Prochain événement">
+      <div class="wrap">
+        <div class="evt-hero" id="evt-next"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="programme" aria-labelledby="prog-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Programme</p>
+          <h2 class="h2" id="prog-title">Calendrier des sessions</h2>
+          <p class="sec__lede">Sélectionne un jour marqué pour aller à l'événement. Les horaires sont à l'heure de Paris.</p>
+        </div>
+        <div class="evt-layout">
+          <div class="cal" id="evt-cal"></div>
+          <div>
+            <div class="seg" id="evt-filters" role="group" aria-label="Filtrer les événements"></div>
+            <div class="evt-list" id="evt-list" style="margin-top: 16px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

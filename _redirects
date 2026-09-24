@@ -1,0 +1,12 @@
+# Le site Complexe 25 publie tout le dépôt : on bloque les fichiers privés du Site-73
+# (contenu classifié, code du serveur, scripts, configuration). Le Site-73 est hébergé
+# sur Cloudflare, qui ne publie que site-73/public.
+/site-73/contenu/*          /404   404!
+/site-73/serveur/*          /404   404!
+/site-73/scripts/*          /404   404!
+/site-73/node_modules/*     /404   404!
+/site-73/.wrangler/*        /404   404!
+/site-73/wrangler.jsonc     /404   404!
+/site-73/package.json       /404   404!
+/site-73/.dev.vars*         /404   404!
+/site-73/.env*              /404   404!

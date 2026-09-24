@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Personnel · Site-73</title>
+  <meta name="description" content="Départements, grades, niveaux d'habilitation, unités FIM et groupes d'intérêt du Site-73.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Personnel · Site-73">
+  <meta property="og:description" content="Départements, grades, niveaux d'habilitation, unités FIM et groupes d'intérêt du Site-73.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="personnel">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="personnel">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">RH</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Ressources humaines · Organigramme</p>
+          <h1 class="sign__title">Personnel</h1>
+          <p class="sign__lede">Neuf départements font tourner le Site-73. Choisis le tien, repère ton grade d'entrée et ton niveau d'habilitation.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-RH-002</dd></div>
+          <div><dt>Départements</dt><dd data-dept-count>9</dd></div>
+          <div><dt>Personnel actif</dt><dd data-personnel>412</dd></div>
+          <div><dt>Habilitation</dt><dd data-hab-name></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="departements" aria-labelledby="dept-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Organigramme</p>
+          <h2 class="h2" id="dept-title">Départements</h2>
+        </div>
+        <div class="dept">
+          <div class="dept__tabs" id="staff-tabs" role="tablist" aria-label="Départements"></div>
+          <div class="dept__panel" id="staff-panel" role="tabpanel" tabindex="0"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="habilitations" aria-labelledby="hab-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Accès à l'information</p>
+          <h2 class="h2" id="hab-title">Niveaux d'habilitation</h2>
+          <p class="sec__lede">Sur cet intranet, ton habilitation décide des passages que tu peux lire. En RP, elle dépend de ton grade et de ton département.</p>
+        </div>
+        <div class="clearance" id="staff-clearance"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="classes" aria-labelledby="pclass-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Exposition aux anomalies</p>
+          <h2 class="h2" id="pclass-title">Classes de personnel</h2>
+        </div>
+        <div class="pclasses" id="staff-classes"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="fim" aria-labelledby="fim-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Forces d'Intervention Mobile</p>
+          <h2 class="h2" id="fim-title">Unités FIM</h2>
+          <p class="sec__lede">Les unités d'élite de la Fondation. Deux sont stationnées en permanence au Site-73, les autres interviennent sur appel. Rôle accessible sur whitelist.</p>
+        </div>
+        <ul class="units" id="staff-units"></ul>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="groupes" aria-labelledby="gi-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Hors Fondation</p>
+          <h2 class="h2" id="gi-title">Groupes d'intérêt</h2>
+          <p class="sec__lede">Organisations extérieures que tu croiseras en RP, surtout lors des événements.</p>
+        </div>
+        <div class="groups" id="staff-groups"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

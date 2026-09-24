@@ -1,0 +1,17 @@
+{
+  "name": "site-73",
+  "private": true,
+  "type": "module",
+  "description": "Site web du RP SCP Site-73 (Cloudflare Workers)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && wrangler dev",
+    "deploy": "node scripts/build.mjs && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

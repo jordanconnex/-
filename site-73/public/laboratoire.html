@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Laboratoire · Site-73</title>
+  <meta name="description" content="Outils RP du Site-73 : simulateur SCP-914, générateur de rapports d'incident et créateur de dossiers SCP avec caviardage.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Laboratoire · Site-73">
+  <meta property="og:description" content="Outils RP du Site-73 : simulateur SCP-914, générateur de rapports d'incident et créateur de dossiers SCP avec caviardage.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="laboratoire">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="laboratoire">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">3-14</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Département Scientifique · Niveau −3</p>
+          <h1 class="sign__title">Laboratoire</h1>
+          <p class="sign__lede">Trois outils pour le RP : des expériences avec SCP-914, un générateur de rapports et un créateur de dossier SCP.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-LAB-003</dd></div>
+          <div><dt>Salle</dt><dd>3-14</dd></div>
+          <div><dt>Habilitation</dt><dd data-hab-name></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="scp914" aria-labelledby="m914-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Salle 3-14 · SCP-914</p>
+          <h2 class="h2" id="m914-title">L'Horlogerie</h2>
+          <p class="sec__lede">Place un objet dans la cabine d'entrée, choisis un réglage et remonte la clé. Chaque essai est consigné au registre de la session.</p>
+        </div>
+        <div class="m914-layout">
+          <div class="m914" id="m914">
+            <svg viewBox="0 0 600 300" role="img" aria-label="Schéma de SCP-914 : cabine d'entrée, mécanisme d'horlogerie avec son cadran, cabine de sortie">
+              <rect class="m914__pipe" x="150" y="168" width="40" height="24"/>
+              <rect class="m914__pipe" x="410" y="168" width="40" height="24"/>
+              <rect class="m914__cabin" x="20" y="96" width="130" height="178"/>
+              <rect class="m914__window" x="44" y="130" width="82" height="118"/>
+              <circle class="m914__lamp" cx="85" cy="113" r="6"/>
+              <text class="m914__label" x="85" y="292" text-anchor="middle">ENTRÉE</text>
+              <rect class="m914__cabin" x="450" y="96" width="130" height="178"/>
+              <rect class="m914__window" x="474" y="130" width="82" height="118"/>
+              <circle class="m914__lamp" cx="515" cy="113" r="6"/>
+              <text class="m914__label" x="515" y="292" text-anchor="middle">SORTIE</text>
+              <rect class="m914__housing" x="190" y="24" width="220" height="250"/>
+              <g fill="#3A4C53"><circle cx="200" cy="34" r="3"/><circle cx="400" cy="34" r="3"/><circle cx="200" cy="264" r="3"/><circle cx="400" cy="264" r="3"/></g>
+              <path d="M246 104 A54 54 0 0 1 354 104" fill="none" stroke="#3A4C53" stroke-width="2"/>
+              <text class="m914__dl" data-dial="0" x="250" y="78" text-anchor="middle">Brut</text>
+              <text class="m914__dl" data-dial="1" x="270" y="56" text-anchor="middle">Grossier</text>
+              <text class="m914__dl" data-dial="2" x="300" y="46" text-anchor="middle">1:1</text>
+              <text class="m914__dl" data-dial="3" x="330" y="56" text-anchor="middle">Fin</text>
+              <text class="m914__dl" data-dial="4" x="352" y="78" text-anchor="middle">Très fin</text>
+              <circle class="m914__knob" cx="300" cy="104" r="20"/>
+              <g class="m914__needle"><line x1="300" y1="104" x2="300" y2="70"/></g>
+              <circle cx="300" cy="104" r="5" fill="#7A8E8C"/>
+              <g class="m914__gear m914__g1"><circle cx="258" cy="190" r="40" stroke-width="10" stroke-dasharray="7 6.23"/><circle cx="258" cy="190" r="29" stroke-width="3"/><circle class="m914__hub" cx="258" cy="190" r="8"/></g>
+              <g class="m914__gear m914__g2"><circle cx="342" cy="160" r="28" stroke-width="10" stroke-dasharray="7 6.53"/><circle cx="342" cy="160" r="19" stroke-width="3"/><circle class="m914__hub" cx="342" cy="160" r="6"/></g>
+              <g class="m914__gear m914__g3"><circle cx="350" cy="226" r="20" stroke-width="9" stroke-dasharray="7 6.96"/><circle cx="350" cy="226" r="12" stroke-width="2"/><circle class="m914__hub" cx="350" cy="226" r="4"/></g>
+              <g class="m914__key"><circle cx="222" cy="120" r="8" fill="none" stroke="#A5B5B3" stroke-width="3"/><rect x="220" y="127" width="4" height="22" fill="#A5B5B3"/><rect x="224" y="141" width="6" height="3" fill="#A5B5B3"/><rect x="224" y="146" width="4" height="3" fill="#A5B5B3"/></g>
+              <text class="m914__plate" x="300" y="258" text-anchor="middle">SCP-914</text>
+            </svg>
+          </div>
+          <div class="m914-ctrl">
+            <label class="field"><span>Objet placé en entrée</span><select class="select" id="m914-obj"></select></label>
+            <label class="field" id="m914-custom-wrap" hidden><span>Nom de l'objet</span><input class="input" id="m914-custom" maxlength="40" placeholder="ex. une chaussure" autocomplete="off"></label>
+            <div class="field"><span>Réglage</span><div class="seg" id="m914-reg" role="radiogroup" aria-label="Réglage de SCP-914"></div></div>
+            <button type="button" class="btn btn--signal" id="m914-run">Remonter la clé</button>
+            <div class="m914-out" id="m914-out" aria-live="polite"><p class="label">Cabine de sortie</p><p class="muted">En attente d'une expérience.</p></div>
+          </div>
+        </div>
+        <div style="margin-top: 24px">
+          <div class="sec__row" style="margin-bottom: 12px"><p class="label">Registre de la session</p><button type="button" class="btn btn--sm" id="m914-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg>Copier le registre</button></div>
+          <ul class="m914-log" id="m914-log"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="rapport" aria-labelledby="rap-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Rédaction</p>
+          <h2 class="h2" id="rap-title">Générateur de rapports</h2>
+          <p class="sec__lede">Remplis le formulaire : le rapport officiel se met en page à droite. Copie-le ensuite pour Discord.</p>
+        </div>
+        <div class="gen">
+          <form class="gen__form" id="rap-form" novalidate>
+            <label class="field"><span>Type de rapport</span><select class="select" id="rap-type"><option value="incident">Rapport d'incident</option><option value="experience">Journal d'expérience</option><option value="mission">Rapport de mission</option></select></label>
+            <label class="field"><span>Date et heure</span><input class="input" type="datetime-local" id="rap-date"></label>
+            <label class="field full"><span>Rédigé par</span><input class="input" id="rap-auteur" maxlength="80" autocomplete="off"></label>
+            <label class="field"><span>Lieu</span><select class="select" id="rap-zone"></select></label>
+            <label class="field"><span>Anomalie concernée</span><select class="select" id="rap-scp"></select></label>
+            <label class="field full"><span>Classification</span><select class="select" id="rap-niveau"></select></label>
+            <label class="field full"><span>Personnel impliqué</span><input class="input" id="rap-perso" maxlength="200" autocomplete="off"></label>
+            <label class="field full"><span id="rap-l1">Déroulement</span><textarea class="textarea" id="rap-deroul" rows="5" maxlength="1500"></textarea></label>
+            <label class="field full"><span id="rap-l2">Bilan</span><input class="input" id="rap-bilan" maxlength="300" autocomplete="off"></label>
+            <div class="gen__actions">
+              <button type="button" class="btn btn--signal" id="rap-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg>Copier pour Discord</button>
+              <button type="button" class="btn" id="rap-reset">Restaurer l'exemple</button>
+            </div>
+          </form>
+          <div class="gen__side">
+            <article class="doc paper gen__preview" id="rap-preview" aria-label="Aperçu du rapport"></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="createur" aria-labelledby="cre-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Proposition d'anomalie</p>
+          <h2 class="h2" id="cre-title">Créateur de dossier SCP</h2>
+          <p class="sec__lede">Rédige un dossier pour le RP. Les boutons N2 à N5 masquent le texte sélectionné sous ce niveau d'habilitation. Le curseur montre ce que voit chaque niveau.</p>
+        </div>
+        <div class="gen">
+          <form class="gen__form" id="cre-form" novalidate>
+            <label class="field"><span>Désignation</span><input class="input" id="cre-num" maxlength="24" autocomplete="off"></label>
+            <label class="field"><span>Surnom</span><input class="input" id="cre-nom" maxlength="48" autocomplete="off"></label>
+            <label class="field"><span>Classe</span><select class="select" id="cre-classe"></select></label>
+            <label class="field"><span>Menace</span><select class="select" id="cre-menace"></select></label>
+            <label class="field full"><span>Habilitation requise</span><select class="select" id="cre-niveau"></select></label>
+            <label class="field full"><span>Procédures de confinement</span><textarea class="textarea" id="cre-proc" rows="4" maxlength="1500"></textarea></label>
+            <div class="full"><span class="syntax"><span>Masquer :</span><button type="button" data-insert="2" data-target="proc">N2</button><button type="button" data-insert="3" data-target="proc">N3</button><button type="button" data-insert="4" data-target="proc">N4</button><button type="button" data-insert="5" data-target="proc">N5</button><button type="button" data-insert="sup" data-target="proc">[DONNÉES SUPPRIMÉES]</button></span></div>
+            <label class="field full"><span>Description</span><textarea class="textarea" id="cre-desc" rows="6" maxlength="2500"></textarea></label>
+            <div class="full"><span class="syntax"><span>Masquer :</span><button type="button" data-insert="2" data-target="desc">N2</button><button type="button" data-insert="3" data-target="desc">N3</button><button type="button" data-insert="4" data-target="desc">N4</button><button type="button" data-insert="5" data-target="desc">N5</button><button type="button" data-insert="sup" data-target="desc">[DONNÉES SUPPRIMÉES]</button></span></div>
+            <div class="gen__actions">
+              <button type="button" class="btn btn--signal" id="cre-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg>Copier pour Discord</button>
+              <button type="button" class="btn" id="cre-reset">Restaurer l'exemple</button>
+            </div>
+          </form>
+          <div class="gen__side">
+            <div class="range-row"><label class="label" for="cre-view">Aperçu avec l'habilitation</label><input type="range" id="cre-view" min="0" max="5" step="1" value="2"><output id="cre-view-out" for="cre-view"></output></div>
+            <article class="doc paper gen__preview" id="cre-preview" data-no-deny aria-label="Aperçu du dossier"></article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

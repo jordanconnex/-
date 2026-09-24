@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Terminal · Site-73</title>
+  <meta name="description" content="Terminal en ligne de commande de l'intranet du Site-73.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Terminal · Site-73">
+  <meta property="og:description" content="Terminal en ligne de commande de l'intranet du Site-73.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="terminal">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="terminal">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">&gt;_</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Poste S73-TERM-04 · Niveau −1</p>
+          <h1 class="sign__title">Terminal</h1>
+          <p class="sign__lede">Accès en ligne de commande à l'intranet. Tape « aide » pour la liste des commandes, ou utilise les raccourcis sous l'écran.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Poste</dt><dd>S73-TERM-04</dd></div>
+          <div><dt>Liaison</dt><dd>Chiffrée</dd></div>
+          <div><dt>Habilitation</dt><dd data-hab-name></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="term" aria-label="Terminal">
+      <div class="wrap">
+        <div class="crt">
+          <div class="crt__bar"><span>S73-TERM-04 · intranet</span><span data-clock></span></div>
+          <div class="crt__screen" id="term-screen">
+            <div class="crt__out" id="term-out" role="log" aria-live="polite"></div>
+            <form class="crt__line" id="term-form" autocomplete="off">
+              <label class="crt__prompt" for="term-input">S73:\&gt;</label>
+              <input id="term-input" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="send">
+            </form>
+          </div>
+        </div>
+        <div class="term-quick" role="group" aria-label="Commandes rapides">
+          <button type="button" data-cmd="aide">aide</button>
+          <button type="button" data-cmd="statut">statut</button>
+          <button type="button" data-cmd="liste">liste</button>
+          <button type="button" data-cmd="scp 173">scp 173</button>
+          <button type="button" data-cmd="ouvrir 079">ouvrir 079</button>
+          <button type="button" data-cmd="incidents">incidents</button>
+          <button type="button" data-cmd="habilitation 4">habilitation 4</button>
+          <button type="button" data-cmd="effacer">effacer</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

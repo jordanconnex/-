@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Protocoles · Site-73</title>
+  <meta name="description" content="Protocoles d'urgence du Site-73 : consignes par rôle et par niveau d'alerte, codes radio, alphabet radio et annonces générales.">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Protocoles · Site-73">
+  <meta property="og:description" content="Protocoles d'urgence du Site-73 : consignes par rôle et par niveau d'alerte, codes radio, alphabet radio et annonces générales.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="protocoles">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="protocoles">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <header class="sign">
+      <span class="sign__code" aria-hidden="true">−4</span>
+      <div class="wrap sign__in">
+        <div class="sign__main">
+          <p class="eyebrow">Commandement de la Sécurité · Niveau −4</p>
+          <h1 class="sign__title">Protocoles</h1>
+          <p class="sign__lede">Ce que chacun doit faire quand l'alarme sonne. Choisis ton rôle et un niveau d'alerte pour afficher les consignes.</p>
+        </div>
+        <dl class="sign__meta">
+          <div><dt>Réf.</dt><dd>S73-SEC-004</dd></div>
+          <div><dt>Niveaux d'alerte</dt><dd>5</dd></div>
+          <div><dt>Rôles</dt><dd>7</dd></div>
+          <div><dt>Habilitation</dt><dd data-hab-name></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sec sec--tight" id="consignes" aria-labelledby="cons-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Consignes d'urgence</p>
+          <h2 class="h2" id="cons-title">Que faire en cas d'alerte ?</h2>
+
+        </div>
+        <div class="proto-ctrl">
+          <div><span class="label">Ton rôle</span><div class="seg" id="proto-roles" role="radiogroup" aria-label="Ton rôle"></div></div>
+          <div><span class="label">Niveau d'alerte</span><div class="seg" id="proto-levels" role="radiogroup" aria-label="Niveau d'alerte"></div></div>
+        </div>
+        <div class="proc" id="proto-panel" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="radio" aria-label="Communications">
+      <div class="wrap two">
+        <div>
+        <div class="sec__head">
+          <p class="eyebrow">Communications</p>
+          <h2 class="h2">Codes radio</h2>
+
+        </div>
+          <div class="codes" id="proto-radio"></div>
+        </div>
+        <div>
+        <div class="sec__head">
+          <p class="eyebrow">Épellation</p>
+          <h2 class="h2">Alphabet radio</h2>
+          <p class="sec__lede">Pour transmettre un matricule ou un code sans erreur sur un canal brouillé.</p>
+        </div>
+          <div class="phon">
+            <div class="field"><label for="proto-phon-input">Mot à épeler</label>
+              <div class="phon__row"><input class="input" id="proto-phon-input" value="D-9341" maxlength="32" autocomplete="off" spellcheck="false">
+              <button type="button" class="btn btn--sm" id="proto-phon-speak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5c1.6 2 1.6 5 0 7M19 6c2.8 3.4 2.8 8.6 0 12"/></svg>Épeler</button></div></div>
+            <div class="phon__out" id="proto-phon-out" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec sec--line" id="annonce" aria-labelledby="pa-title">
+      <div class="wrap">
+        <div class="sec__head">
+          <p class="eyebrow">Haut-parleurs du site</p>
+          <h2 class="h2" id="pa-title">Annonce générale</h2>
+          <p class="sec__lede">Prépare une annonce pour tout le site et diffuse-la avec la voix de synthèse de ton navigateur. Pense à monter le son.</p>
+        </div>
+        <div class="pa" id="pa-console">
+          <form class="pa__form">
+            <label class="field"><span>Modèle</span><select class="select" id="pa-tpl"></select></label>
+            <label class="field" data-pa-need="breche fin"><span>Anomalie</span><select class="select" id="pa-scp"></select></label>
+            <label class="field" data-pa-need="breche evacuation exercice"><span>Zone</span><select class="select" id="pa-zone"></select></label>
+            <label class="field" data-pa-need="convocation"><span>Personne convoquée</span><input class="input" id="pa-personne" placeholder="le Docteur Varenne" maxlength="60" autocomplete="off"></label>
+          </form>
+          <div class="pa__out">
+            <div class="pa__top">
+              <div class="pa__speaker"><span class="pa__grill" aria-hidden="true"></span>
+                <span class="pa__wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+              <span class="pa__onair">Canal général</span>
+            </div>
+            <p class="pa__text" id="pa-text" aria-live="polite"></p>
+            <div class="pa__actions">
+              <button type="button" class="btn btn--signal" id="pa-play"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5c1.6 2 1.6 5 0 7M19 6c2.8 3.4 2.8 8.6 0 12"/></svg><span>Diffuser l'annonce</span></button>
+              <button type="button" class="btn" id="pa-copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12"/><path d="M16 8V4H4v12h4"/></svg>Copier le texte</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>
