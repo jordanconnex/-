@@ -1,5 +1,5 @@
 node_modules/
-.wrangler/
-.dev.vars
+.netlify/
 .env
+.dev.vars
 dist/

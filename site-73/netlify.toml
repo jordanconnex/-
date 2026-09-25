@@ -1,0 +1,10 @@
+# Déploiement Netlify du Site-73.
+# Sur Netlify : Site configuration → Build & deploy → « Base directory » = site-73.
+# Le reste est lu ici (ce fichier passe avant les réglages de l'interface).
+[build]
+  command = "npm run build"
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

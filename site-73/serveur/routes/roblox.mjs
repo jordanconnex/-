@@ -12,7 +12,7 @@ export default async function roblox(req) {
   const pseudo = (url.searchParams.get("pseudo") || "").trim();
   if (!PSEUDO.test(pseudo)) return json({ erreur: "Pseudo Roblox invalide (3 à 20 lettres, chiffres ou _)." }, 400);
 
-  // Même pseudo demandé souvent : réponse gardée une heure en cache chez Cloudflare
+  // Même pseudo demandé souvent : réponse gardée une heure en cache
   const cache = typeof caches !== "undefined" ? caches.default : null;
   const cle = new Request(url.origin + "/api/roblox?pseudo=" + pseudo.toLowerCase());
   const deja = cache && (await cache.match(cle));

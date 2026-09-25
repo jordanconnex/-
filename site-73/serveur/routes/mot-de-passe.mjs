@@ -13,19 +13,19 @@ export default async function motDePasse(req) {
   const membre = await membreConnecte(req);
   if (!membre) return json({ erreur: "Connecte-toi d'abord." }, 401);
   if (estPrincipal(membre)) {
-    return json({ erreur: "Le mot de passe de l'administrateur principal se change dans Cloudflare (secret ADMIN_MOT_DE_PASSE)." }, 400);
+    return json({ erreur: "Le mot de passe de l'administrateur principal se change dans Netlify (variable ADMIN_MOT_DE_PASSE)." }, 400);
   }
   const corps = await lireCorps(req);
   if (!corps) return json({ erreur: "Requête illisible." }, 400);
-  const minutes = await blocage(membre.id, req);
+  const minutes = await blocage(membre.id);
   if (minutes) return json({ erreur: `Trop d'essais. Réessaie dans ${minutes} min.` }, 429);
   const erreur = verifierMotDePasse(corps.nouveau, membre.id);
   if (erreur) return json({ erreur }, 400);
   if (typeof corps.actuel !== "string" || !(await motDePasseCorrect(corps.actuel, membre.mdp))) {
-    await noterEchec(membre.id, req);
+    await noterEchec(membre.id);
     return json({ erreur: "Mot de passe actuel incorrect." }, 403);
   }
-  await effacerEchecs(membre.id, req);
+  await effacerEchecs(membre.id);
   membre.mdp = await hacher(corps.nouveau);
   membre.jeton = nouveauJeton();
   delete membre.mdpProvisoire;

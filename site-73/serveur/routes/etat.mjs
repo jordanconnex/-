@@ -19,8 +19,8 @@ export default async function etat() {
   };
   const pret = stock === "ok" && Object.values(variables).every((v) => v === "ok");
   return json({
-    serveur: "ok (le Worker Cloudflare répond)",
-    stockage_kv: stock,
+    serveur: "ok (la fonction Netlify répond)",
+    stockage: stock,
     variables,
     inscription: env("CODE_INSCRIPTION") ? "protégée par CODE_INSCRIPTION" : "ouverte à tous (règle CODE_INSCRIPTION pour la limiter)",
     connexion: pret ? "prête" : "incomplète : corrige les lignes marquées PROBLÈME, MANQUANT, INVALIDE ou TROP COURT"

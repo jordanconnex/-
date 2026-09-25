@@ -3,7 +3,7 @@ import { json, env, lireDynamique, contenuPour } from "../commun.mjs";
 import { membreConnecte, habilitationPourMembre, estAdmin, estPrincipal } from "../comptes.mjs";
 
 export default async function contenu(req) {
-  // Sans stockage KV, le site reste lisible (contenu de départ) : /api/etat dit quoi corriger
+  // Sans stockage, le site reste lisible (contenu de départ) : /api/etat dit quoi corriger
   let membre = null, dyn = { etat: null, communiques: [], evenements: null }, stockageOk = true;
   try {
     [membre, dyn] = await Promise.all([membreConnecte(req), lireDynamique()]);
@@ -23,6 +23,6 @@ export default async function contenu(req) {
     // La page de connexion n'affiche le champ « code d'inscription » que s'il est demandé
     comptes: { codeInscription: !!env("CODE_INSCRIPTION") },
     data: contenuPour(hab.niveau, dyn),
-    ...(stockageOk ? {} : { avertissement: "Stockage KV indisponible : voir /api/etat" })
+    ...(stockageOk ? {} : { avertissement: "Stockage indisponible : voir /api/etat" })
   });
 }

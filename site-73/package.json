@@ -2,15 +2,13 @@
   "name": "site-73",
   "private": true,
   "type": "module",
-  "description": "Site web du RP SCP Site-73 (Cloudflare Workers)",
+  "description": "Site web du RP SCP Site-73 (Netlify : pages, fonction serveur, Netlify Blobs)",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "node scripts/build.mjs && wrangler dev",
-    "deploy": "node scripts/build.mjs && wrangler deploy",
-    "worker-unique": "node scripts/worker-unique.mjs"
+    "dev": "node scripts/dev.mjs"
   },
-  "devDependencies": {
-    "wrangler": "^4.45.0"
+  "dependencies": {
+    "@netlify/blobs": "^11.1.1"
   },
   "engines": {
     "node": ">=22"

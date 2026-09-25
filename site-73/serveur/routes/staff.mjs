@@ -122,7 +122,7 @@ export default async function staff(req) {
       // Mot de passe oublié : le staff donne un mot de passe provisoire au membre
       const { cle, membre } = await compteCible(s, corps.id);
       if (!membre) return json({ erreur: "Membre introuvable." }, 404);
-      if (estPrincipal(membre)) return json({ erreur: "Le mot de passe de l'administrateur principal se change dans Cloudflare (ADMIN_MOT_DE_PASSE)." }, 400);
+      if (estPrincipal(membre)) return json({ erreur: "Le mot de passe de l'administrateur principal se change dans Netlify (variable ADMIN_MOT_DE_PASSE)." }, 400);
       if (membre.id === moi.id) return json({ erreur: "Change ton propre mot de passe depuis « Mon compte »." }, 400);
       const provisoire = motDePasseProvisoire();
       membre.mdp = await hacher(provisoire);
@@ -136,7 +136,7 @@ export default async function staff(req) {
     case "membre.admin": {
       const { cle, membre } = await compteCible(s, corps.id);
       if (!membre) return json({ erreur: "Membre introuvable." }, 404);
-      if (estPrincipal(membre)) return json({ erreur: "L'administrateur principal se règle dans Cloudflare (ADMIN_IDENTIFIANT)." }, 400);
+      if (estPrincipal(membre)) return json({ erreur: "L'administrateur principal se règle dans Netlify (variable ADMIN_IDENTIFIANT)." }, 400);
       if (membre.id === moi.id) return json({ erreur: "Tu ne peux pas retirer tes propres droits d'administrateur." }, 400);
       if (typeof corps.admin !== "boolean") return json({ erreur: "Requête illisible." }, 400);
       membre.admin = corps.admin;

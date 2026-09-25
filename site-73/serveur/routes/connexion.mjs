@@ -17,14 +17,14 @@ export default async function connexion(req) {
   const refuse = () => json({ erreur: "Identifiant ou mot de passe incorrect." }, 401);
   if (!identifiantValide(id) || mdp.length > 128) { await hachageLeurre(mdp.slice(0, 128)); return refuse(); }
 
-  const minutes = await blocage(id, req);
+  const minutes = await blocage(id);
   if (minutes) return json({ erreur: `Trop d'essais. Réessaie dans ${minutes} min.` }, 429);
 
   const s = stockage();
   let membre = await s.get("membres/" + id);
   let ok;
   if (id === adminPrincipal()) {
-    // Administrateur principal : mot de passe lu dans les secrets Cloudflare
+    // Administrateur principal : mot de passe lu dans les variables secrètes Netlify
     ok = env("ADMIN_MOT_DE_PASSE").length >= 8 && (await memeTexte(mdp, env("ADMIN_MOT_DE_PASSE")));
     if (ok) {
       membre = { ...(membre || {}), id, nom: (membre && membre.nom) || env("ADMIN_IDENTIFIANT"), jeton: await jetonPrincipal() };
@@ -38,10 +38,10 @@ export default async function connexion(req) {
     ok = false;
   }
   if (!ok) {
-    if (membre) await noterEchec(id, req);
+    if (membre) await noterEchec(id);
     return refuse();
   }
-  await effacerEchecs(id, req);
+  await effacerEchecs(id);
   const maintenant = new Date().toISOString();
   membre.premiereVisite = membre.premiereVisite || maintenant;
   membre.derniereVisite = maintenant;

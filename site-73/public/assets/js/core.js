@@ -243,7 +243,7 @@
   S.habName = habName;
 
   /* ---------- Session (compte identifiant + mot de passe) ----------- */
-  // mode "live" : le site parle à son Worker Cloudflare (/api/…) ;
+  // mode "live" : le site parle à son serveur (fonction Netlify, /api/…) ;
   // mode "horsligne" : le serveur ne répond pas (fichier local, hébergement
   // de fichiers simples) : visiteur de niveau 0, sans connexion ni staff.
   // Le mode staff est à part : il faut être administrateur (compte nommé
@@ -1362,7 +1362,7 @@
       });
     });
   };
-  let sansServeur = function () { return Promise.reject(new Error("Serveur indisponible : l'espace staff a besoin du Worker du site.")); };
+  let sansServeur = function () { return Promise.reject(new Error("Serveur indisponible : l'espace staff a besoin du serveur du site.")); };
   S.api = {
     etat: function () { return sess.mode === "live" ? appelStaff({}) : sansServeur(); },
     action: function (action, corps) {
@@ -1457,7 +1457,7 @@
     if (r.code === "fichier") return "Page ouverte sans serveur (fichier local ou aperçu) : lance « npm run dev » dans le dossier site-73.";
     if (r.code === "statique" || r.statut === 404) {
       return local ? "Normal avec Live Server : lance « npm run dev » pour faire tourner le vrai serveur."
-        : "Le Worker Cloudflare ne tourne pas : le site est servi comme de simples fichiers. Redéploie avec « npm run deploy » ou l'import GitHub, pas en glisser-déposer.";
+        : "La fonction Netlify ne répond pas : le site est servi comme de simples fichiers. Déploie-le depuis GitHub avec le dossier de base « site-73 », pas en glisser-déposer.";
     }
     if (r.code === "http") return "Le serveur a répondu une erreur (code " + r.statut + ")" + (r.detail ? " : " + r.detail : "") + ". Diagnostic : /api/etat";
     return r.code === "delai" ? "Le serveur n'a pas répondu à temps." : "Le serveur est injoignable.";
@@ -1468,7 +1468,7 @@
     passerHorsLigne();
   };
   // Adresse relative, pour que le site marche aussi dans un sous-dossier.
-  // Sur Cloudflare, le Worker y répond avec le contenu et la session.
+  // Sur Netlify, la fonction du site y répond avec le contenu et la session.
   let chargerSession = function () {
     if (BUNDLE || location.protocol === "file:") { horsLigne({ code: "fichier" }); return Promise.resolve(); }
     let ctrl = window.AbortController ? new AbortController() : null;
@@ -1484,7 +1484,7 @@
       })
       .then(function (p) {
         clearTimeout(minuteur);
-        // Réponse qui ne vient pas du Worker (hébergement de fichiers simples)
+        // Réponse qui ne vient pas du serveur (hébergement de fichiers simples)
         if (!p || p.mode !== "live" || !p.data) { horsLigne({ code: "statique" }); return; }
         appliquerContenu(p);
         sess.mode = "live";

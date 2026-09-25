@@ -1373,7 +1373,7 @@
     return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ln +
       '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
   };
-  // Photo de la carte : avatar Roblox (via le Worker), sinon silhouette.
+  // Photo de la carte : avatar Roblox (via le serveur), sinon silhouette.
   let PSEUDO_ROBLOX = /^[A-Za-z0-9_]{3,20}$/;
   let photosRoblox = {}, photosResolues = {}, photosVues = {};
   let chercherRoblox = function (pseudo) {

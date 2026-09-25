@@ -1,15 +1,14 @@
 // Comptes du site : identifiant + mot de passe.
 // Les mots de passe sont salés et hachés (PBKDF2-SHA256, Web Crypto) : le
 // site ne les stocke jamais en clair. L'administrateur principal est défini
-// par ADMIN_IDENTIFIANT et ADMIN_MOT_DE_PASSE (secrets Cloudflare) ; il peut
+// par ADMIN_IDENTIFIANT et ADMIN_MOT_DE_PASSE (variables secrètes Netlify) ; il peut
 // ensuite nommer d'autres administrateurs depuis la console staff.
-import { env, stockage, lireSession, aleatoireHex } from "./commun.mjs";
+import { env, stockage, lireSession, aleatoireHex, ipClient } from "./commun.mjs";
 
 const enc = new TextEncoder();
-// Borné par le temps de calcul de l'offre gratuite de Cloudflare (10 ms par
-// requête). Chaque hachage garde son nombre d'itérations : on peut l'augmenter
-// plus tard (100 000 au maximum sur Workers) sans casser les anciens comptes.
-const ITERATIONS = 30000;
+// Environ 50 ms de calcul par mot de passe. Chaque hachage garde son nombre
+// d'itérations : on peut l'augmenter plus tard sans casser les anciens comptes.
+const ITERATIONS = 300000;
 const ESSAIS_MAX = 5;
 const BLOCAGE_MINUTES = 15;
 
@@ -101,19 +100,19 @@ export async function membreConnecte(req) {
 
 /* ---------- Essais de connexion ----------------------------------------- */
 // Après 5 erreurs, le compte est bloqué 15 minutes pour cette adresse IP.
-const cleEssais = (id, req) => "essais/" + id + "/" + (req.headers.get("cf-connecting-ip") || "local");
-export async function blocage(id, req) {
-  const e = await stockage().get(cleEssais(id, req));
+const cleEssais = (id) => "essais/" + id + "/" + ipClient().replace(/[^0-9a-fA-F.:]/g, "");
+export async function blocage(id) {
+  const e = await stockage().get(cleEssais(id));
   return e && e.jusqua > Date.now() ? Math.ceil((e.jusqua - Date.now()) / 60000) : 0;
 }
-export async function noterEchec(id, req) {
-  const s = stockage(), cle = cleEssais(id, req);
+export async function noterEchec(id) {
+  const s = stockage(), cle = cleEssais(id);
   const e = (await s.get(cle)) || { n: 0 };
   e.n = (e.n || 0) + 1;
   if (e.n >= ESSAIS_MAX) { e.n = 0; e.jusqua = Date.now() + BLOCAGE_MINUTES * 60000; }
-  await s.setJSON(cle, e, { expirationTtl: BLOCAGE_MINUTES * 60 * 2 });
+  await s.setJSON(cle, e);
 }
-export async function effacerEchecs(id, req) {
-  const s = stockage(), cle = cleEssais(id, req);
+export async function effacerEchecs(id) {
+  const s = stockage(), cle = cleEssais(id);
   if (await s.get(cle)) await s.delete(cle);
 }

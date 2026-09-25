@@ -1,5 +1,5 @@
-// Outils partagés par le Worker Cloudflare du Site-73 : configuration,
-// cookies, session signée, stockage Workers KV et fusion du contenu.
+// Outils partagés par le serveur du Site-73 (fonction Netlify) : configuration,
+// cookies, session signée, stockage Netlify Blobs et fusion du contenu.
 // Uniquement des API web standard (fetch, Web Crypto) : aucun module Node.
 import donnees from "../contenu/donnees.mjs";
 import { caviarder } from "./caviardage.mjs";
@@ -7,15 +7,21 @@ import { caviarder } from "./caviardage.mjs";
 export { donnees };
 
 /* ---------- Configuration ------------------------------------------------ */
-// Variables et secrets du Worker : tableau de bord Cloudflare (Settings →
-// Variables and Secrets) ou fichier .dev.vars en local.
-// worker.mjs appelle initialiser(env) au début de chaque requête.
+// Variables et secrets : tableau de bord Netlify (Site configuration →
+// Environment variables) ou fichier .env en local.
+// routeur.mjs appelle initialiser() au début de chaque requête.
 let ENV = {};
+let MAGASIN = null;
+let IP = "";
 let cache = new Map();
-export function initialiser(envWorker) {
-  ENV = envWorker || {};
+export function initialiser(env, magasin, ip) {
+  ENV = env || {};
+  MAGASIN = magasin || null;
+  IP = ip || "";
   cache = new Map();
 }
+// Adresse IP du visiteur (fournie par Netlify), pour limiter les essais de connexion
+export const ipClient = () => IP || "local";
 export const env = (cle, defaut = "") => String(ENV[cle] || defaut).trim();
 
 export const ALERTES = ["vert", "jaune", "orange", "rouge", "noir"];
@@ -113,35 +119,30 @@ export async function lireSession(req) {
   } catch { return null; }
 }
 
-/* ---------- Stockage (Workers KV, liaison « SITE73 ») ------------------- */
+/* ---------- Stockage (Netlify Blobs, magasin « site-73 ») --------------- */
 // Clés : "membres/<identifiant>", "site" (alerte, communiqués, événements),
 // "journal", "fiches", "essais/…" (connexions ratées, effacées toutes seules).
-// Une petite mémoire par requête garde ce qui vient d'être écrit :
-// KV peut mettre quelques secondes à propager une écriture.
+// Une petite mémoire par requête garde ce qui vient d'être écrit.
+// MAGASIN : { get, set, delete, list } (voir serveur/blobs.mjs).
 export function stockage() {
-  const kv = ENV.SITE73;
-  if (!kv) throw new Error("Stockage KV « SITE73 » non relié au Worker (voir wrangler.jsonc).");
+  const m = MAGASIN;
+  if (!m) throw new Error("Stockage Netlify Blobs indisponible (voir /api/etat).");
   return {
     async get(cle) {
       if (cache.has(cle)) return structuredClone(cache.get(cle));
-      return kv.get(cle, { type: "json" });
+      return m.get(cle);
     },
-    async setJSON(cle, valeur, options) {
+    async setJSON(cle, valeur) {
       cache.set(cle, structuredClone(valeur));
-      await kv.put(cle, JSON.stringify(valeur), options);
+      await m.set(cle, valeur);
     },
     async delete(cle) {
       cache.set(cle, null);
-      await kv.delete(cle);
+      await m.delete(cle);
     },
     async list({ prefix }) {
       const cles = new Set([...cache.keys()].filter((c) => c.startsWith(prefix) && cache.get(c) !== null));
-      let curseur;
-      do {
-        const r = await kv.list({ prefix, cursor: curseur });
-        for (const k of r.keys) if (cache.get(k.name) !== null) cles.add(k.name);
-        curseur = r.list_complete ? null : r.cursor;
-      } while (curseur);
+      for (const cle of await m.list(prefix)) if (cache.get(cle) !== null) cles.add(cle);
       return [...cles];
     }
   };

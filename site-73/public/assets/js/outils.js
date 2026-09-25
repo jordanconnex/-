@@ -997,7 +997,7 @@
           (se.admin ? '<a class="btn btn--sm" href="staff.html">Console staff</a>' : "") +
           '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>' +
         (se.principal
-          ? '<p class="sas__note">Ton mot de passe d\'administrateur principal se change dans Cloudflare : secret <b>ADMIN_MOT_DE_PASSE</b>.</p>'
+          ? '<p class="sas__note">Ton mot de passe d\'administrateur principal se change dans Netlify : variable <b>ADMIN_MOT_DE_PASSE</b>.</p>'
           : '<form class="cx-form cx-form--mdp" id="cx-p-mdp" novalidate>' +
               '<h2 class="cx-sous">Changer de mot de passe</h2>' +
               '<input type="text" autocomplete="username" value="' + esc(se.user.id) + '" hidden>' +
