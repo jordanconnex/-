@@ -29,7 +29,11 @@ export const TYPES_EVENEMENT = Object.keys(donnees.typesEvenement);
 const DUREE_SESSION = 7 * 24 * 3600 * 1000; // 7 jours
 
 /* ---------- Réponses ---------------------------------------------------- */
-const SECURITE = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin", "cache-control": "no-store" };
+// Réponses de l'API : du JSON ou une redirection, jamais une page à afficher
+const SECURITE = {
+  "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin", "cache-control": "no-store",
+  "content-security-policy": "default-src 'none'; frame-ancestors 'none'"
+};
 export function json(corps, statut = 200, entetes = {}) {
   return new Response(JSON.stringify(corps), {
     status: statut,

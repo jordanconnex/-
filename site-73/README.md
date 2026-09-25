@@ -118,6 +118,8 @@ site-73/
   serveur/blobs.mjs             stockage Netlify Blobs
   serveur/caviardage.mjs        masque les passages selon l'habilitation
   public/                       le site publié (14 pages, la page de connexion, 404.html)
+  public/_headers               en-têtes de sécurité (CSP) : une image, une police ou un script
+                                venant d'un autre site doit y être autorisé, sinon il est bloqué
 ```
 
 ## Pages

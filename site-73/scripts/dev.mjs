@@ -44,8 +44,19 @@ const TYPES = {
   ".json": "application/json; charset=utf-8", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".png": "image/png",
   ".jpg": "image/jpeg", ".webp": "image/webp", ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json"
 };
-// Mêmes en-têtes que public/_headers
-const SECURITE = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin", "x-frame-options": "SAMEORIGIN" };
+// Mêmes en-têtes que sur Netlify : bloc « /* » de public/_headers (CSP comprise)
+function entetesNetlify() {
+  const entetes = {};
+  let dansBloc = false;
+  for (const ligne of readFileSync(join(PUBLIC, "_headers"), "utf8").split(/\r?\n/)) {
+    if (!ligne.trim() || ligne.trim().startsWith("#")) continue;
+    if (!/^\s/.test(ligne)) { dansBloc = ligne.trim() === "/*"; continue; }
+    const i = ligne.indexOf(":");
+    if (dansBloc && i > 0) entetes[ligne.slice(0, i).trim().toLowerCase()] = ligne.slice(i + 1).trim();
+  }
+  return entetes;
+}
+const SECURITE = entetesNetlify();
 
 // Comme Netlify : « / » → index.html, « /plan » → plan.html, sinon 404.html
 function fichierPour(chemin) {
