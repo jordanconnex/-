@@ -1,9 +1,9 @@
 /* ==========================================================================
    SITE-73 · CONSOLE STAFF
    Mode à part : un sas d'accès, puis une console à onglets. Il faut être
-   administrateur (rôle Discord) et activer le mode staff. Toutes les
-   actions passent par S.api : le serveur (/api/staff) vérifie la session
-   Discord à chaque appel. Sans serveur, la console reste fermée.
+   connecté avec un compte administrateur et activer le mode staff. Toutes
+   les actions passent par S.api : le serveur (/api/staff) vérifie le compte
+   à chaque appel. Sans serveur, la console reste fermée.
    Chaque onglet est un panneau avec son propre titre dans staff.html.
    ========================================================================== */
 (function () {
@@ -21,7 +21,6 @@
   let SOURCE = {
     admin: ["Administrateur", "var(--signal)"],
     staff: ["Réglée par le staff", "var(--c-attente)"],
-    role: ["Rôle Discord", "var(--c-sur)"],
     defaut: ["Par défaut", "var(--text-3)"]
   };
   let STATUT = {
@@ -53,21 +52,21 @@
       guard.classList.remove("is-refus");
       if (se.mode !== "live") {
         sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Serveur indisponible</p>' +
-          "<p>La console staff a besoin du serveur du site : la connexion passe par Discord et chaque action y est vérifiée.</p>" +
+          "<p>La console staff a besoin du serveur du site : la connexion et chaque action y sont vérifiées.</p>" +
           (S.texteRaisonHorsLigne() ? '<p class="sas__note sas__raison">⚠ ' + esc(S.texteRaisonHorsLigne()) + "</p>" : "") +
           '<button type="button" class="btn btn--signal" data-reessayer>Réessayer</button>';
       } else if (!se.user) {
         sasBody.innerHTML = '<p class="sas__etat"><i></i>Identité inconnue</p>' +
-          "<p>Connecte-toi avec ton compte Discord. Seuls les membres qui ont un rôle d'administrateur sur le serveur franchissent ce sas.</p>" +
-          '<a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>";
+          "<p>Connecte-toi avec ton identifiant. Seuls les comptes administrateurs franchissent ce sas.</p>" +
+          '<a class="btn btn--signal" href="' + S.loginUrl() + '">' + S.icon.lock + "Se connecter</a>";
       } else if (!se.admin) {
         guard.classList.add("is-refus");
         sasBody.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Accès refusé</p>' +
-          "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'a pas le rôle d'administrateur sur le serveur Discord. Tu peux consulter l'intranet selon ton habilitation (niveau " + se.reel + ").</p>" +
+          "<p>Ton compte <b>" + esc(se.user.nom) + "</b> n'est pas administrateur. Tu peux consulter l'intranet selon ton habilitation (niveau " + se.reel + ").</p>" +
           '<a class="btn" href="index.html">Retour à l\'intranet</a>';
       } else {
-        sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Identité vérifiée par Discord</p>' +
-          '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>Administrateur du serveur</small></div></div>" +
+        sasBody.innerHTML = '<p class="sas__etat sas__etat--ok"><i></i>Identité vérifiée</p>' +
+          '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>@" + esc(se.user.id) + " · Administrateur</small></div></div>" +
           "<p>Active le mode staff pour ouvrir la console et afficher les commandes du staff sur tout le site.</p>" +
           '<button type="button" class="btn btn--signal" data-staff-on>' + S.icon.shield + "Activer le mode staff</button>";
       }
@@ -136,7 +135,7 @@
       majBarre();
       let se = S.session();
       $("#adm-id").innerHTML = '<span class="adm__badge"><i></i>Mode staff</span>' +
-        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user ? se.user.nom : "Staff") + "</b><small>Administrateur · Discord</small></div></div>";
+        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user ? se.user.nom : "Staff") + "</b><small>@" + esc(se.user ? se.user.id : "") + " · Administrateur</small></div></div>";
       ouvrir(onglet);
       // Le focus était dans le sas, qui vient de disparaître
       if (ouverture) { let tb = $('[aria-selected="true"]', nav); if (tb) tb.focus({ preventScroll: true }); }
@@ -272,16 +271,24 @@
       let q = norm(filtre.q.trim());
       let liste = etat.membres.filter(function (m) {
         if (filtre.niveau !== "all" && String(m.habilitation) !== filtre.niveau) return false;
-        return !q || norm(m.nom + " " + (m.pseudo || "") + " " + m.id).indexOf(q) >= 0;
+        return !q || norm(m.nom + " " + m.id).indexOf(q) >= 0;
       });
       $("#st-membres-count").textContent = liste.length + " membre" + (liste.length > 1 ? "s" : "") + " affiché" + (liste.length > 1 ? "s" : "") + " sur " + etat.membres.length;
       let body = $("#st-membres");
       if (!liste.length) {
-        body.innerHTML = '<tr><td colspan="5" class="muted">' + (etat.membres.length ? "Aucun membre ne correspond." : "Aucun membre pour l'instant. Les membres apparaissent ici après leur première connexion avec Discord.") + "</td></tr>";
+        body.innerHTML = '<tr><td colspan="5" class="muted">' + (etat.membres.length ? "Aucun membre ne correspond." : "Aucun membre pour l'instant. Les membres apparaissent ici dès qu'ils créent leur compte.") + "</td></tr>";
         return;
       }
+      let moi = S.session().user ? S.session().user.id : "";
       body.innerHTML = liste.map(function (m) {
         let src = SOURCE[m.source] || SOURCE.defaut;
+        let soi = m.id === moi, cle = esc(m.id);
+        // Actions sur le compte (jamais sur l'admin principal ni sur soi-même)
+        let actes = (m.override !== null && !m.admin ? '<button type="button" class="btn btn--sm" data-reset="' + cle + '">Par défaut</button>' : "") +
+          (m.principal || soi ? "" :
+            '<button type="button" class="btn btn--sm" data-mdp="' + cle + '">' + (confirmer === "m" + m.id ? "Confirmer" : "Mot de passe") + "</button>" +
+            '<button type="button" class="btn btn--sm" data-admin="' + cle + '">' + (confirmer === "a" + m.id ? "Confirmer" : m.admin ? "Retirer admin" : "Nommer admin") + "</button>" +
+            '<button type="button" class="btn btn--sm btn--danger" data-suppr="' + cle + '">' + (confirmer === "s" + m.id ? "Confirmer" : "Supprimer") + "</button>");
         let select = m.admin
           ? '<span class="mono">5 · ' + esc(S.habName(5)) + "</span>"
           : '<select class="select st-hab" data-id="' + esc(m.id) + '" aria-label="Habilitation de ' + esc(m.nom) + '">' +
@@ -289,13 +296,13 @@
               return '<option value="' + h.niveau + '"' + (h.niveau === m.habilitation ? " selected" : "") + ">" + h.niveau + " · " + esc(h.nom) + "</option>";
             }).join("") + "</select>";
         return "<tr>" +
-          '<td data-label="Membre"><div class="who">' + S.avatar(m) + "<div><b>" + esc(m.nom) + "</b><small>" + esc(m.pseudo ? "@" + m.pseudo : m.id) + "</small></div></div></td>" +
+          '<td data-label="Membre"><div class="who">' + S.avatar(m) + "<div><b>" + esc(m.nom) + "</b><small>@" + cle +
+            (m.principal ? " · admin principal" : m.admin ? " · admin" : "") + (soi ? " · toi" : "") + (m.mdpProvisoire ? " · mot de passe provisoire" : "") + "</small></div></div></td>" +
           '<td data-label="Habilitation">' + select + "</td>" +
           '<td data-label="Origine"><span class="chip" style="--c:' + src[1] + '">' + src[0] + "</span>" +
-            (m.source === "staff" && m.modifiePar ? '<small class="st-by">par ' + esc(m.modifiePar) + ", " + esc(quand(m.modifieLe)) + "</small>" : "") +
-            (m.source === "staff" && m.roleHab !== null ? '<small class="st-by">rôle Discord : niveau ' + m.roleHab + "</small>" : "") + "</td>" +
+            (m.source === "staff" && m.modifiePar ? '<small class="st-by">par ' + esc(m.modifiePar) + ", " + esc(quand(m.modifieLe)) + "</small>" : "") + "</td>" +
           '<td data-label="Dernière visite" class="mono st-date">' + esc(quand(m.derniereVisite)) + "</td>" +
-          '<td data-label="">' + (m.override !== null && !m.admin ? '<button type="button" class="btn btn--sm" data-reset="' + esc(m.id) + '">Rendre au rôle</button>' : "") + "</td></tr>";
+          '<td data-label=""><div class="st-acts">' + actes + "</div></td></tr>";
       }).join("");
     };
     $("#st-q").addEventListener("input", function () { filtre.q = this.value; if (etat) renderMembres(); });
@@ -306,11 +313,47 @@
       let m = etat.membres.filter(function (x) { return x.id === sel.getAttribute("data-id"); })[0];
       agir("habilitation", { id: m.id, niveau: parseInt(sel.value, 10) }, "<b>" + esc(m.nom) + "</b> passe au niveau " + sel.value + " (" + esc(S.habName(+sel.value)) + ").", sel);
     });
+    // Actions sensibles : un premier clic arme le bouton (« Confirmer »), le second agit
+    let armer = function (cle) {
+      if (confirmer === cle) { confirmer = null; return true; }
+      confirmer = cle;
+      renderMembres();
+      setTimeout(function () { if (confirmer === cle) { confirmer = null; if (etat) renderMembres(); } }, 4000);
+      return false;
+    };
+    let montrerProvisoire = function (r) {
+      let boite = $("#st-mdp-resultat");
+      boite.innerHTML = "<p><b>Mot de passe provisoire de " + esc(r.nom) + "</b> (@" + esc(r.id) + ")</p>" +
+        '<p class="st-mdp__code mono">' + esc(r.motDePasse) + "</p>" +
+        "<p class=\"muted\">Donne-le-lui en message privé : il ne sera plus affiché. Au premier passage, le site lui demandera d'en choisir un nouveau.</p>" +
+        '<div class="st-acts"><button type="button" class="btn btn--sm btn--signal" data-copier-mdp>Copier</button><button type="button" class="btn btn--sm" data-fermer-mdp>Fermer</button></div>';
+      boite.hidden = false;
+      boite.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+    $("#st-mdp-resultat").addEventListener("click", function (e) {
+      if (e.target.closest("[data-copier-mdp]")) U.copy($(".st-mdp__code", this).textContent, "<b>Mot de passe copié.</b>");
+      if (e.target.closest("[data-fermer-mdp]")) { this.hidden = true; this.innerHTML = ""; }
+    });
     $("#st-membres").addEventListener("click", function (e) {
-      let b = e.target.closest("[data-reset]");
+      let b = e.target.closest("[data-reset], [data-mdp], [data-admin], [data-suppr]");
       if (!b) return;
-      let m = etat.membres.filter(function (x) { return x.id === b.getAttribute("data-reset"); })[0];
-      agir("habilitation", { id: m.id, niveau: null }, "<b>" + esc(m.nom) + "</b> retrouve l'habilitation de ses rôles Discord.", b);
+      let attr = ["data-reset", "data-mdp", "data-admin", "data-suppr"].filter(function (a) { return b.hasAttribute(a); })[0];
+      let m = etat.membres.filter(function (x) { return x.id === b.getAttribute(attr); })[0];
+      if (!m) return;
+      let nom = "<b>" + esc(m.nom) + "</b>";
+      if (attr === "data-reset") {
+        agir("habilitation", { id: m.id, niveau: null }, nom + " revient au niveau d'habilitation par défaut.", b);
+      } else if (attr === "data-mdp") {
+        if (!armer("m" + m.id)) return;
+        agir("membre.motDePasse", { id: m.id }, nom + " a un nouveau mot de passe provisoire. Ses sessions ouvertes sont fermées.", b)
+          .then(function (ok) { if (ok && etat.resultat) montrerProvisoire(etat.resultat); });
+      } else if (attr === "data-admin") {
+        if (!armer("a" + m.id)) return;
+        agir("membre.admin", { id: m.id, admin: !m.admin }, m.admin ? nom + " n'est plus administrateur." : nom + " est maintenant administrateur.", b);
+      } else if (attr === "data-suppr") {
+        if (!armer("s" + m.id)) return;
+        agir("membre.supprimer", { id: m.id }, "Compte de " + nom + " supprimé. Ses fiches sont conservées, sans lien.", b);
+      }
     });
 
     /* ---------- Fiches -------------------------------------------------- */
@@ -327,8 +370,8 @@
     let remplirMembres = function () {
       let garde = FF.membre.value;
       FF.membre.innerHTML = '<option value="">Aucun (personnage non lié)</option>' + (etat ? etat.membres : []).map(function (m) {
-        let deja = (etat.fiches || []).some(function (f) { return f.discordId === m.id && f.id !== FF.id.value && f.statut !== "archive"; });
-        return '<option value="' + esc(m.id) + '">' + esc(m.nom) + (m.pseudo ? " (@" + esc(m.pseudo) + ")" : "") + (deja ? " · a déjà une fiche" : "") + "</option>";
+        let deja = (etat.fiches || []).some(function (f) { return f.membreId === m.id && f.id !== FF.id.value && f.statut !== "archive"; });
+        return '<option value="' + esc(m.id) + '">' + esc(m.nom) + " (@" + esc(m.id) + ")" + (deja ? " · a déjà une fiche" : "") + "</option>";
       }).join("");
       FF.membre.value = garde && membreDe(garde) ? garde : "";
     };
@@ -338,24 +381,22 @@
       return v;
     };
     let MSG_PHOTO = {
-      roblox: "✓ Photo Roblox sur la carte.", discord: "Photo de profil Discord du membre.", "discord-secours": "Pseudo Roblox introuvable : photo Discord du membre à la place.",
+      roblox: "✓ Photo Roblox sur la carte.",
       introuvable: "Pseudo Roblox introuvable.", invalide: "3 à 20 caractères : lettres, chiffres ou _.", attente: "Recherche de l'avatar Roblox…",
-      horsligne: "La photo Roblox s'affiche quand le serveur du site répond.", aucune: ""
+      horsligne: "La photo Roblox s'affiche quand le serveur du site répond.", aucune: "Sans pseudo Roblox, la carte garde la silhouette."
     };
     let dessinerCarte = function () {
       if (!ficheCarte) return;
       let v = lireFiche(), m = membreDe(v.membre);
-      // Photo Discord du membre lié (jamais celle de l'admin connecté)
-      v.avatar = m && m.avatar ? m.avatar : null;
       S.renderIdCard(ficheCarte, v, function (e) { $("#st-fiche-photo").textContent = MSG_PHOTO[e] || ""; });
       let statut = STATUT[v.statut] || STATUT.service;
-      $("#st-fiche-texte").textContent = S.texteFiche(v, ["> **Statut :** " + statut[0]].concat(m ? ["> **Membre Discord :** " + m.nom + (m.pseudo ? " (@" + m.pseudo + ")" : "")] : []));
+      $("#st-fiche-texte").textContent = S.texteFiche(v, ["> **Statut :** " + statut[0]].concat(m ? ["> **Compte :** " + m.nom + " (@" + m.id + ")"] : []));
     };
     let modeFiche = function (f) {
       ficheErreur.textContent = "";
       FF.id.value = f ? f.id : "";
       remplirMembres();
-      FF.membre.value = f && f.discordId && membreDe(f.discordId) ? f.discordId : "";
+      FF.membre.value = f && f.membreId && membreDe(f.membreId) ? f.membreId : "";
       ["prenom", "nom", "age", "roblox", "apparence", "perso", "histoire", "comp"].forEach(function (k) { FF[k].value = f && f[k] != null ? f[k] : ""; });
       FF.statut.value = f ? f.statut : "service";
       FF.dept.value = f ? f.dept : "securite";
@@ -369,9 +410,9 @@
     ficheForm.addEventListener("input", function (e) {
       if (e.target === FF.dept) remplirGrades();
       if (e.target === FF.membre && !FF.prenom.value && !FF.nom.value) {
-        // Pratique : reprend le pseudo Discord comme point de départ
+        // Pratique : reprend le nom du compte comme point de départ
         let m = membreDe(FF.membre.value);
-        if (m) FF.prenom.value = String(m.nom || "").replace(/^Exemple · /, "").split(" ")[0].slice(0, 30);
+        if (m) FF.prenom.value = String(m.nom || "").split(/[\s._-]/)[0].slice(0, 30);
       }
       ficheErreur.textContent = "";
       dessinerCarte();
@@ -383,7 +424,7 @@
       if (v.age && (isNaN(age) || age < 18 || age > 75)) { ficheErreur.textContent = "L'âge doit être compris entre 18 et 75 ans."; FF.age.focus(); return; }
       if (v.roblox && !/^[A-Za-z0-9_]{3,20}$/.test(v.roblox)) { ficheErreur.textContent = "Pseudo Roblox : 3 à 20 lettres, chiffres ou _."; FF.roblox.focus(); return; }
       let corps = {
-        id: v.id || undefined, discordId: v.membre || null, prenom: v.prenom, nom: v.nom, age: v.age ? age : null, statut: v.statut,
+        id: v.id || undefined, membreId: v.membre || null, prenom: v.prenom, nom: v.nom, age: v.age ? age : null, statut: v.statut,
         dept: v.dept, grade: v.grade, roblox: v.roblox, apparence: v.apparence, perso: v.perso, histoire: v.histoire, comp: v.comp
       };
       let nomF = S.infosFiche(v).fullName;
@@ -404,12 +445,12 @@
       let liste = toutes.filter(function (f) {
         if (filtreFiches.statut !== "all" && f.statut !== filtreFiches.statut) return false;
         if (!q) return true;
-        let i = S.infosFiche(f), m = membreDe(f.discordId);
-        return norm([i.fullName, i.matricule, f.prenom, f.nom, f.roblox, m ? m.nom + " " + (m.pseudo || "") : ""].join(" ")).indexOf(q) >= 0;
+        let i = S.infosFiche(f), m = membreDe(f.membreId);
+        return norm([i.fullName, i.matricule, f.prenom, f.nom, f.roblox, m ? m.nom + " " + m.id : ""].join(" ")).indexOf(q) >= 0;
       });
       $("#st-fiches-count").textContent = liste.length + " fiche" + (liste.length > 1 ? "s" : "") + " affichée" + (liste.length > 1 ? "s" : "") + " sur " + toutes.length;
       $("#st-fiches").innerHTML = liste.length ? liste.map(function (f) {
-        let i = S.infosFiche(f), m = membreDe(f.discordId), st = STATUT[f.statut] || STATUT.service;
+        let i = S.infosFiche(f), m = membreDe(f.membreId), st = STATUT[f.statut] || STATUT.service;
         return '<li class="fiche" style="--dc:' + (S.levelColors[i.lvl] || "var(--line-2)") + '">' +
           '<div class="fiche__id"><span class="fiche__mat mono">' + esc(i.matricule) + "</span><b>" + esc(i.fullName) + "</b>" +
           "<small>" + esc(i.dept.nom) + " · " + esc(i.grade[0]) + " · hab. " + i.lvl + "</small></div>" +
@@ -434,9 +475,9 @@
       }
       let cp = ficheDe("data-copy-fiche");
       if (cp) {
-        let m = membreDe(cp.discordId);
+        let m = membreDe(cp.membreId);
         S.stat("copies");
-        U.copy(S.texteFiche(cp, ["> **Statut :** " + (STATUT[cp.statut] || STATUT.service)[0]].concat(m ? ["> **Membre Discord :** " + m.nom] : [])), "<b>Fiche copiée.</b>");
+        U.copy(S.texteFiche(cp, ["> **Statut :** " + (STATUT[cp.statut] || STATUT.service)[0]].concat(m ? ["> **Compte :** " + m.nom + " (@" + m.id + ")"] : [])), "<b>Fiche copiée.</b>");
         return;
       }
       let b = e.target.closest("[data-del-fiche]");

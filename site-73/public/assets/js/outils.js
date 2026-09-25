@@ -722,22 +722,23 @@
     doc.addEventListener("s73:session", dessinerCarte);
     S.tiltCard($("#carnet-stage"), card);
     let compte = $("#carnet-compte");
-    let SRC = { role: "tes rôles Discord", staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur" };
+    let SRC = { staff: "l'administration du site", defaut: "le niveau par défaut des membres", admin: "ton statut d'administrateur" };
     let renderCompte = function () {
       if (!compte) return;
       let se = S.session();
       if (!se.user) {
         compte.innerHTML = '<p class="label">Compte</p><p>Tu consultes l\'intranet en visiteur (niveau 0).</p>' +
-          (se.mode === "live" ? '<a class="btn btn--signal btn--sm" href="' + S.loginUrl() + '">' + S.icon.chat + "Se connecter avec Discord</a>"
-            : '<p class="muted">Connexion Discord indisponible : le serveur du site ne répond pas.</p><button type="button" class="btn btn--sm" data-reessayer>Réessayer</button>');
+          (se.mode === "live" ? '<div class="hero__cta"><a class="btn btn--signal btn--sm" href="' + S.loginUrl() + '">' + S.icon.lock + "Se connecter</a>" +
+              '<a class="btn btn--sm" href="' + S.loginUrl(true) + '">Créer un compte</a></div>'
+            : '<p class="muted">Connexion indisponible : le serveur du site ne répond pas.</p><button type="button" class="btn btn--sm" data-reessayer>Réessayer</button>');
         return;
       }
-      compte.innerHTML = '<p class="label">Compte Discord</p>' +
-        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>" + (se.admin ? "Administrateur" + (S.modeStaff() ? " · mode staff" : "") : "Membre du serveur") + "</small></div></div>" +
+      compte.innerHTML = '<p class="label">Compte</p>' +
+        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>@" + esc(se.user.id) + " · " + (se.admin ? "Administrateur" + (S.modeStaff() ? " · mode staff" : "") : "Membre") + "</small></div></div>" +
         "<p>Habilitation niveau <b>" + se.reel + "</b> (" + esc(S.habName(se.reel)) + "), attribuée par " + esc(SRC[se.source] || SRC.defaut) + ".</p>" +
         '<div class="hero__cta">' +
         (S.modeStaff() ? '<a class="btn btn--sm btn--signal" href="staff.html">Console staff</a>' : se.admin ? '<button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' : "") +
-        '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
+        '<a class="btn btn--sm" href="connexion.html">Mon compte</a><a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>';
     };
     doc.addEventListener("s73:session", renderCompte);
     renderCompte();
@@ -844,9 +845,204 @@
     });
   }
 
+  /* ======================================================================
+     CONNEXION ET « MON COMPTE » (connexion.html)
+     ====================================================================== */
+  function comptePage() {
+    let body = $("#cx-body");
+    if (!body) return;
+    let titre = $("#cx-titre"), lede = $("#cx-lede"), eyebrow = $("#cx-eyebrow");
+    let IDENTIFIANT = /^[a-z0-9][a-z0-9._-]{2,19}$/;
+    // Page d'origine : le visiteur y retourne une fois connecté
+    let retour = "/";
+    try {
+      let m = /[?&]retour=([^&#]*)/.exec(location.search);
+      let r = m ? decodeURIComponent(m[1]) : "/";
+      if (/^\/(?:[a-z0-9-]+\.html)?$/.test(r) && r !== "/connexion.html") retour = r;
+    } catch (e) { retour = "/"; }
+    let onglet = /inscription/.test(location.hash) ? "inscription" : "connexion";
+
+    let appel = function (url, donnees) {
+      return fetch(url, {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "content-type": "application/json", "x-s73": "1" }, body: JSON.stringify(donnees)
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j.erreur || "Erreur du serveur (" + r.status + ").");
+          return j;
+        });
+      });
+    };
+    let champ = function (id, label, attrs, aide) {
+      return '<label class="field"><span>' + label + '</span><input class="input" id="' + id + '" ' + attrs + ">" +
+        (aide ? '<small class="cx-aide">' + aide + "</small>" : "") + "</label>";
+    };
+    let champMdp = function (id, label, auto, aide) {
+      return '<label class="field"><span>' + label + '</span><span class="cx-mdp">' +
+        '<input class="input" id="' + id + '" type="password" autocomplete="' + auto + '" required maxlength="128" spellcheck="false">' +
+        '<button type="button" class="cx-voir" data-voir="' + id + '" aria-pressed="false" aria-label="Afficher le mot de passe">Voir</button></span>' +
+        (aide ? '<small class="cx-aide">' + aide + "</small>" : "") + "</label>";
+    };
+    let bouton = function (texte) { return '<div class="cx-actions"><button type="submit" class="btn btn--signal">' + S.icon.lock + texte + "</button></div>"; };
+    let MSG = '<p class="cx-msg" role="alert"></p>';
+
+    // Envoi d'un formulaire : vérification, bouton bloqué pendant l'appel, erreur affichée
+    let brancher = function (form, verifier, envoyer) {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        let msg = $(".cx-msg", form), btn = $('[type="submit"]', form);
+        let erreur = verifier();
+        if (erreur) { msg.textContent = erreur; S.sfx("deny"); return; }
+        msg.textContent = "";
+        btn.disabled = true;
+        envoyer().catch(function (err) {
+          btn.disabled = false;
+          msg.textContent = err.message === "Failed to fetch" ? "Le serveur ne répond pas. Réessaie." : err.message;
+          S.sfx("deny");
+        });
+      });
+    };
+    let val = function (id) { let el = $("#" + id); return el ? el.value : ""; };
+    let regleMdp = function (mdp, id, confirmation) {
+      if (mdp.length < 8) return "Mot de passe : 8 caractères minimum.";
+      if (mdp.toLowerCase() === id) return "Le mot de passe ne doit pas être ton identifiant.";
+      if (mdp !== confirmation) return "Les deux mots de passe ne sont pas identiques.";
+      return "";
+    };
+
+    let enTete = function (e, t, l) { eyebrow.textContent = e; titre.textContent = t; lede.textContent = l; };
+
+    let rendre = function () {
+      let se = S.session();
+      if (se.mode !== "live") {
+        enTete("Porte A · Contrôle d'identité", "Connexion", "La connexion a besoin du serveur du site.");
+        body.innerHTML = '<p class="sas__etat sas__etat--refus"><i></i>Serveur indisponible</p>' +
+          "<p>Impossible de vérifier ton identité tant que le serveur du site ne répond pas.</p>" +
+          (S.texteRaisonHorsLigne() ? '<p class="sas__note sas__raison">⚠ ' + esc(S.texteRaisonHorsLigne()) + "</p>" : "") +
+          '<button type="button" class="btn btn--signal" data-reessayer>Réessayer</button>';
+        return;
+      }
+      if (se.user) { rendreCompte(se); return; }
+
+      enTete("Porte A · Contrôle d'identité", onglet === "inscription" ? "Inscription" : "Connexion",
+        "Ton identifiant et ton mot de passe ouvrent l'intranet à ton niveau d'habilitation. Pas encore de compte ? Crée-le en une minute.");
+      let code = se.codeInscription;
+      body.innerHTML =
+        '<div class="cx-onglets" role="tablist" aria-label="Connexion ou création de compte">' +
+          '<button type="button" role="tab" id="cx-t-connexion" aria-controls="cx-p-connexion" data-cx-onglet="connexion">Se connecter</button>' +
+          '<button type="button" role="tab" id="cx-t-inscription" aria-controls="cx-p-inscription" data-cx-onglet="inscription">Créer un compte</button>' +
+        "</div>" +
+        '<form class="cx-form" id="cx-p-connexion" role="tabpanel" aria-labelledby="cx-t-connexion" novalidate>' +
+          champ("cx-id", "Identifiant", 'autocomplete="username" required maxlength="20" autocapitalize="off" spellcheck="false"') +
+          champMdp("cx-mdp", "Mot de passe", "current-password") + MSG + bouton("Se connecter") +
+          '<p class="sas__note">Mot de passe oublié ? Demande au staff sur le Discord : il te donnera un mot de passe provisoire.</p>' +
+        "</form>" +
+        '<form class="cx-form" id="cx-p-inscription" role="tabpanel" aria-labelledby="cx-t-inscription" novalidate>' +
+          champ("cx-nid", "Identifiant", 'autocomplete="username" required maxlength="20" autocapitalize="off" spellcheck="false"',
+            "3 à 20 caractères : lettres sans accent, chiffres, point, tiret ou tiret bas. Il servira à te connecter.") +
+          champMdp("cx-nmdp", "Mot de passe", "new-password", "8 caractères minimum. N'utilise pas celui d'un autre site.") +
+          champMdp("cx-nmdp2", "Confirmation du mot de passe", "new-password") +
+          (code ? champ("cx-code", "Code d'inscription", 'autocomplete="off" required maxlength="60" spellcheck="false"', "Donné par le staff sur le Discord du Site-73.") : "") +
+          MSG + bouton("Créer mon compte") +
+          '<p class="sas__note">Tu commences au niveau d\'habilitation par défaut ; le staff le relève selon ton rôle dans le RP.</p>' +
+        "</form>";
+      montrerOnglet(onglet, false);
+
+      brancher($("#cx-p-connexion"), function () {
+        if (!val("cx-id").trim() || !val("cx-mdp")) return "Indique ton identifiant et ton mot de passe.";
+        return "";
+      }, function () {
+        return appel("/api/auth/connexion", { identifiant: val("cx-id"), motDePasse: val("cx-mdp") }).then(function () {
+          S.sfx("ok");
+          location.href = retour + "?connexion=ok";
+        });
+      });
+      brancher($("#cx-p-inscription"), function () {
+        let id = val("cx-nid").trim().toLowerCase();
+        if (!IDENTIFIANT.test(id)) return "Identifiant : 3 à 20 caractères, lettres sans accent, chiffres, point, tiret ou tiret bas.";
+        let e = regleMdp(val("cx-nmdp"), id, val("cx-nmdp2"));
+        if (e) return e;
+        if (code && !val("cx-code").trim()) return "Indique le code d'inscription donné par le staff.";
+        return "";
+      }, function () {
+        return appel("/api/auth/inscription", { identifiant: val("cx-nid").trim(), motDePasse: val("cx-nmdp"), code: val("cx-code") }).then(function () {
+          S.sfx("ok");
+          location.href = retour + "?connexion=bienvenue";
+        });
+      });
+    };
+    let montrerOnglet = function (id, focus) {
+      onglet = id;
+      $$("[data-cx-onglet]", body).forEach(function (b) {
+        let on = b.getAttribute("data-cx-onglet") === id;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        if (on && focus) b.focus();
+      });
+      $("#cx-p-connexion").hidden = id !== "connexion";
+      $("#cx-p-inscription").hidden = id !== "inscription";
+      titre.textContent = id === "inscription" ? "Inscription" : "Connexion";
+      try { history.replaceState(null, "", location.pathname + location.search + (id === "inscription" ? "#inscription" : "")); } catch (e) { /* ignoré */ }
+    };
+
+    let SRC = { staff: "réglée par l'administration du site", defaut: "niveau par défaut des membres", admin: "administrateur" };
+    let rendreCompte = function (se) {
+      enTete("Porte A · Identité vérifiée", "Mon compte", "Ton identité au Site-73 : habilitation, mot de passe et déconnexion.");
+      body.innerHTML = (se.mdpProvisoire ? '<p class="sas__note sas__raison">⚠ Tu utilises un mot de passe provisoire donné par le staff. Choisis le tien ci-dessous.</p>' : "") +
+        '<p class="sas__etat sas__etat--ok"><i></i>Connecté</p>' +
+        '<div class="who">' + S.avatar(se.user) + "<div><b>" + esc(se.user.nom) + "</b><small>@" + esc(se.user.id) + " · " +
+          (se.admin ? (se.principal ? "Administrateur principal" : "Administrateur") : "Membre") + "</small></div></div>" +
+        "<p>Habilitation niveau <b>" + se.reel + "</b> (" + esc(S.habName(se.reel)) + "), " + esc(SRC[se.source] || SRC.defaut) + ".</p>" +
+        '<div class="cx-actions"><a class="btn btn--sm" href="carnet.html">Mon carnet</a>' +
+          (se.admin ? '<a class="btn btn--sm" href="staff.html">Console staff</a>' : "") +
+          '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a></div>' +
+        (se.principal
+          ? '<p class="sas__note">Ton mot de passe d\'administrateur principal se change dans Cloudflare : secret <b>ADMIN_MOT_DE_PASSE</b>.</p>'
+          : '<form class="cx-form cx-form--mdp" id="cx-p-mdp" novalidate>' +
+              '<h2 class="cx-sous">Changer de mot de passe</h2>' +
+              '<input type="text" autocomplete="username" value="' + esc(se.user.id) + '" hidden>' +
+              champMdp("cx-actuel", se.mdpProvisoire ? "Mot de passe provisoire" : "Mot de passe actuel", "current-password") +
+              champMdp("cx-nouveau", "Nouveau mot de passe", "new-password", "8 caractères minimum. Tes autres appareils seront déconnectés.") +
+              champMdp("cx-nouveau2", "Confirmation", "new-password") + MSG + bouton("Enregistrer") +
+            "</form>");
+      let f = $("#cx-p-mdp");
+      if (!f) return;
+      brancher(f, function () {
+        if (!val("cx-actuel")) return "Indique ton mot de passe actuel.";
+        return regleMdp(val("cx-nouveau"), se.user.id, val("cx-nouveau2"));
+      }, function () {
+        return appel("/api/auth/mot-de-passe", { actuel: val("cx-actuel"), nouveau: val("cx-nouveau") }).then(function () {
+          S.sfx("ok");
+          location.replace("connexion.html?connexion=motdepasse");
+        });
+      });
+    };
+
+    body.addEventListener("click", function (e) {
+      let v = e.target.closest("[data-voir]");
+      if (v) {
+        let input = $("#" + v.getAttribute("data-voir")), voir = input.type === "password";
+        input.type = voir ? "text" : "password";
+        v.setAttribute("aria-pressed", String(voir));
+        v.textContent = voir ? "Cacher" : "Voir";
+        v.setAttribute("aria-label", voir ? "Cacher le mot de passe" : "Afficher le mot de passe");
+        return;
+      }
+      let o = e.target.closest("[data-cx-onglet]");
+      if (o) { montrerOnglet(o.getAttribute("data-cx-onglet"), false); let premier = $("form:not([hidden]) .input", body); if (premier) premier.focus(); }
+    });
+    body.addEventListener("keydown", function (e) {
+      if (!e.target.closest("[data-cx-onglet]") || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+      e.preventDefault();
+      montrerOnglet(onglet === "connexion" ? "inscription" : "connexion", true);
+    });
+    rendre();
+    doc.addEventListener("s73:session", rendre);
+  }
+
   /* ---------- Lancement de tous les modules ------------------------ */
   let lancer = function () {
-    (S.pageModules || []).concat([evenements, protocoles, laboratoire, entrainement, carnetPage, S.staffModule]).forEach(function (fn) {
+    (S.pageModules || []).concat([evenements, protocoles, laboratoire, entrainement, carnetPage, comptePage, S.staffModule]).forEach(function (fn) {
       if (typeof fn !== "function") return;
       try { fn(); } catch (e) { if (window.console) console.error("[Site-73] " + (fn.name || "module"), e); }
     });

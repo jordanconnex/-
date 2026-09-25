@@ -2114,3 +2114,36 @@ html[data-motion="normal"] .idcard__img:not(.is-vu) { animation: photo-scan .9s 
 
 /* Pourquoi le serveur du site ne répond pas */
 .clr__raison, .sas__raison { font-size: .78rem !important; line-height: 1.45; color: var(--signal) !important; padding: 8px 10px; border: 1px dashed color-mix(in srgb, var(--signal) 55%, transparent); background: color-mix(in srgb, var(--signal) 7%, transparent); }
+
+/* ----- Connexion et « Mon compte » (connexion.html) ----- */
+.sas--compte .sas__body { gap: 16px; }
+.cx-onglets { display: grid; grid-template-columns: 1fr 1fr; width: 100%; border: 1px solid var(--line-2); }
+.cx-onglets button {
+  min-height: 44px; padding: 8px 12px; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text-2); background: transparent; border: 0; cursor: pointer; transition: color .2s, background .2s;
+}
+.cx-onglets button + button { border-left: 1px solid var(--line-2); }
+.cx-onglets button:hover { color: var(--text); }
+.cx-onglets button[aria-selected="true"] { color: var(--signal-ink); background: var(--signal); }
+.cx-form { display: grid; gap: 14px; width: 100%; }
+.cx-form[hidden] { display: none; }
+.cx-form .input { width: 100%; }
+.cx-form--mdp { padding-top: 18px; border-top: 1px solid var(--line); }
+.cx-sous { font-family: var(--font-mono); font-size: .74rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text-2); }
+.cx-aide { font-size: .78rem; line-height: 1.4; color: var(--text-3); }
+.cx-mdp { position: relative; display: block; }
+.cx-mdp .input { padding-right: 80px; }
+.cx-voir {
+  position: absolute; top: 50%; right: 6px; transform: translateY(-50%); min-height: 32px; padding: 0 10px;
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-2); background: var(--bg-2); border: 1px solid var(--line-2); cursor: pointer;
+}
+.cx-voir:hover, .cx-voir[aria-pressed="true"] { color: var(--text); border-color: var(--text-3); }
+.cx-msg { font-family: var(--font-mono); font-size: .8rem !important; line-height: 1.45; color: var(--a-rouge) !important; }
+.cx-msg:empty { display: none; }
+.cx-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Mot de passe provisoire affiché une seule fois (console staff) */
+.st-mdp { display: grid; gap: 8px; margin-bottom: 14px; padding: 14px 16px; border: 1px dashed color-mix(in srgb, var(--signal) 60%, transparent); background: color-mix(in srgb, var(--signal) 7%, transparent); }
+.st-mdp[hidden] { display: none; }
+.st-mdp__code { font-size: 1.35rem; letter-spacing: .12em; color: var(--signal); user-select: all; overflow-wrap: anywhere; }

@@ -1,8 +1,9 @@
 // GET /api/etat : diagnostic de la mise en ligne, sans rien dévoiler de secret.
-// Ouvre https://ton-site/api/etat pour voir ce qui manque (stockage, variables Discord…).
-import { json, env, urlDuSite, stockage, rolesAdmin, idsAdmin } from "../commun.mjs";
+// Ouvre https://ton-site/api/etat pour voir ce qui manque (stockage, variables…).
+import { json, env, stockage } from "../commun.mjs";
+import { adminPrincipal } from "../comptes.mjs";
 
-export default async function etat(req) {
+export default async function etat() {
   let stock;
   try {
     await stockage().get("site");
@@ -10,21 +11,18 @@ export default async function etat(req) {
   } catch (e) {
     stock = "PROBLÈME : " + e.message;
   }
-  const present = (k) => (env(k) ? "ok" : "MANQUANT");
-  const secret = env("SESSION_SECRET");
-  const discord = {
-    DISCORD_CLIENT_ID: present("DISCORD_CLIENT_ID"),
-    DISCORD_CLIENT_SECRET: present("DISCORD_CLIENT_SECRET"),
-    DISCORD_GUILD_ID: present("DISCORD_GUILD_ID"),
-    SESSION_SECRET: secret.length >= 32 ? "ok" : secret ? "TROP COURT (32 caractères minimum)" : "MANQUANT"
+  const secret = env("SESSION_SECRET"), mdp = env("ADMIN_MOT_DE_PASSE");
+  const variables = {
+    SESSION_SECRET: secret.length >= 32 ? "ok" : secret ? "TROP COURT (32 caractères minimum)" : "MANQUANT",
+    ADMIN_IDENTIFIANT: adminPrincipal() ? "ok" : env("ADMIN_IDENTIFIANT") ? "INVALIDE (3 à 20 caractères : lettres sans accent, chiffres, . _ -)" : "MANQUANT",
+    ADMIN_MOT_DE_PASSE: mdp.length >= 8 ? "ok" : mdp ? "TROP COURT (8 caractères minimum)" : "MANQUANT"
   };
-  const pret = stock === "ok" && Object.values(discord).every((v) => v === "ok");
+  const pret = stock === "ok" && Object.values(variables).every((v) => v === "ok");
   return json({
     serveur: "ok (le Worker Cloudflare répond)",
     stockage_kv: stock,
-    variables: discord,
-    administrateurs: { ADMIN_ROLES: rolesAdmin().length + " rôle(s)", ADMIN_IDS: idsAdmin().length + " compte(s)" },
-    adresse_de_retour_discord: urlDuSite(req) + "/api/auth/callback",
-    connexion_discord: pret ? "prête" : "incomplète : corrige les lignes marquées PROBLÈME, MANQUANT ou TROP COURT"
+    variables,
+    inscription: env("CODE_INSCRIPTION") ? "protégée par CODE_INSCRIPTION" : "ouverte à tous (règle CODE_INSCRIPTION pour la limiter)",
+    connexion: pret ? "prête" : "incomplète : corrige les lignes marquées PROBLÈME, MANQUANT, INVALIDE ou TROP COURT"
   });
 }

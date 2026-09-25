@@ -17,13 +17,10 @@ export function initialiser(envWorker) {
   cache = new Map();
 }
 export const env = (cle, defaut = "") => String(ENV[cle] || defaut).trim();
-const liste = (cle) => env(cle).split(/[\s,;]+/).filter(Boolean);
 
 export const ALERTES = ["vert", "jaune", "orange", "rouge", "noir"];
 export const TYPES_EVENEMENT = Object.keys(donnees.typesEvenement);
-const DUREE_SESSION = 3 * 24 * 3600 * 1000; // 3 jours
-// Adresse de l'API Discord (modifiable seulement pour les tests locaux)
-export const apiDiscord = () => env("DISCORD_API_URL", "https://discord.com/api/v10");
+const DUREE_SESSION = 7 * 24 * 3600 * 1000; // 7 jours
 
 /* ---------- Réponses ---------------------------------------------------- */
 const SECURITE = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin", "cache-control": "no-store" };
@@ -54,13 +51,20 @@ export function cookie(nom, valeur, maxAgeSecondes) {
   return `${nom}=${encodeURIComponent(valeur)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAgeSecondes}`;
 }
 
-/* ---------- Adresse du site et retour après connexion ----------------- */
-export function urlDuSite(req) {
-  return (env("SITE_URL") || new URL(req.url).origin).replace(/\/+$/, "");
+/* ---------- Requêtes POST du site ------------------------------------- */
+// Refuse les requêtes venues d'un autre site : en-tête maison + même origine.
+export function refuserAutreSite(req) {
+  const origine = req.headers.get("origin");
+  if (req.headers.get("x-s73") !== "1" || (origine && origine !== new URL(req.url).origin)) {
+    return json({ erreur: "Requête refusée." }, 403);
+  }
+  return null;
 }
-// N'accepte qu'une page interne du site (évite les redirections ouvertes).
-export function retourSur(chemin) {
-  return typeof chemin === "string" && /^\/([a-z0-9-]+\.html)?$/.test(chemin) ? chemin : "/";
+export async function lireCorps(req) {
+  try {
+    const corps = await req.json();
+    return corps && typeof corps === "object" ? corps : null;
+  } catch { return null; }
 }
 
 /* ---------- Encodage et hasard ------------------------------------------ */
@@ -89,8 +93,10 @@ async function cleSession() {
   return cleHmac;
 }
 
-export async function creerSession({ id, nom, avatar, admin }) {
-  const corps = b64url(enc.encode(JSON.stringify({ id, nom, avatar, adm: !!admin, exp: Date.now() + DUREE_SESSION })));
+// v = jeton du compte : il change quand le mot de passe change, ce qui ferme
+// les autres sessions de ce compte.
+export async function creerSession({ id, nom, v }) {
+  const corps = b64url(enc.encode(JSON.stringify({ id, nom, v, exp: Date.now() + DUREE_SESSION })));
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", await cleSession(), enc.encode(corps)));
   return { jeton: corps + "." + b64url(sig), maxAge: DUREE_SESSION / 1000 };
 }
@@ -103,35 +109,14 @@ export async function lireSession(req) {
     // verify compare en temps constant
     if (!(await crypto.subtle.verify("HMAC", await cleSession(), deB64url(sig), enc.encode(corps)))) return null;
     const s = JSON.parse(dec.decode(deB64url(corps)));
-    return s && s.id && s.exp > Date.now() ? s : null;
+    return s && s.id && s.v && s.exp > Date.now() ? s : null;
   } catch { return null; }
-}
-export const estAdmin = (session) => !!session && (session.adm || liste("ADMIN_IDS").includes(session.id));
-
-/* ---------- Rôles Discord ---------------------------------------------- */
-export const rolesAdmin = () => liste("ADMIN_ROLES");
-export const idsAdmin = () => liste("ADMIN_IDS");
-export function habilitationDesRoles(roles) {
-  // HABILITATION_ROLES="idRole:1,idRole:3" → niveau le plus élevé parmi les rôles du membre
-  let max = null;
-  for (const paire of liste("HABILITATION_ROLES")) {
-    const [role, niveau] = paire.split(":");
-    const n = Number(niveau);
-    if (roles.includes(role) && n >= 0 && n <= 5) max = Math.max(max ?? 0, n);
-  }
-  return max;
-}
-export function habilitationPourMembre(membre, session) {
-  if (estAdmin(session)) return { niveau: 5, source: "admin" };
-  if (membre && Number.isInteger(membre.override)) return { niveau: membre.override, source: "staff" };
-  if (membre && Number.isInteger(membre.roleHab)) return { niveau: membre.roleHab, source: "role" };
-  const defaut = Number(env("HABILITATION_PAR_DEFAUT", "1"));
-  return { niveau: defaut >= 0 && defaut <= 5 ? defaut : 1, source: "defaut" };
 }
 
 /* ---------- Stockage (Workers KV, liaison « SITE73 ») ------------------- */
-// Clés : "membres/<id Discord>", "site" (alerte, communiqués, événements),
-// "journal". Une petite mémoire par requête garde ce qui vient d'être écrit :
+// Clés : "membres/<identifiant>", "site" (alerte, communiqués, événements),
+// "journal", "fiches", "essais/…" (connexions ratées, effacées toutes seules).
+// Une petite mémoire par requête garde ce qui vient d'être écrit :
 // KV peut mettre quelques secondes à propager une écriture.
 export function stockage() {
   const kv = ENV.SITE73;
@@ -141,16 +126,20 @@ export function stockage() {
       if (cache.has(cle)) return structuredClone(cache.get(cle));
       return kv.get(cle, { type: "json" });
     },
-    async setJSON(cle, valeur) {
+    async setJSON(cle, valeur, options) {
       cache.set(cle, structuredClone(valeur));
-      await kv.put(cle, JSON.stringify(valeur));
+      await kv.put(cle, JSON.stringify(valeur), options);
+    },
+    async delete(cle) {
+      cache.set(cle, null);
+      await kv.delete(cle);
     },
     async list({ prefix }) {
-      const cles = new Set([...cache.keys()].filter((c) => c.startsWith(prefix)));
+      const cles = new Set([...cache.keys()].filter((c) => c.startsWith(prefix) && cache.get(c) !== null));
       let curseur;
       do {
         const r = await kv.list({ prefix, cursor: curseur });
-        for (const k of r.keys) cles.add(k.name);
+        for (const k of r.keys) if (cache.get(k.name) !== null) cles.add(k.name);
         curseur = r.list_complete ? null : r.cursor;
       } while (curseur);
       return [...cles];

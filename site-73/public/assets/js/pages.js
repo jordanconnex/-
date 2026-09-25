@@ -983,7 +983,7 @@
       qui: { desc: "Identité de la session", run: function () {
         let se = S.session();
         if (se.mode === "live") {
-          print(se.user ? se.user.nom + " · connecté avec Discord · " + (se.admin ? "administrateur" + (S.modeStaff() ? " (mode staff)" : "") : "membre") + " · habilitation niveau " + S.getClearance()
+          print(se.user ? se.user.nom + " (@" + se.user.id + ") · connecté · " + (se.admin ? "administrateur" + (S.modeStaff() ? " (mode staff)" : "") : "membre") + " · habilitation niveau " + S.getClearance()
             : "Visiteur non connecté · habilitation niveau 0");
           return;
         }
@@ -1254,13 +1254,11 @@
     let photoHint = $("#join-roblox-hint");
     let PHOTO_MSG = {
       roblox: "✓ Photo Roblox affichée sur la carte.",
-      discord: "Photo de profil Discord affichée. Ajoute ton pseudo Roblox pour ta tête Roblox.",
-      "discord-secours": "Pseudo Roblox introuvable : photo de profil Discord affichée à la place.",
       introuvable: "Pseudo Roblox introuvable. Vérifie l'orthographe.",
       invalide: "3 à 20 caractères : lettres, chiffres ou _.",
       attente: "Recherche de ton avatar Roblox…",
       horsligne: "La photo Roblox s'affiche quand le serveur du site répond.",
-      aucune: ""
+      aucune: "Indique ton pseudo Roblox pour mettre la tête de ton avatar sur la carte."
     };
     let afficherPhoto = function (etat) { if (photoHint) photoHint.textContent = PHOTO_MSG[etat] || ""; };
 
@@ -1375,8 +1373,7 @@
     return '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">' + ln +
       '<circle cx="50" cy="48" r="20" fill="rgb(15 22 25 / .55)"/><path d="M12 120 C14 88 30 74 50 74 C70 74 86 88 88 120 Z" fill="rgb(15 22 25 / .55)"/></svg>';
   };
-  // Photo de la carte : avatar Roblox (via le Worker), sinon photo de profil
-  // Discord du membre connecté, sinon silhouette.
+  // Photo de la carte : avatar Roblox (via le Worker), sinon silhouette.
   let PSEUDO_ROBLOX = /^[A-Za-z0-9_]{3,20}$/;
   let photosRoblox = {}, photosResolues = {}, photosVues = {};
   let chercherRoblox = function (pseudo) {
@@ -1391,11 +1388,6 @@
       });
     }
     return photosRoblox[cle];
-  };
-  // v.avatar : photo Discord d'un autre membre (console staff) ; sinon celle du membre connecté
-  let photoDiscord = function (v) {
-    let url = v && "avatar" in v ? v.avatar : (S.isLive() && S.session().user ? S.session().user.avatar : null);
-    return url && /^https:\/\/cdn\.discordapp\.com\//.test(url) ? String(url).replace(/size=\d+/, "size=256") : null;
   };
   S.photoCarte = function (card, v, rapport) {
     let zone = card.querySelector(".idcard__photo");
@@ -1417,21 +1409,20 @@
       img.onerror = function () {
         img.remove();
         zone.classList.remove("has-photo");
-        if (source === "roblox") poser(photoDiscord(v), "discord", "Photo de profil Discord");
+        zone.removeAttribute("data-source");
       };
       img.src = url;
       zone.insertBefore(img, zone.querySelector("b"));
       zone.setAttribute("data-source", source);
     };
     let pseudo = String(v.roblox || "").trim();
-    let discord = photoDiscord(v);
-    if (!pseudo) { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord" : "aucune"); return; }
-    if (!PSEUDO_ROBLOX.test(pseudo)) { poser(discord, "discord", "Photo de profil Discord"); dire("invalide"); return; }
+    if (!pseudo) { poser(null); dire("aucune"); return; }
+    if (!PSEUDO_ROBLOX.test(pseudo)) { poser(null); dire("invalide"); return; }
     if (!S.isLive()) { poser(null); dire("horsligne"); return; }
     let conclure = function (url) {
       if (card.__photo !== jeton) return;
       if (url) { poser(url, "roblox", "Avatar Roblox de " + pseudo); dire("roblox"); }
-      else { poser(discord, "discord", "Photo de profil Discord"); dire(discord ? "discord-secours" : "introuvable"); }
+      else { poser(null); dire("introuvable"); }
     };
     let cle = pseudo.toLowerCase();
     if (cle in photosResolues) { conclure(photosResolues[cle]); return; }

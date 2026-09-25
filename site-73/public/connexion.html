@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr" data-alert="vert">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Connexion · Site-73</title>
+  <meta name="description" content="Connexion à l'intranet du Site-73 : identifiant et mot de passe, création de compte et gestion de ton mot de passe.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0C1215">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Connexion · Site-73">
+  <meta property="og:description" content="Connexion à l'intranet du Site-73 : identifiant et mot de passe, création de compte et gestion de ton mot de passe.">
+  <link rel="icon" href="assets/img/emblem.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/site-73.css">
+  <script src="assets/js/data.js" defer></script>
+  <script src="assets/js/core.js" defer></script>
+  <script src="assets/js/pages.js" defer></script>
+  <script src="assets/js/staff.js" defer></script>
+  <script src="assets/js/outils.js" defer></script>
+</head>
+<body data-page="connexion">
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <div id="s73-header"></div>
+
+  <main id="contenu" data-view="connexion">
+    <noscript><p class="noscript">L'intranet du Site-73 a besoin de JavaScript pour fonctionner. Active-le dans ton navigateur.</p></noscript>
+    <!-- Porte A : connexion, création de compte, puis « Mon compte » une fois connecté -->
+    <section class="sas sas--compte" id="compte" aria-labelledby="cx-titre">
+      <div class="sas__grille" aria-hidden="true"></div>
+      <div class="wrap sas__in">
+        <div class="sas__scan" aria-hidden="true">
+          <span class="sas__ring sas__ring--1"></span><span class="sas__ring sas__ring--2"></span><span class="sas__ring sas__ring--3"></span>
+          <span class="sas__emblem" data-emblem></span>
+          <span class="sas__beam"></span>
+        </div>
+        <div class="sas__panel">
+          <p class="eyebrow" id="cx-eyebrow">Porte A · Contrôle d'identité</p>
+          <h1 class="sas__title" id="cx-titre">Connexion</h1>
+          <p class="sas__lede" id="cx-lede">Ton identifiant et ton mot de passe ouvrent l'intranet à ton niveau d'habilitation. Pas encore de compte ? Crée-le en une minute.</p>
+          <div class="sas__body" id="cx-body" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="s73-footer"></div>
+</body>
+</html>

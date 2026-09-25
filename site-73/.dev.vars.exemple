@@ -3,21 +3,19 @@
 # En local : copie ce fichier en « .dev.vars » (jamais envoyé sur GitHub) puis « npm run dev ».
 # Ne mets JAMAIS les vraies valeurs dans ce fichier-ci ni dans le dépôt.
 
-# Application Discord (discord.com/developers/applications → OAuth2) — type « Secret »
-DISCORD_CLIENT_ID=
-DISCORD_CLIENT_SECRET=
-# Identifiant du serveur Discord (clic droit sur le serveur → Copier l'identifiant)
-DISCORD_GUILD_ID=
 # Longue chaîne aléatoire (au moins 32 caractères) qui signe les sessions — type « Secret »
 SESSION_SECRET=
 
-# Administrateurs : identifiants de rôles Discord et/ou d'utilisateurs, séparés par des virgules
-ADMIN_ROLES=
-ADMIN_IDS=
+# Administrateur principal : il se connecte avec cet identifiant et ce mot de passe,
+# puis nomme les autres administrateurs depuis la console staff.
+# Identifiant : 3 à 20 caractères (lettres sans accent, chiffres, . _ -)
+ADMIN_IDENTIFIANT=
+# Mot de passe de l'administrateur principal (8 caractères minimum) — type « Secret »
+ADMIN_MOT_DE_PASSE=
 
-# Facultatif : habilitation donnée par des rôles Discord (idRole:niveau)
-HABILITATION_ROLES=
-# Facultatif : habilitation d'un membre sans rôle ni réglage du staff (1 par défaut)
+# Facultatif mais conseillé : code à donner sur le Discord pour pouvoir créer un compte.
+# Vide = n'importe qui peut créer un compte (au niveau par défaut) — type « Secret »
+CODE_INSCRIPTION=
+
+# Facultatif : habilitation d'un nouveau compte (1 par défaut)
 HABILITATION_PAR_DEFAUT=1
-# Facultatif : adresse publique du site si tu utilises ton propre nom de domaine
-SITE_URL=

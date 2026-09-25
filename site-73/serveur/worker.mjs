@@ -3,10 +3,11 @@
 // statiques). Le Worker répond aux routes /api/… ci-dessous (wrangler.jsonc :
 // run_worker_first), avant les fichiers. Aussi utilisé par Cloudflare Pages
 // via functions/api/[[chemin]].js.
-import { initialiser, json } from "./commun.mjs";
+import { initialiser, json, rediriger } from "./commun.mjs";
 import contenu from "./routes/contenu.mjs";
 import connexion from "./routes/connexion.mjs";
-import retourDiscord from "./routes/retour-discord.mjs";
+import inscription from "./routes/inscription.mjs";
+import motDePasse from "./routes/mot-de-passe.mjs";
 import deconnexion from "./routes/deconnexion.mjs";
 import staff from "./routes/staff.mjs";
 import roblox from "./routes/roblox.mjs";
@@ -15,9 +16,12 @@ import etat from "./routes/etat.mjs";
 const ROUTES = {
   "/api/contenu": contenu,
   "/api/contenu.json": contenu, // adresse (relative) utilisée par les pages
-  "/api/auth/login": connexion,
-  "/api/auth/callback": retourDiscord,
+  "/api/auth/connexion": connexion,
+  "/api/auth/inscription": inscription,
+  "/api/auth/mot-de-passe": motDePasse,
   "/api/auth/logout": deconnexion,
+  // Ancienne adresse de connexion (Discord) : mène à la page de connexion
+  "/api/auth/login": async () => rediriger("/connexion.html"),
   "/api/staff": staff,
   "/api/roblox": roblox,
   "/api/etat": etat

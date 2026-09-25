@@ -242,12 +242,12 @@
   let habName = function (n) { return D.habilitations[n].nom; };
   S.habName = habName;
 
-  /* ---------- Session (connexion Discord) --------------------------- */
+  /* ---------- Session (compte identifiant + mot de passe) ----------- */
   // mode "live" : le site parle à son Worker Cloudflare (/api/…) ;
   // mode "horsligne" : le serveur ne répond pas (fichier local, hébergement
   // de fichiers simples) : visiteur de niveau 0, sans connexion ni staff.
-  // Le mode staff est à part : il faut être administrateur (rôle Discord)
-  // PUIS l'activer. Hors mode staff, personne ne peut changer l'alerte ni
+  // Le mode staff est à part : il faut être administrateur (compte nommé
+  // par le staff) PUIS l'activer. Hors mode staff, personne ne peut changer l'alerte ni
   // les habilitations.
   let sess = { mode: "horsligne", user: null, admin: false, reel: 0, source: "visiteur" };
   // Identifiant du compte qui a activé le mode staff dans cet onglet
@@ -264,14 +264,14 @@
     if (staffId) store.set("s73.staff", staffId, true); else store.del("s73.staff", true);
   };
   S.canChooseClearance = function () { return S.modeStaff(); };
-  S.loginUrl = function () {
+  // Page de connexion ; le visiteur revient ensuite sur la page où il était
+  S.loginUrl = function (inscription) {
     let p = byId[currentPage];
-    return "/api/auth/login?retour=" + encodeURIComponent(p && p.id !== "accueil" ? "/" + p.file + ".html" : "/");
+    return "connexion.html?retour=" + encodeURIComponent(p && p.id !== "accueil" ? "/" + p.file + ".html" : "/") + (inscription ? "#inscription" : "");
   };
   S.avatar = function (u, cls) {
-    let ini = String(u && u.nom || "?").replace(/[^A-Za-zÀ-ÿ0-9 ]/g, "").split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase() || "?";
-    let bg = u && u.avatar && sess.mode === "live" ? ' style="background-image:url(\'' + String(u.avatar).replace(/['"()\\]/g, "") + '\')"' : "";
-    return '<span class="av ' + (cls || "") + '"' + bg + ' aria-hidden="true">' + esc(ini) + "</span>";
+    let ini = String(u && u.nom || "?").replace(/[^A-Za-zÀ-ÿ0-9 ._-]/g, "").split(/[\s._-]+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase() || "?";
+    return '<span class="av ' + (cls || "") + '" aria-hidden="true">' + esc(ini) + "</span>";
   };
 
   /* ---------- Caviardage ---------------------------------------------- */
@@ -376,7 +376,7 @@
     let lvl = bar.getAttribute("data-lvl");
     let fin = S.modeStaff() ? " Mode staff : change l'aperçu avec le bouton « Hab. »."
       : sess.user ? " Seul le staff du serveur peut relever votre habilitation."
-      : sess.mode === "live" ? ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous avec Discord</a> pour recevoir la vôtre.'
+      : sess.mode === "live" ? ' <a class="link" href="' + S.loginUrl() + '">Connectez-vous</a> pour recevoir la vôtre.'
       : " Connectez-vous avec le bouton « Hab. » pour recevoir la vôtre.";
     S.toast("<b>Accès refusé.</b> Niveau " + lvl + " requis, votre habilitation est de niveau " + clearance + "." + fin, { warn: true, duration: 6000 });
   }
@@ -681,7 +681,6 @@
     }).join("") + "</ul>";
   };
   let SOURCES = {
-    role: "Attribuée par tes rôles sur le serveur Discord.",
     staff: "Attribuée par l'administration du site.",
     defaut: "Niveau par défaut des membres. Le staff peut le relever.",
     admin: "Administrateur : accès complet."
@@ -693,9 +692,10 @@
       (sess.admin ? "Administrateur" : "Membre du serveur") + "</small></div></div>" : "";
     let sortir = '<a class="btn btn--sm" href="/api/auth/logout">Se déconnecter</a>';
     let out = sess.admin && sess.avertissement ? '<p class="clr__raison">⚠ ' + esc(sess.avertissement) + "</p>" : "";
+    if (sess.user && sess.mdpProvisoire) out += '<p class="clr__raison">⚠ Mot de passe provisoire : <a href="connexion.html">choisis le tien</a>.</p>';
     if (sess.mode !== "live") {
       out += '<p class="clr__horsligne">Serveur indisponible</p>' +
-        "<p><b>Visiteur · niveau 0</b><br>La connexion Discord et l'espace staff reviennent dès que le serveur du site répond.</p>" +
+        "<p><b>Visiteur · niveau 0</b><br>La connexion et l'espace staff reviennent dès que le serveur du site répond.</p>" +
         (S.texteRaisonHorsLigne() ? '<p class="clr__raison">⚠ ' + esc(S.texteRaisonHorsLigne()) + "</p>" : "") +
         '<button type="button" class="btn btn--signal clr__login" data-reessayer>Réessayer</button>';
     } else if (S.modeStaff()) {
@@ -705,15 +705,15 @@
         '<button type="button" class="btn btn--sm" data-staff-off>Quitter le mode staff</button></div>';
     } else if (sess.admin) {
       out += who + "<p><b>Administrateur · niveau " + sess.reel + "</b><br>Les commandes du staff (alerte, habilitations, communiqués) ne s'affichent qu'en mode staff.</p>" +
-        '<div class="clr__acts"><button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' + sortir + "</div>";
+        '<div class="clr__acts"><button type="button" class="btn btn--sm btn--signal" data-staff-on>Activer le mode staff</button>' +
+        '<a class="btn btn--sm" href="connexion.html">Mon compte</a>' + sortir + "</div>";
     } else if (!sess.user) {
-      out += "<p><b>Visiteur · niveau 0</b><br>Connecte-toi avec ton compte Discord : le staff du serveur t'attribue ton habilitation.</p>" +
-        '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.chat + "Se connecter avec Discord</a>" +
-        '<a class="clr__staff-link" href="staff.html">' + ICON.lock + "Accès staff</a>";
+      out += "<p><b>Visiteur · niveau 0</b><br>Connecte-toi avec ton identifiant : le staff du serveur t'attribue ton habilitation.</p>" +
+        '<a class="btn btn--signal clr__login" href="' + S.loginUrl() + '">' + ICON.lock + "Se connecter</a>" +
+        '<a class="clr__staff-link" href="' + S.loginUrl(true) + '">Pas de compte ? Créer un compte</a>';
     } else {
       out += who + "<p><b>Habilitation · niveau " + sess.reel + " · " + esc(habName(sess.reel)) + "</b><br>" + esc(SOURCES[sess.source] || SOURCES.defaut) + "</p>" +
-        '<div class="clr__acts"><a class="btn btn--sm" href="carnet.html">Mon carnet</a>' + sortir + "</div>" +
-        '<a class="clr__staff-link" href="staff.html">' + ICON.lock + "Accès staff</a>";
+        '<div class="clr__acts"><a class="btn btn--sm" href="connexion.html">Mon compte</a><a class="btn btn--sm" href="carnet.html">Mon carnet</a>' + sortir + "</div>";
     }
     pop.innerHTML = out;
     if (btn) btn.innerHTML = (sess.user ? S.avatar(sess.user, "av--sm") : "") + '<span class="clr__lbl">' + (S.modeStaff() ? "Staff" : "Hab.") + "</span><b data-hab-num>" + clearance + "</b>";
@@ -987,7 +987,7 @@
         (clearance < 4 ? " Certaines informations restent masquées." : "") + "</span>" +
         (S.canChooseClearance() ? '<button type="button" data-open-hab>Changer d\'habilitation</button>'
           : sess.user ? "<span>Habilitation attribuée par l'administration.</span>"
-          : '<a href="' + S.loginUrl() + '">Se connecter avec Discord</a>') + "</footer>";
+          : '<a href="' + S.loginUrl() + '">Se connecter</a>') + "</footer>";
     S.redactInto(art.querySelector('[data-part="proc"]'), s.procedures);
     S.redactInto(art.querySelector('[data-part="desc"]'), s.description);
     modal.querySelector("[data-pos]").textContent = (modalIndex + 1) + " / " + modalList.length;
@@ -1176,7 +1176,7 @@
       "> Conditions en surface : " + (w.temp > 0 ? "+" : "") + w.temp + " °C, vent " + w.vent + " km/h",
       "> Chargement de " + D.scp.length + " dossiers de confinement ... <span class=\"ok\">OK</span>",
       "> Niveau d'alerte : <span class=\"hl\">" + esc(D.alertes[alertLevel].code.toUpperCase()) + "</span>",
-      "> Identité : <span class=\"hl\">" + (sess.user ? esc(sess.user.nom.toUpperCase()) + (sess.mode === "live" ? " (DISCORD)" : " (DÉMO)") : "VISITEUR NON CONNECTÉ") + "</span>",
+      "> Identité : <span class=\"hl\">" + (sess.user ? esc(sess.user.nom.toUpperCase()) + (sess.admin ? " (ADMINISTRATION)" : "") : "VISITEUR NON CONNECTÉ") + "</span>",
       "> Habilitation : <span class=\"hl\">NIVEAU " + clearance + " · " + esc(habName(clearance).toUpperCase()) + "</span>"
     ];
     let timers = [], done = false;
@@ -1395,6 +1395,7 @@
   let passerHorsLigne = function () {
     sess.mode = "horsligne";
     sess.admin = false; sess.user = null; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
+    sess.principal = false; sess.mdpProvisoire = false;
     clearance = 0;
   };
   let applySessionUI = function () {
@@ -1402,7 +1403,7 @@
     doc.querySelectorAll("[data-staff-only]").forEach(function (el) { el.hidden = !S.modeStaff(); });
     doc.querySelectorAll("[data-public-only]").forEach(function (el) { el.hidden = S.modeStaff(); });
     doc.querySelectorAll("[data-session-nom]").forEach(function (el) { el.textContent = sess.user ? sess.user.nom : "Visiteur"; });
-    doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne · Discord" : "Hors ligne"; });
+    doc.querySelectorAll("[data-session-mode]").forEach(function (el) { el.textContent = sess.mode === "live" ? "En ligne" : "Hors ligne"; });
     renderClrPop();
     updateClearanceUI();
     doc.dispatchEvent(new CustomEvent("s73:session"));
@@ -1488,15 +1489,19 @@
         appliquerContenu(p);
         sess.mode = "live";
         sess.avertissement = p.avertissement || null;
+        sess.codeInscription = !!(p.comptes && p.comptes.codeInscription);
         if (p.avertissement && window.console) console.warn("Site-73 : " + p.avertissement);
         if (p.session) {
-          sess.user = { id: p.session.id, nom: p.session.nom, avatar: p.session.avatar };
+          sess.user = { id: p.session.id, nom: p.session.nom };
           sess.admin = !!p.session.admin;
+          sess.principal = !!p.session.principal;
+          sess.mdpProvisoire = !!p.session.mdpProvisoire;
           sess.reel = p.session.habilitation;
           sess.source = p.session.source;
           sess.fiche = p.session.fiche || null;
         } else {
           sess.user = null; sess.admin = false; sess.reel = 0; sess.source = "visiteur"; sess.fiche = null;
+          sess.principal = false; sess.mdpProvisoire = false;
         }
         clearance = niveauVu();
       })
@@ -1519,12 +1524,9 @@
   };
   let MESSAGES = {
     ok: [false, function () { return "<b>Connecté · " + esc(sess.user ? sess.user.nom : "") + ".</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + ")."; }],
-    fermee: [false, "<b>Déconnecté.</b> À bientôt au Site-73."],
-    annulee: [true, "<b>Connexion annulée.</b>"],
-    expiree: [true, "<b>La connexion a expiré.</b> Réessaie depuis le bouton « Hab. »."],
-    serveur: [true, "<b>Accès refusé.</b> Ce compte Discord n'est pas membre du serveur du Site-73."],
-    discord: [true, "<b>Discord n'a pas répondu.</b> Réessaie dans un instant."],
-    config: [true, "<b>Connexion indisponible.</b> La connexion Discord n'est pas encore configurée sur ce site."]
+    bienvenue: [false, function () { return "<b>Compte créé · bienvenue au Site-73, " + esc(sess.user ? sess.user.nom : "") + ".</b> Habilitation niveau " + sess.reel + " (" + esc(habName(sess.reel)) + ") : le staff la relève selon ton rôle."; }],
+    motdepasse: [false, "<b>Mot de passe changé.</b> Tes autres appareils ont été déconnectés."],
+    fermee: [false, "<b>Déconnecté.</b> À bientôt au Site-73."]
   };
   let messageConnexion = function () {
     let q = /[?&]connexion=([a-z]+)/.exec(location.search);

@@ -42,7 +42,7 @@ const resultat = await build({
   outfile: ici("../dist/worker.js"),
   bundle: true, format: "esm", platform: "neutral", target: "es2022", write: false,
   legalComments: "none", logLevel: "warning",
-  banner: { js: "// Site-73 · Worker Cloudflare en un seul fichier (généré par « npm run worker-unique », ne pas modifier).\n// Contient le contenu classifié du site : ne le publie jamais, ne le mets pas sur GitHub.\n// Il faut une liaison KV nommée SITE73 et les variables Discord (voir le guide)." },
+  banner: { js: "// Site-73 · Worker Cloudflare en un seul fichier (généré par « npm run worker-unique », ne pas modifier).\n// Contient le contenu classifié du site : ne le publie jamais, ne le mets pas sur GitHub.\n// Il faut une liaison KV nommée SITE73 et les variables SESSION_SECRET, ADMIN_IDENTIFIANT et ADMIN_MOT_DE_PASSE (voir le guide)." },
   plugins: [{
     name: "fichiers",
     setup(b) {

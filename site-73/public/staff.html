@@ -113,16 +113,17 @@
 
         <section class="adm__panel" id="p-membres" role="tabpanel" aria-labelledby="h-membres" data-panneau="membres" hidden>
           <header class="adm__head">
-            <p class="eyebrow">Membres du serveur</p>
+            <p class="eyebrow">Comptes des membres</p>
             <h2 class="adm__title" id="h-membres">Habilitations</h2>
-            <p class="adm__lede">Un membre apparaît ici après sa première connexion avec Discord. Sans réglage du staff, son habilitation vient de ses rôles Discord ou du niveau par défaut. Un réglage du staff passe avant les rôles.</p>
+            <p class="adm__lede">Un membre apparaît ici dès qu'il crée son compte, au niveau d'habilitation par défaut. Règle son niveau, donne-lui un mot de passe provisoire s'il a oublié le sien, nomme d'autres administrateurs ou supprime un compte.</p>
           </header>
           <div class="toolbar">
-            <label class="search"><span class="sr-only">Rechercher un membre</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-q" type="search" placeholder="Nom, pseudo ou identifiant Discord…" autocomplete="off"></label>
+            <label class="search"><span class="sr-only">Rechercher un membre</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input class="input" id="st-q" type="search" placeholder="Nom ou identifiant…" autocomplete="off"></label>
             <label class="sort"><span>Niveau</span>
               <select class="select" id="st-niveau"><option value="all">Tous</option><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
             </label>
           </div>
+          <div class="st-mdp" id="st-mdp-resultat" role="status" hidden></div>
           <p class="db-count" id="st-membres-count" aria-live="polite"></p>
           <div class="table-wrap adm__table">
             <table class="table st-table">
@@ -142,7 +143,7 @@
             <form class="adm__form" id="st-fiche-form" novalidate>
               <h3 class="label" id="st-fiche-mode">Nouvelle fiche</h3>
               <input type="hidden" id="st-fiche-id">
-              <label class="field"><span>Membre Discord</span><select class="select" id="st-fiche-membre"></select></label>
+              <label class="field"><span>Compte du joueur</span><select class="select" id="st-fiche-membre"></select></label>
               <div class="adm__duo">
                 <label class="field"><span>Prénom</span><input class="input" id="st-fiche-prenom" maxlength="30" autocomplete="off"></label>
                 <label class="field"><span>Nom</span><input class="input" id="st-fiche-nom" maxlength="30" autocomplete="off"></label>
