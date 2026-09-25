@@ -6,7 +6,7 @@ window.S73 = window.S73 || {};
 window.S73.data = {
  "config": {
   "nom": "Site-73",
-  "discord": "https://discord.gg/RqM7Nvam2R",
+  "discord": "https://discord.gg/TBVu3KCbpk",
   "alerte": "vert",
   "animations": "toujours",
   "dernierIncident": {
