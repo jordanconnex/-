@@ -1070,35 +1070,50 @@
     if (!body) return;
     let toc = $("#rules-toc-nav"), search = $("#rules-search"), prog = $("#rules-progress");
     let query = "";
+    let parties = function () { return D.reglementParties || []; };
+    let chapitresDe = function (p) { return D.reglement.filter(function (ch) { return ch.partie === p.id; }); };
+    let boite = toc.closest(".rules-toc");
 
     let draw = function (q) {
       query = q;
       let re = q ? accentRegex(q) : null;
       let nq = norm(q || "");
       let any = false;
-      body.innerHTML = D.reglement.map(function (ch, ci) {
-        let arts = ch.articles.map(function (t, ai) {
-          if (nq && norm(t).indexOf(nq) < 0) return "";
-          let txt = esc(t);
-          if (re) txt = txt.replace(re, function (m) { return "<mark>" + m + "</mark>"; });
-          return '<li class="article" id="art-' + (ci + 1) + "-" + (ai + 1) + '"><b>Art. ' + (ci + 1) + "." + (ai + 1) + "</b><p>" + txt + "</p></li>";
+      // Une catégorie par partie : A (Discord), B (Roblox · SCP:RP)
+      body.innerHTML = parties().map(function (p) {
+        let chapitres = chapitresDe(p).map(function (ch) {
+          let code = S.chapitreCode(ch);
+          let arts = ch.articles.map(function (t, ai) {
+            if (nq && norm(t).indexOf(nq) < 0) return "";
+            let txt = esc(t);
+            if (re) txt = txt.replace(re, function (m) { return "<mark>" + m + "</mark>"; });
+            return '<li class="article" id="art-' + ch.id + "-" + (ai + 1) + '"><b>Art. ' + code + "." + (ai + 1) + "</b><p>" + txt + "</p></li>";
+          }).join("");
+          if (!arts) return "";
+          let read = S.isMarked("rules", ch.id);
+          return '<section class="chapter' + (read ? " is-read" : "") + '" id="' + ch.id + '"><div class="chapter__head"><span class="chapter__num" aria-hidden="true">' + code +
+            '</span><h3 class="h2">Chapitre ' + code + " · " + esc(ch.titre) + '</h3></div><ol class="articles">' + arts + "</ol>" +
+            '<button type="button" class="btn btn--sm chapter__read' + (read ? " is-on" : "") + '" data-read="' + ch.id + '" aria-pressed="' + read + '">' +
+            (read ? "✓ Chapitre lu" : "Marquer comme lu") + "</button></section>";
         }).join("");
-        if (!arts) return "";
+        if (!chapitres) return "";
         any = true;
-        let read = S.isMarked("rules", ch.id);
-        return '<section class="chapter' + (read ? " is-read" : "") + '" id="' + ch.id + '"><div class="chapter__head"><span class="chapter__num" aria-hidden="true">' + (ci + 1) +
-          '</span><h2 class="h2">Chapitre ' + (ci + 1) + " · " + esc(ch.titre) + '</h2></div><ol class="articles">' + arts + "</ol>" +
-          '<button type="button" class="btn btn--sm chapter__read' + (read ? " is-on" : "") + '" data-read="' + ch.id + '" aria-pressed="' + read + '">' +
-          (read ? "✓ Chapitre lu" : "Marquer comme lu") + "</button></section>";
+        return '<div class="partie" id="partie-' + p.id + '"><header class="partie__head"><span class="partie__lettre" aria-hidden="true">' + p.lettre + "</span>" +
+          '<div><p class="eyebrow">Partie ' + p.lettre + '</p><h2 class="h2">' + esc(p.titre) + '</h2><p class="partie__resume">' + esc(p.resume) + "</p></div></header>" +
+          chapitres + "</div>";
       }).join("");
-      if (!any) body.innerHTML = '<p class="rules-empty">Aucun article ne contient « ' + esc(q) + " ». Essaie « métagaming », « brèche » ou « fiche ».</p>";
+      if (!any) body.innerHTML = '<p class="rules-empty">Aucun article ne contient « ' + esc(q) + " ». Essaie « RDM », « ticket » ou « FearRP ».</p>";
       observe();
     };
     let drawToc = function () {
-      toc.innerHTML = D.reglement.map(function (ch, i) {
-        let read = S.isMarked("rules", ch.id);
-        return '<a href="#' + ch.id + '" class="' + (read ? "is-read" : "") + '"><b>' + (read ? "✓" : pad(i + 1)) + "</b><span>" + esc(ch.titre) + "</span></a>";
-      }).join("") + '<a href="#sanctions"><b>§</b><span>Sanctions</span></a><a href="#glossaire"><b>A–Z</b><span>Glossaire</span></a><a href="#examen"><b>?</b><span>Examen d\'aptitude</span></a>';
+      toc.innerHTML = parties().map(function (p) {
+        return '<p class="rules-toc__partie"><a href="#partie-' + p.id + '">Partie ' + p.lettre + " · " + esc(p.court || p.titre) + "</a></p>" +
+          chapitresDe(p).map(function (ch) {
+            let read = S.isMarked("rules", ch.id);
+            return '<a href="#' + ch.id + '" class="' + (read ? "is-read" : "") + '"><b>' + (read ? "✓" : S.chapitreCode(ch)) + "</b><span>" + esc(ch.titre) + "</span></a>";
+          }).join("");
+      }).join("") + '<p class="rules-toc__partie">Annexes</p>' +
+        '<a href="#sanctions"><b>§</b><span>Sanctions</span></a><a href="#glossaire"><b>A–Z</b><span>Glossaire</span></a><a href="#examen"><b>?</b><span>Examen d\'aptitude</span></a>';
       if (prog) {
         let n = D.reglement.filter(function (ch) { return S.isMarked("rules", ch.id); }).length;
         prog.innerHTML = '<span class="label">Lecture · ' + n + " / " + D.reglement.length + " chapitres</span>" +
@@ -1113,7 +1128,17 @@
       io = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
           if (!en.isIntersecting) return;
-          $$("a", toc).forEach(function (a) { a.classList.toggle("is-active", a.getAttribute("href") === "#" + en.target.id); });
+          let actif = null;
+          $$("nav > a", toc.parentNode).forEach(function (a) {
+            let on = a.getAttribute("href") === "#" + en.target.id;
+            a.classList.toggle("is-active", on);
+            if (on) actif = a;
+          });
+          // Sommaire plus haut que l'écran : garde le chapitre en cours visible
+          if (actif && boite && boite.scrollHeight > boite.clientHeight) {
+            let haut = actif.offsetTop, bas = haut + actif.offsetHeight;
+            if (haut < boite.scrollTop || bas > boite.scrollTop + boite.clientHeight) boite.scrollTop = haut - boite.clientHeight / 2;
+          }
         });
       }, { rootMargin: "-30% 0px -60% 0px" });
       $$(".chapter", body).forEach(function (c) { io.observe(c); });
@@ -1163,17 +1188,17 @@
         '<div class="quiz__foot"><button type="button" class="btn btn--signal" data-next hidden>' + (qi === D.quiz.length - 1 ? "Voir le résultat" : "Question suivante") + "</button></div>";
     };
     let drawResult = function () {
-      let pass = score >= D.quiz.length - 1;
+      let pass = score >= S.seuilExamen();
       S.stat("exam", score, "max");
       quiz.innerHTML =
         '<div class="quiz__stamp" style="--c:' + (pass ? "var(--a-vert)" : "var(--a-rouge)") + '">' + (pass ? "Apte au service" : "À revoir") + "</div>" +
         '<div class="quiz__result"><span class="label">Résultat de l\'examen</span>' +
         '<p class="quiz__score">' + score + '<span style="color:var(--text-3)">/' + D.quiz.length + "</span></p>" +
         '<p class="prose">' + (pass
-          ? "Tu maîtrises les règles essentielles du Site-73. Il ne te reste plus qu'à créer ta fiche personnage."
-          : "Quelques règles t'ont échappé. Relis les chapitres 2 à 4 puis retente l'examen.") + "</p>" +
+          ? "Tu maîtrises le règlement du Site-73, sur Discord comme en jeu. Il ne te reste plus qu'à créer ta fiche personnage."
+          : "Il faut au moins " + S.seuilExamen() + " bonnes réponses. Relis la partie B (Roblox), surtout le roleplay et le combat, puis retente l'examen.") + "</p>" +
         '<div class="hero__cta"><button type="button" class="btn" data-restart>Recommencer</button>' +
-        (pass ? '<a class="btn btn--signal" href="rejoindre.html#fiche">Créer ma fiche ' + S.icon.arrow + "</a>" : '<a class="btn btn--signal" href="#ch2">Relire le chapitre 2</a>') + "</div></div>";
+        (pass ? '<a class="btn btn--signal" href="rejoindre.html#fiche">Créer ma fiche ' + S.icon.arrow + "</a>" : '<a class="btn btn--signal" href="#partie-roblox">Relire la partie Roblox</a>') + "</div></div>";
     };
     quiz.addEventListener("click", function (e) {
       let o = e.target.closest(".quiz__opt");

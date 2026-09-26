@@ -472,6 +472,15 @@
     }
   } catch (e) { /* carnet illisible : on repart de zéro */ }
   let saveCarnet = function () { store.set("s73.carnet", JSON.stringify(carnet)); };
+  /* ---------- Règlement : parties A (Discord) et B (Roblox) ----------- */
+  // Numéro d'un chapitre dans sa partie : A1…A6, B1…B9
+  S.chapitreCode = function (ch) {
+    let p = (D.reglementParties || []).filter(function (x) { return x.id === ch.partie; })[0];
+    return (p ? p.lettre : "") + (D.reglement.filter(function (c) { return c.partie === ch.partie; }).indexOf(ch) + 1);
+  };
+  // Examen d'aptitude : 80 % de bonnes réponses (16 sur 20)
+  S.seuilExamen = function () { return Math.ceil(D.quiz.length * 0.8); };
+
   let badgeReady = false;
   let RULES = {
     arrivee: function () { return true; },
@@ -481,7 +490,7 @@
     visite: function (c) { return PAGES.every(function (p) { return (p.staff && !sess.admin) || c.pages[p.id]; }); },
     thaumiel: function () { return clearance === 5; },
     reglement: function (c) { return D.reglement.every(function (ch) { return c.rules[ch.id]; }); },
-    apte: function (c) { return (c.stats.exam || 0) >= D.quiz.length - 1; },
+    apte: function (c) { return (c.stats.exam || 0) >= S.seuilExamen(); },
     sansfaute: function (c) { return (c.stats.exam || 0) >= D.quiz.length; },
     evacuation: function (c) { return (c.stats.breach || 0) >= 1; },
     itineraire: function (c) { return (c.stats.route || 0) >= 1; },
@@ -1033,9 +1042,10 @@
     });
     D.zones.forEach(function (z) { add("Zone", z.nom, z.niveau + " · " + z.profondeur, function () { S.go("plan.html#zone-" + z.id); }); });
     D.departements.forEach(function (d) { add("Département", d.nom, d.resume, function () { S.go("personnel.html#dept-" + d.id); }, d.code); });
-    D.reglement.forEach(function (ch, ci) {
+    D.reglement.forEach(function (ch) {
+      let code = S.chapitreCode(ch);
       ch.articles.forEach(function (a, ai) {
-        add("Règle", "Art. " + (ci + 1) + "." + (ai + 1) + " · " + ch.titre, a, function () { S.go("reglement.html#art-" + (ci + 1) + "-" + (ai + 1)); });
+        add("Règle", "Art. " + code + "." + (ai + 1) + " · " + ch.titre, a, function () { S.go("reglement.html#art-" + ch.id + "-" + (ai + 1)); });
       });
     });
     D.glossaire.forEach(function (g) { add("Glossaire", g[0], g[1], function () { S.go("reglement.html#glossaire"); }); });
@@ -1779,6 +1789,8 @@
   fill("[data-arch-count]", D.archives.length);
   fill("[data-chapter-count]", D.reglement.length);
   fill("[data-article-count]", D.reglement.reduce(function (n, c) { return n + c.articles.length; }, 0));
+  fill("[data-quiz-count]", D.quiz.length);
+  fill("[data-quiz-seuil]", S.seuilExamen());
   fill("[data-zone-count]", D.zones.length);
   fill("[data-page-count]", PAGES.length);
   fill("[data-event-count]", (D.evenements || []).length);

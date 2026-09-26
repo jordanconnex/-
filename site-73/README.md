@@ -86,6 +86,8 @@ Remplis `.env` (il n'est jamais envoyé sur GitHub), puis ouvre <http://localhos
 ## Modifier le contenu
 Tout le texte est dans **`contenu/donnees.mjs`** : dossiers SCP, zones du plan, départements, règlement, protocoles, quiz, distinctions, FAQ. Le lien Discord se met dans `config.discord`.
 
+Règlement : `reglementParties` définit les catégories (A Discord, B Roblox) et chaque chapitre de `reglement` indique sa `partie`. Les numéros (A1, B4.3…) se calculent tout seuls selon l'ordre des chapitres. L'examen (`quiz`) accepte autant de questions que tu veux : il faut 80 % de bonnes réponses pour être apte ; `bonne` est la position de la bonne réponse (0 = A, 1 = B…).
+
 Au déploiement, `npm run build` génère `public/assets/js/data.js`, où les passages classifiés sont remplacés par des « ▒ ». Si tu modifies le contenu et veux l'essayer en local, lance `npm run build`.
 
 Caviardage : `[[3|texte]]` n'est lisible qu'à partir de l'habilitation 3. `[DONNÉES SUPPRIMÉES]` reste toujours masqué.

@@ -892,18 +892,28 @@ html[data-alert="rouge"] .m-car, html[data-alert="noir"] .m-car { animation-play
 
 /* ---------- 21. Règlement ---------------------------------------- */
 .rules-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: clamp(24px, 4vw, 48px); align-items: start; }
-.rules-toc { position: sticky; top: 96px; display: grid; gap: 16px; }
+.rules-toc { position: sticky; top: 96px; display: grid; gap: 16px; max-height: calc(100vh - 112px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .rules-toc nav { display: grid; border-top: 1px solid var(--line-2); }
 .rules-toc nav a { display: grid; grid-template-columns: 36px 1fr; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--text-2); font-family: var(--font-head); font-weight: 500; transition: color .2s; }
 .rules-toc nav a b { font-family: var(--font-mono); font-size: .72rem; font-weight: 500; color: var(--text-3); padding-top: 3px; }
 .rules-toc nav a:hover, .rules-toc nav a.is-active { color: var(--text); }
 .rules-toc nav a.is-active b { color: var(--signal); }
+/* Catégories du sommaire : partie A (Discord), partie B (Roblox), annexes */
+.rules-toc__partie { margin: 18px 0 6px; font-family: var(--font-mono); font-size: .7rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--signal); }
+.rules-toc nav > .rules-toc__partie:first-child { margin-top: 12px; }
+.rules-toc nav .rules-toc__partie a { display: inline; padding: 0; border: 0; color: inherit; font: inherit; }
+.rules-toc nav .rules-toc__partie a:hover { text-decoration: underline; }
+.partie + .partie { margin-top: 56px; }
+.partie__head { display: flex; align-items: center; gap: 20px; padding: 20px 22px; margin-bottom: 28px; background: var(--surface); border: 1px solid var(--line-2); border-left: 3px solid var(--signal); }
+.partie__lettre { font-family: var(--font-display); font-weight: 900; font-size: 3.6rem; line-height: .8; color: var(--signal); }
+.partie__head .h2 { margin-top: 6px; }
+.partie__resume { margin-top: 6px; color: var(--text-2); max-width: 62ch; }
 .chapter { padding-bottom: 36px; }
 .chapter + .chapter { padding-top: 36px; border-top: 1px solid var(--line); }
 .chapter__head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 18px; }
 .chapter__num { font-family: var(--font-display); font-weight: 900; font-size: 3.4rem; line-height: .8; color: transparent; -webkit-text-stroke: 1.5px var(--signal); }
 .articles { list-style: none; display: grid; gap: 0; }
-.article { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.article { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
 .article b { font-family: var(--font-mono); font-size: .78rem; font-weight: 600; color: var(--signal); padding-top: 3px; letter-spacing: .04em; }
 .article p { color: var(--text); max-width: 68ch; }
 .article mark { background: var(--signal); color: var(--signal-ink); padding: 0 2px; }
@@ -1060,7 +1070,7 @@ html[data-alert="rouge"] .m-car, html[data-alert="noir"] .m-car { animation-play
   .dept__tab[aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--signal); }
   .dept__panel { grid-template-columns: minmax(0, 1fr); }
   .rules-layout { grid-template-columns: minmax(0, 1fr); }
-  .rules-toc { position: static; }
+  .rules-toc { position: static; max-height: none; overflow: visible; }
   .creator { grid-template-columns: minmax(0, 1fr); }
   .creator__preview { position: static; order: -1; }
   .ftr__in { grid-template-columns: repeat(3, minmax(0, 1fr)); }

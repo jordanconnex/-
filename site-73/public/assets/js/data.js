@@ -1090,10 +1090,10 @@ window.S73.data = {
  ],
  "archives": [
   {
-   "date": "2026-09-23",
+   "date": "2026-09-26",
    "type": "communique",
-   "titre": "Mise à jour du règlement",
-   "texte": "Le chapitre 4 (SCP & confinement) a été mis à jour. Merci d'en prendre connaissance avant la prochaine session."
+   "titre": "Nouveau règlement officiel",
+   "texte": "Le règlement officiel est réorganisé en deux parties : A (Discord) et B (Roblox · SCP:RP). L'examen d'aptitude passe à vingt questions. Merci d'en prendre connaissance avant la prochaine session."
   },
   {
    "date": "2026-09-20",
@@ -1164,96 +1164,215 @@ window.S73.data = {
   "INFIRMERIE · SCP-500 : utilisation sur double autorisation uniquement.",
   "RH · Recrutement ouvert au Département Scientifique, à la Sécurité et au Médical."
  ],
+ "reglementParties": [
+  {
+   "id": "discord",
+   "lettre": "A",
+   "court": "Discord",
+   "titre": "Règlement Discord",
+   "resume": "Le serveur Discord : respect, salons, contenu, vocaux, tickets et sanctions."
+  },
+  {
+   "id": "roblox",
+   "lettre": "B",
+   "court": "Roblox · SCP:RP",
+   "titre": "Règlement Roblox · SCP:RP",
+   "resume": "En jeu sur Roblox : fair-play, roleplay, FearRP, combat, SCP, groupes, triche et modération."
+  }
+ ],
  "reglement": [
   {
-   "id": "ch1",
-   "titre": "Règles générales",
+   "id": "a1",
+   "partie": "discord",
+   "titre": "Respect & comportement",
    "articles": [
-    "Le respect entre membres est obligatoire, en RP comme en HRP. Insultes, harcèlement et provocations sont interdits.",
-    "Aucun propos discriminatoire (origine, genre, orientation, religion, handicap) n'est toléré, même « pour rire ».",
-    "Le contenu choquant réel (NSFW, gore réel, contenu illégal) est interdit sur tous les salons.",
-    "Pas de spam, de flood ni de mentions abusives (@everyone, @staff) sans raison valable.",
-    "La publicité pour d'autres serveurs est interdite sans accord du staff, y compris en message privé.",
-    "Ne partage jamais d'informations personnelles, les tiennes comme celles des autres.",
-    "Les décisions du staff s'appliquent. Tu peux les contester calmement par ticket, jamais en public."
+    "Le respect entre tous les membres est obligatoire.",
+    "Les insultes, provocations, harcèlement, menaces ou discriminations sont interdits.",
+    "Aucun propos raciste, homophobe, sexiste ou discriminatoire ne sera toléré.",
+    "Les conflits personnels doivent être réglés en privé et ne doivent pas perturber le serveur.",
+    "Les décisions du Staff doivent être respectées."
    ]
   },
   {
-   "id": "ch2",
-   "titre": "Principes du roleplay",
+   "id": "a2",
+   "partie": "discord",
+   "titre": "Utilisation des salons",
    "articles": [
-    "Sépare toujours RP et HRP. Les messages hors personnage s'écrivent entre doubles parenthèses (( )) ou dans les salons HRP.",
-    "Métagaming interdit : ton personnage ne sait que ce qu'il a appris en RP.",
-    "Powergaming interdit : tu ne peux pas imposer une action à un autre joueur ni rendre ton personnage invincible.",
-    "Freekill interdit : toute agression ou mise à mort doit avoir une justification RP claire.",
-    "Joue la peur (FearRP) : face à une arme ou à une anomalie, ton personnage réagit de façon réaliste.",
-    "Laisse de la place aux autres : attends les réponses et évite les pavés qui bloquent la scène.",
-    "Ne quitte pas une scène en cours sans prévenir. Si tu dois partir, signale-le en HRP."
+    "Utilisez chaque salon conformément à son objectif.",
+    "Le spam, le flood et l'envoi massif de messages sont interdits.",
+    "Évitez les mentions inutiles de @everyone, @here et des membres du Staff.",
+    "La publicité pour d'autres serveurs, communautés ou services sans autorisation est interdite.",
+    "Les liens suspects, malveillants ou frauduleux sont interdits."
    ]
   },
   {
-   "id": "ch3",
-   "titre": "Personnages",
+   "id": "a3",
+   "partie": "discord",
+   "titre": "Contenu",
    "articles": [
-    "Chaque personnage doit avoir une fiche validée par le staff avant d'être joué.",
-    "Deux personnages maximum par joueur, dans deux départements différents.",
-    "Un personnage commence au grade le plus bas de son département, sauf dérogation du staff.",
-    "Aucun personnage anormal, surnaturel ou lié à un groupe d'intérêt sans validation spéciale.",
-    "La mort RP d'un personnage est définitive lorsqu'elle est validée par un animateur.",
-    "Les compétences d'un personnage doivent correspondre à son âge, à son parcours et à son grade."
+    "Les contenus pornographiques, gore, choquants ou illégaux sont interdits.",
+    "Les images, vidéos ou messages susceptibles de choquer doivent être évités.",
+    "La diffusion d'informations personnelles sur un membre sans son consentement est strictement interdite.",
+    "L'usurpation d'identité d'un membre, d'un joueur ou d'un membre du Staff est interdite."
    ]
   },
   {
-   "id": "ch4",
-   "titre": "SCP & confinement",
+   "id": "a4",
+   "partie": "discord",
+   "titre": "Vocaux",
    "articles": [
-    "Incarner un SCP nécessite une whitelist accordée par le staff.",
-    "Les capacités d'un SCP joué respectent son dossier. Aucune capacité ne peut être inventée en cours de scène.",
-    "Les brèches de confinement sont déclenchées uniquement par les animateurs ou lors d'un événement annoncé.",
-    "Le personnel suit les procédures de confinement de chaque dossier. Les ignorer a des conséquences RP.",
-    "Toute expérience sur un SCP doit être validée en RP par un chercheur de niveau 3 minimum.",
-    "Ton personnage ne peut pas utiliser une information d'un niveau d'habilitation supérieur au sien."
+    "Évitez de crier ou de saturer volontairement votre microphone.",
+    "Les soundboards et musiques ne doivent pas perturber les conversations.",
+    "Les propos tenus dans les salons vocaux restent soumis au règlement.",
+    "Le troll vocal volontaire et répété est interdit."
    ]
   },
   {
-   "id": "ch5",
-   "titre": "Hiérarchie & grades",
+   "id": "a5",
+   "partie": "discord",
+   "titre": "Tickets & Staff",
    "articles": [
-    "Respecte la hiérarchie RP de ton département. Un ordre peut être contesté en RP, jamais en HRP.",
-    "Les promotions sont attribuées par les responsables de département après évaluation.",
-    "L'abus de grade (ordres absurdes, sanctions injustifiées) est sanctionnable.",
-    "Un poste à responsabilité implique une présence régulière. Trois semaines d'inactivité sans prévenir entraînent une rétrogradation."
+    "Les tickets doivent être utilisés pour leur véritable objectif.",
+    "Il est interdit d'ouvrir plusieurs tickets pour le même problème.",
+    "Le ping abusif du Staff est interdit.",
+    "Une plainte contre un membre du Staff doit être réalisée dans le salon prévu à cet effet.",
+    "Toute tentative de manipulation ou de fausse preuve pourra entraîner une sanction."
+   ]
+  },
+  {
+   "id": "a6",
+   "partie": "discord",
+   "titre": "Sanctions Discord",
+   "articles": [
+    "Selon la gravité des faits, le Staff peut appliquer : un avertissement, un mute / timeout, une exclusion temporaire ou un bannissement définitif.",
+    "Le Staff se réserve le droit d'adapter la sanction à la gravité et à la répétition des faits."
+   ]
+  },
+  {
+   "id": "b1",
+   "partie": "roblox",
+   "titre": "Respect & Fair-Play",
+   "articles": [
+    "Le respect entre joueurs est obligatoire.",
+    "Les insultes, provocations et comportements toxiques sont interdits.",
+    "Le troll volontaire visant à gâcher l'expérience des autres joueurs est interdit.",
+    "Les joueurs doivent respecter les membres du Staff et les Game Masters."
+   ]
+  },
+  {
+   "id": "b2",
+   "partie": "roblox",
+   "titre": "Roleplay",
+   "articles": [
+    "Le Roleplay (RP) doit être privilégié pendant les scènes RP.",
+    "Le No-RP est interdit.",
+    "Il est interdit de casser volontairement une scène RP sans raison valable.",
+    "Les informations obtenues hors RP ne doivent pas être utilisées en RP : c'est du MetaGaming (MG).",
+    "Utiliser des informations que son personnage ne peut pas connaître est interdit."
+   ]
+  },
+  {
+   "id": "b3",
+   "partie": "roblox",
+   "titre": "FearRP",
+   "articles": [
+    "Votre personnage doit réagir de manière cohérente face au danger.",
+    "Il est interdit d'ignorer volontairement une menace évidente.",
+    "Les comportements suicidaires ou totalement irréalistes sans justification RP sont interdits."
+   ]
+  },
+  {
+   "id": "b4",
+   "partie": "roblox",
+   "titre": "Combat",
+   "articles": [
+    "Le Random DeathMatch (RDM) est interdit.",
+    "Il est interdit de tuer un joueur sans raison RP valable.",
+    "Le Revenge Kill (RK) est interdit : revenir se venger après sa mort sans justification RP.",
+    "Le Spawn Kill est interdit.",
+    "Le Free Kill (FK) est interdit."
+   ]
+  },
+  {
+   "id": "b5",
+   "partie": "roblox",
+   "titre": "SCP",
+   "articles": [
+    "Les SCP doivent respecter leur rôle et leurs capacités définies par le serveur.",
+    "Il est interdit d'utiliser volontairement une capacité SCP pour contourner les règles.",
+    "Les SCP ne doivent pas coopérer avec des groupes ennemis sans justification RP.",
+    "Les évasions doivent rester cohérentes avec le RP et les mécaniques du jeu."
+   ]
+  },
+  {
+   "id": "b6",
+   "partie": "roblox",
+   "titre": "Groupes & Classes",
+   "articles": [
+    "Chaque joueur doit respecter les fonctions de son grade ou de sa classe.",
+    "L'abus de pouvoir est interdit.",
+    "Il est interdit de donner volontairement des informations confidentielles à une faction ennemie sans raison RP.",
+    "Le FailRP est interdit : comportement incohérent avec son rôle ou la situation.",
+    "Les changements de faction doivent respecter les procédures prévues par le serveur."
+   ]
+  },
+  {
+   "id": "b7",
+   "partie": "roblox",
+   "titre": "Exploits & Triche",
+   "articles": [
+    "L'utilisation de logiciels de triche, scripts ou exploits est strictement interdite.",
+    "L'exploitation volontaire de bugs permettant d'obtenir un avantage injuste est interdite.",
+    "Les bugs importants doivent être signalés au Staff.",
+    "L'utilisation d'un bug pour tuer, voler, s'enfuir ou obtenir un avantage est sanctionnable."
+   ]
+  },
+  {
+   "id": "b8",
+   "partie": "roblox",
+   "titre": "Roblox",
+   "articles": [
+    "Les règles de Roblox doivent être respectées à tout moment.",
+    "Toute tentative de contournement des systèmes de modération du jeu est interdite.",
+    "Les comportements visant à provoquer volontairement une sanction Roblox contre un autre joueur sont interdits.",
+    "Les comptes alternatifs utilisés pour contourner une sanction peuvent être sanctionnés."
+   ]
+  },
+  {
+   "id": "b9",
+   "partie": "roblox",
+   "titre": "Staff & Modération",
+   "articles": [
+    "Les membres du Staff peuvent intervenir lorsqu'une situation enfreint le règlement.",
+    "Il est interdit de mentir volontairement au Staff.",
+    "Les faux signalements et fausses preuves sont interdits.",
+    "Si vous contestez une sanction, utilisez le système de ticket prévu à cet effet.",
+    "Les décisions de modération doivent être contestées de manière respectueuse."
    ]
   }
  ],
  "sanctions": [
   {
    "nom": "Avertissement",
-   "motif": "Premier manquement mineur",
-   "duree": "Retiré après 30 jours sans récidive",
+   "motif": "Premier écart ou manquement mineur : hors-sujet, mention inutile, message déplacé",
+   "duree": "Aucune",
    "gravite": 1
   },
   {
-   "nom": "Mute temporaire",
-   "motif": "Spam, propos déplacés, récidive mineure",
-   "duree": "1 h à 72 h",
+   "nom": "Mute / timeout",
+   "motif": "Spam, flood, micro saturé, soundboard gênante, troll vocal",
+   "duree": "Selon la gravité",
    "gravite": 2
   },
   {
-   "nom": "Exclusion RP",
-   "motif": "Freekill, métagaming ou powergaming répétés",
-   "duree": "3 à 14 jours sans jouer",
+   "nom": "Exclusion temporaire",
+   "motif": "Insultes, provocations, contenu choquant, ping abusif répété, récidive",
+   "duree": "Selon la gravité",
    "gravite": 3
   },
   {
-   "nom": "Bannissement temporaire",
-   "motif": "Manquement grave, harcèlement",
-   "duree": "7 à 30 jours",
-   "gravite": 4
-  },
-  {
    "nom": "Bannissement définitif",
-   "motif": "Propos haineux, contenu illégal, récidive grave",
+   "motif": "Discrimination, menaces, harcèlement, contenu illégal, informations personnelles diffusées, récidive grave",
    "duree": "Permanent",
    "gravite": 5
   }
@@ -1261,43 +1380,67 @@ window.S73.data = {
  "glossaire": [
   [
    "RP",
-   "Roleplay. Tout ce que fait et dit ton personnage."
+   "Roleplay. Tout ce que fait et dit ton personnage en jeu."
   ],
   [
    "HRP",
-   "Hors roleplay. Ce que tu dis en tant que joueur, entre (( ))."
+   "Hors roleplay. Ce que tu dis en tant que joueur, pas en tant que personnage."
   ],
   [
-   "Métagaming",
-   "Utiliser en RP une information que ton personnage ne connaît pas."
+   "No-RP",
+   "Refuser de jouer son rôle ou casser une scène RP sans raison valable."
   ],
   [
-   "Powergaming",
-   "Imposer une action à autrui ou jouer un personnage invincible."
+   "FailRP",
+   "Comportement incohérent avec son rôle ou avec la situation."
   ],
   [
-   "Freekill",
-   "Tuer ou agresser sans justification RP."
+   "MetaGaming (MG)",
+   "Utiliser en RP une information obtenue hors RP : Discord, vocal, stream."
   ],
   [
    "FearRP",
-   "Obligation de jouer la peur face à un danger réel."
+   "Obligation de réagir de façon réaliste face au danger : arme, SCP, menace."
+  ],
+  [
+   "RDM",
+   "Random DeathMatch. Tuer un joueur au hasard, sans raison RP valable."
+  ],
+  [
+   "Free Kill (FK)",
+   "Tuer un joueur qui ne représente aucune menace, par exemple un Classe-D qui obéit."
+  ],
+  [
+   "Revenge Kill (RK)",
+   "Revenir se venger après sa mort sans justification RP."
+  ],
+  [
+   "Spawn Kill",
+   "Tuer un joueur à son point d'apparition, juste après sa réapparition."
+  ],
+  [
+   "Exploit",
+   "Script, logiciel ou bug utilisé pour obtenir un avantage injuste."
+  ],
+  [
+   "Compte alternatif",
+   "Second compte Roblox. Sanctionnable s'il sert à contourner une sanction."
+  ],
+  [
+   "Game Master (GM)",
+   "Membre de l'équipe qui anime les scènes et les événements en jeu."
+  ],
+  [
+   "Ticket",
+   "Demande privée au Staff sur Discord : plainte, contestation, bug."
   ],
   [
    "Whitelist",
-   "Autorisation spéciale pour un rôle sensible : SCP, FIM, Direction."
-  ],
-  [
-   "Animateur",
-   "Membre du staff qui dirige les événements et incarne les PNJ."
-  ],
-  [
-   "PNJ",
-   "Personnage non joueur, incarné par le staff."
+   "Autorisation du Staff pour un rôle sensible : SCP, FIM, Direction."
   ],
   [
    "Brèche",
-   "Évasion d'une anomalie hors de son confinement."
+   "Évasion d'un SCP hors de son confinement."
   ],
   [
    "FIM",
@@ -1310,64 +1453,205 @@ window.S73.data = {
  ],
  "quiz": [
   {
-   "q": "Ton personnage est à la cafétéria. Un joueur annonce en HRP qu'une brèche commence au niveau −5. Que fait ton personnage ?",
+   "q": "Un ami t'écrit sur Discord que SCP-173 vient de s'échapper au niveau −2. En jeu, ton personnage est à la cafétéria. Que fais-tu ?",
    "choix": [
-    "Il court s'armer au QG Sécurité",
-    "Rien de particulier : il ne l'a pas appris en RP",
-    "Il prévient tout le monde à la radio"
+    "Tu fonces au niveau −2 pour aider l'équipe",
+    "Rien de particulier : ton personnage ne l'a pas appris en RP",
+    "Tu préviens tout le site à la radio"
    ],
    "bonne": 1,
-   "explication": "Réagir à une information HRP, c'est du métagaming (art. 2.2). Attends l'alarme ou l'annonce en RP."
+   "explication": "Utiliser une information obtenue hors RP, c'est du MetaGaming (art. B2.4). Attends l'alarme ou une annonce en jeu."
   },
   {
-   "q": "Qui peut déclencher une brèche de confinement ?",
+   "q": "Pendant l'interrogatoire d'un Classe-D, un joueur enchaîne les emotes de danse et spamme le chat. C'est…",
    "choix": [
-    "Tout joueur qui incarne un SCP",
-    "Les animateurs, ou lors d'un événement annoncé",
-    "Le personnage le plus gradé présent"
+    "Du No-RP : il casse la scène sans raison valable",
+    "Autorisé, c'est un jeu",
+    "Autorisé tant qu'il ne tue personne"
    ],
-   "bonne": 1,
-   "explication": "Les brèches sont réservées aux animateurs et aux événements annoncés (art. 4.3)."
+   "bonne": 0,
+   "explication": "Le No-RP est interdit, tout comme casser volontairement une scène RP (art. B2.2 et B2.3)."
   },
   {
-   "q": "Un garde braque son arme sur ton personnage, désarmé. Que fais-tu ?",
+   "q": "Un chercheur sans arme ni formation part seul affronter SCP-096 « pour l'action ». C'est…",
    "choix": [
-    "J'esquive et je le désarme en un tour",
-    "Je joue la peur : j'obéis ou je tente de négocier",
-    "J'ignore la scène et je continue mon chemin"
+    "Du bon RP, ça crée une scène",
+    "Autorisé s'il prévient dans le chat",
+    "Du FailRP : un comportement incohérent avec son rôle"
    ],
-   "bonne": 1,
-   "explication": "Le FearRP impose une réaction réaliste face au danger (art. 2.5). Esquiver tout, c'est du powergaming."
+   "bonne": 2,
+   "explication": "Agir contre la logique de son rôle, c'est du FailRP (art. B6.4). C'est aussi un comportement suicidaire sans justification (art. B3.3)."
   },
   {
-   "q": "Comment écrire un message hors personnage dans un salon RP ?",
+   "q": "Un garde armé met en joue ton Classe-D, qui n'a pas d'arme. Que fais-tu ?",
    "choix": [
-    "En majuscules",
-    "Entre doubles parenthèses (( ))",
-    "C'est interdit, même brièvement"
+    "Tu cours droit sur lui en sautant dans tous les sens",
+    "Tu obéis ou tu tentes de négocier",
+    "Tu ignores l'arme et tu continues ton chemin"
    ],
    "bonne": 1,
-   "explication": "Le HRP s'écrit entre (( )) ou dans les salons HRP (art. 2.1)."
+   "explication": "Le FearRP impose de réagir de façon cohérente face au danger, sans ignorer une menace évidente (art. B3.1 et B3.2)."
   },
   {
-   "q": "Tu veux incarner SCP-049. Quelle est la marche à suivre ?",
+   "q": "Un joueur te bouscule dans un couloir sans rien dire. Ton agent de sécurité peut-il l'abattre ?",
    "choix": [
-    "Écrire une fiche et commencer à jouer",
-    "Demander une whitelist au staff",
-    "Attendre qu'une brèche le libère"
+    "Oui, il l'a cherché",
+    "Oui, s'il n'y a pas de témoin",
+    "Non : tuer sans raison RP valable, c'est du RDM"
    ],
-   "bonne": 1,
-   "explication": "Incarner un SCP nécessite une whitelist (art. 4.1)."
+   "bonne": 2,
+   "explication": "Le Random DeathMatch est interdit : il faut une vraie raison RP pour tuer (art. B4.1 et B4.2)."
   },
   {
-   "q": "Combien de personnages peux-tu jouer au maximum ?",
+   "q": "Pendant une émeute, un garde abat les Classe-D dès qu'ils réapparaissent dans leur cellule. C'est…",
    "choix": [
-    "Un seul",
-    "Deux, dans deux départements différents",
-    "Autant que tu veux"
+    "Du Spawn Kill, interdit",
+    "Autorisé pendant une émeute",
+    "Autorisé si le garde est gradé"
+   ],
+   "bonne": 0,
+   "explication": "Tuer un joueur à son point d'apparition, c'est du Spawn Kill (art. B4.4), même pendant une émeute."
+  },
+  {
+   "q": "Ton personnage vient d'être tué par un agent de l'Insurrection du Chaos. Tu réapparais. Que fais-tu ?",
+   "choix": [
+    "Tu retournes immédiatement tuer celui qui t'a abattu",
+    "Tu reprends ton rôle sans chercher à te venger",
+    "Tu quittes la partie pour ne pas perdre"
    ],
    "bonne": 1,
-   "explication": "Deux personnages maximum, dans deux départements différents (art. 3.2)."
+   "explication": "Revenir se venger après sa mort sans justification RP, c'est du Revenge Kill (art. B4.3)."
+  },
+  {
+   "q": "Tu incarnes SCP-049. Un agent de l'Insurrection du Chaos te propose de l'aider à attaquer la Fondation. Que fais-tu ?",
+   "choix": [
+    "Tu acceptes, c'est plus simple pour t'évader",
+    "Tu acceptes seulement s'il te donne une arme",
+    "Tu refuses, sauf justification RP"
+   ],
+   "bonne": 2,
+   "explication": "Un SCP ne coopère pas avec un groupe ennemi sans justification RP (art. B5.3)."
+  },
+  {
+   "q": "Une évasion de SCP doit…",
+   "choix": [
+    "Rester cohérente avec le RP et les mécaniques du jeu",
+    "Avoir lieu dès le début de la partie, quoi qu'il arrive",
+    "Être votée par les autres joueurs dans le chat"
+   ],
+   "bonne": 0,
+   "explication": "Les évasions doivent rester cohérentes avec le RP et les mécaniques du jeu (art. B5.4)."
+  },
+  {
+   "q": "Un sergent de sécurité ordonne à un Classe-D d'entrer dans la cellule de SCP-173 « pour rire ». C'est…",
+   "choix": [
+    "Un ordre normal, il est gradé",
+    "De l'abus de pouvoir, interdit",
+    "Autorisé si le Classe-D est d'accord en HRP"
+   ],
+   "bonne": 1,
+   "explication": "Un grade ne permet pas tout : l'abus de pouvoir est interdit (art. B6.1 et B6.2)."
+  },
+  {
+   "q": "Sans aucune raison RP, ton chercheur donne les codes d'accès du site à un agent de l'Insurrection du Chaos. C'est…",
+   "choix": [
+    "Autorisé, c'est ton personnage",
+    "Autorisé si tu changes de faction juste après",
+    "Interdit : informations confidentielles données à une faction ennemie"
+   ],
+   "bonne": 2,
+   "explication": "Donner volontairement des informations confidentielles à une faction ennemie sans raison RP est interdit (art. B6.3)."
+  },
+  {
+   "q": "Tu découvres un bug qui permet de traverser le mur d'une cellule de confinement. Que fais-tu ?",
+   "choix": [
+    "Tu le signales au Staff sans t'en servir",
+    "Tu t'en sers pour t'évader, c'est le jeu",
+    "Tu le montres à tes amis pour qu'ils en profitent"
+   ],
+   "bonne": 0,
+   "explication": "Exploiter un bug pour s'enfuir est sanctionnable. Les bugs importants se signalent au Staff (art. B7.2 à B7.4)."
+  },
+  {
+   "q": "Un joueur utilise un script pour courir plus vite que les autres. Que risque-t-il ?",
+   "choix": [
+    "Rien, s'il ne tue personne",
+    "Une sanction : scripts et logiciels de triche sont strictement interdits",
+    "Rien, si c'est seulement pour s'amuser"
+   ],
+   "bonne": 1,
+   "explication": "Les logiciels de triche, scripts et exploits sont strictement interdits (art. B7.1)."
+  },
+  {
+   "q": "Un joueur banni du jeu revient avec un autre compte Roblox. C'est…",
+   "choix": [
+    "Autorisé, c'est un nouveau compte",
+    "Autorisé après 24 heures",
+    "Sanctionnable : compte alternatif utilisé pour contourner une sanction"
+   ],
+   "bonne": 2,
+   "explication": "Les comptes alternatifs utilisés pour contourner une sanction peuvent être sanctionnés (art. B8.4)."
+  },
+  {
+   "q": "Un joueur pousse un autre à écrire des mots interdits dans le chat pour le faire bannir par Roblox. C'est…",
+   "choix": [
+    "Interdit : provoquer volontairement une sanction Roblox contre un joueur",
+    "Une simple blague",
+    "Autorisé si l'autre joueur est d'accord"
+   ],
+   "bonne": 0,
+   "explication": "Provoquer volontairement une sanction Roblox contre un autre joueur est interdit (art. B8.3)."
+  },
+  {
+   "q": "Tu penses qu'un modérateur t'a sanctionné à tort en jeu. Que fais-tu ?",
+   "choix": [
+    "Tu l'insultes dans le chat pour qu'il comprenne",
+    "Tu ouvres cinq tickets pour être sûr d'être lu",
+    "Tu publies une capture de lui dans le salon général",
+    "Tu ouvres un ticket et tu expliques calmement"
+   ],
+   "bonne": 3,
+   "explication": "Une sanction se conteste par ticket, avec respect (art. B9.4 et B9.5), et un seul ticket par problème (art. A5.2)."
+  },
+  {
+   "q": "Pour faire sanctionner un joueur qu'il n'aime pas, un membre retouche une capture d'écran et l'envoie en ticket. C'est…",
+   "choix": [
+    "Autorisé si l'autre joueur a déjà été sanctionné",
+    "Sanctionnable : fausses preuves et faux signalements sont interdits",
+    "Autorisé tant que personne ne s'en rend compte"
+   ],
+   "bonne": 1,
+   "explication": "Les faux signalements et fausses preuves sont interdits (art. B9.3), sur Discord comme en jeu (art. A5.5)."
+  },
+  {
+   "q": "Tu attends depuis dix minutes une réponse à ton ticket. Que fais-tu ?",
+   "choix": [
+    "Tu mentionnes @everyone",
+    "Tu mentionnes chaque membre du Staff un par un",
+    "Tu patientes : ton ticket sera traité"
+   ],
+   "bonne": 2,
+   "explication": "Les mentions inutiles et le ping abusif du Staff sont interdits (art. A2.3 et A5.3)."
+  },
+  {
+   "q": "Un membre publie sur Discord le vrai prénom et la ville d'un autre joueur. C'est…",
+   "choix": [
+    "Strictement interdit sans son consentement",
+    "Autorisé si c'est pour rire",
+    "Autorisé si ce sont des amis"
+   ],
+   "bonne": 0,
+   "explication": "Diffuser les informations personnelles d'un membre sans son consentement est strictement interdit (art. A3.3)."
+  },
+  {
+   "q": "Un joueur reprend le pseudo et la photo d'un membre du Staff pour donner des ordres sur Discord. C'est…",
+   "choix": [
+    "Autorisé si c'est pour du RP",
+    "De l'usurpation d'identité, interdite",
+    "Autorisé tant qu'il ne sanctionne personne"
+   ],
+   "bonne": 1,
+   "explication": "L'usurpation d'identité d'un membre, d'un joueur ou du Staff est interdite (art. A3.4)."
   }
  ],
  "etapes": [
@@ -1389,7 +1673,7 @@ window.S73.data = {
   },
   {
    "titre": "Prends ton poste",
-   "texte": "Une fois validé, tu reçois ton rôle Discord et ta première affectation au Site-73."
+   "texte": "Une fois validé, tu reçois ton rôle Discord et ta première affectation. Rejoins ensuite le jeu Roblox et prends ton poste au Site-73."
   }
  ],
  "faq": [
@@ -1403,7 +1687,7 @@ window.S73.data = {
   },
   {
    "q": "Puis-je incarner un SCP ?",
-   "r": "Oui, après quelques sessions en tant que personnel et une demande de whitelist auprès du staff (art. 4.1)."
+   "r": "Oui, après quelques sessions en tant que personnel et une demande de whitelist auprès du Staff. Ton SCP devra respecter son rôle et les capacités définies par le serveur (art. B5.1)."
   },
   {
    "q": "Quand ont lieu les sessions ?",
@@ -1415,7 +1699,7 @@ window.S73.data = {
   },
   {
    "q": "Mon personnage peut-il mourir ?",
-   "r": "Oui. Une mort RP validée par un animateur est définitive (art. 3.5). Tu pourras alors créer un nouveau personnage."
+   "r": "Oui. Tu réapparais ensuite, mais ton personnage ne revient pas se venger sans justification RP : ce serait du Revenge Kill (art. B4.3)."
   }
  ],
  "noms": {
@@ -2230,21 +2514,21 @@ window.S73.data = {
   },
   {
    "id": "reglement",
-   "code": "§5",
+   "code": "§",
    "nom": "Juriste",
-   "texte": "Lire les cinq chapitres du règlement."
+   "texte": "Lire tous les chapitres du règlement, Discord et Roblox."
   },
   {
    "id": "apte",
    "code": "EX",
    "nom": "Apte au service",
-   "texte": "Réussir l'examen d'aptitude."
+   "texte": "Réussir l'examen d'aptitude (16 bonnes réponses sur 20)."
   },
   {
    "id": "sansfaute",
-   "code": "6/6",
+   "code": "20",
    "nom": "Sans faute",
-   "texte": "Obtenir 6/6 à l'examen d'aptitude."
+   "texte": "Obtenir 20/20 à l'examen d'aptitude."
   },
   {
    "id": "evacuation",
